@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="vrSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#192841" />
+      <stop offset="70%" stop-color="#3A5274" />
+      <stop offset="100%" stop-color="#E8C47A" />
+    </linearGradient>
+    <linearGradient id="vrVilla" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FDFBF7" />
+      <stop offset="50%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F0EBE1" />
+    </linearGradient>
+    <linearGradient id="vrRoof" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3B4B61" />
+      <stop offset="100%" stop-color="#1B263B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="600" fill="url(#vrSky)" />
+
+  <!-- Background Willow Trees & European Foliage -->
+  <g fill="#1B4332">
+    <ellipse cx="140" cy="360" rx="90" ry="110" />
+    <ellipse cx="660" cy="350" rx="95" ry="120" />
+    <ellipse cx="730" cy="380" rx="70" ry="90" fill="#2D6A4F" />
+  </g>
+
+  <!-- Grand Neoclassical Waterfront Villa -->
+  <g transform="translate(210, 180)">
+    <!-- Main Villa Mansard Roof -->
+    <polygon points="40,90 80,20 300,20 340,90" fill="url(#vrRoof)" />
+    <!-- Classical Roof Dormers (Attic windows) -->
+    <polygon points="120,50 140,25 160,50" fill="#E8C47A" />
+    <rect x="130" y="45" width="20" height="25" fill="#FFE59E" rx="2" />
+    <polygon points="220,50 240,25 260,50" fill="#E8C47A" />
+    <rect x="230" y="45" width="20" height="25" fill="#FFE59E" rx="2" />
+
+    <!-- 3-Story Classical Villa Facade -->
+    <rect x="50" y="90" width="280" height="220" fill="url(#vrVilla)" rx="2" stroke="#E2D9CC" stroke-width="1.5" />
+
+    <!-- Neoclassical Columns (Colonnade) -->
+    <g fill="#FFFFFF" stroke="#D5CBB9" stroke-width="1">
+      <rect x="110" y="140" width="12" height="170" rx="1" />
+      <rect x="150" y="140" width="12" height="170" rx="1" />
+      <rect x="220" y="140" width="12" height="170" rx="1" />
+      <rect x="260" y="140" width="12" height="170" rx="1" />
+      <!-- Classical Pediment Portico -->
+      <polygon points="90,140 190,85 290,140" fill="#FDFBF7" stroke="#D5CBB9" stroke-width="2" />
+      <circle cx="190" cy="115" r="10" fill="#E8C47A" />
+    </g>
+
+    <!-- French Arched Windows with Warm Ambient Chandelier Glow -->
+    <g fill="#FFE59E">
+      <!-- 2nd Floor Arched Windows -->
+      <path d="M70 120 A 10 10 0 0 1 90 120 L 90 160 L 70 160 Z" />
+      <path d="M180 145 A 10 10 0 0 1 200 145 L 200 185 L 180 185 Z" />
+      <path d="M290 120 A 10 10 0 0 1 310 120 L 310 160 L 290 160 Z" />
+      <!-- 1st Floor French Doors -->
+      <rect x="70" y="210" width="22" height="50" rx="2" />
+      <rect x="180" y="210" width="24" height="60" rx="2" />
+      <rect x="288" y="210" width="22" height="50" rx="2" />
+    </g>
+
+    <!-- Classical Wrought-Iron Balcony Railing -->
+    <rect x="60" y="170" width="260" height="12" fill="#D49B42" rx="1" />
+  </g>
+
+  <!-- Manicured Estate Green Lawn & Rose Bushes -->
+  <polygon points="0,450 800,450 800,520 0,520" fill="#2D6A4F" />
+  <polygon points="120,450 680,450 720,520 80,520" fill="#40916C" />
+  <!-- Blooming English Rose Clump -->
+  <g fill="#F5222D">
+    <circle cx="150" cy="465" r="6" />
+    <circle cx="165" cy="460" r="7" />
+    <circle cx="180" cy="468" r="5" />
+    <circle cx="620" cy="465" r="6" />
+    <circle cx="635" cy="460" r="8" />
+    <circle cx="650" cy="468" r="6" />
+  </g>
+
+  <!-- Venice-style Canal with Private Villa Dock -->
+  <rect x="0" y="515" width="800" height="85" fill="#133854" />
+  <!-- Wooden Dock & Mooring Bollards -->
+  <rect x="340" y="495" width="120" height="40" fill="#8C5C35" rx="2" />
+  <line x1="340" y1="495" x2="460" y2="495" stroke="#FFE8A3" stroke-width="2" />
+  <rect x="350" y="490" width="8" height="10" fill="#D49B42" rx="1" />
+  <rect x="440" y="490" width="8" height="10" fill="#D49B42" rx="1" />
+
+  <!-- Classic Wooden Gondola / Speedboat Tied to Dock -->
+  <g transform="translate(370, 525)">
+    <path d="M0 15 Q40 25 80 15 L70 5 L10 5 Z" fill="#FFFFFF" />
+    <path d="M5 12 Q40 20 75 12 L70 16 L10 16 Z" fill="#8C5C35" />
+    <!-- Mooring Rope -->
+    <line x1="10" y1="8" x2="-15" y2="-15" stroke="#E8C47A" stroke-width="2" />
+  </g>
+
+  <!-- Water Ripples -->
+  <g stroke="#91D5FF" stroke-width="1.5" stroke-opacity="0.4" stroke-linecap="round">
+    <line x1="120" y1="540" x2="280" y2="540" />
+    <line x1="480" y1="550" x2="680" y2="550" />
+    <line x1="240" y1="575" x2="520" y2="575" />
+  </g>
+
+  <!-- Badge -->
+  <rect x="30" y="30" width="200" height="28" rx="6" fill="#0A192F" fill-opacity="0.85" stroke="#D49B42" stroke-width="1.5" />
+  <text x="130" y="49" fill="#FFE8A3" font-size="12" font-family="Inter, sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">VINHOMES RIVERSIDE</text>
+</svg>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="poolSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#081A32" />
+      <stop offset="60%" stop-color="#1E3E66" />
+      <stop offset="90%" stop-color="#DE8C3B" />
+      <stop offset="100%" stop-color="#FFD494" />
+    </linearGradient>
+    <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#36CFC9" />
+      <stop offset="50%" stop-color="#13C2C2" />
+      <stop offset="100%" stop-color="#006D75" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="600" fill="url(#poolSky)" />
+  <circle cx="400" cy="320" r="70" fill="#FFE8A3" opacity="0.8" />
+
+  <!-- City Skyline on Horizon -->
+  <g fill="#0D2238" opacity="0.75">
+    <rect x="60" y="270" width="45" height="70" />
+    <rect x="130" y="240" width="55" height="100" />
+    <rect x="220" y="220" width="60" height="120" />
+    <rect x="520" y="230" width="50" height="110" />
+    <rect x="600" y="250" width="65" height="90" />
+    <rect x="690" y="280" width="40" height="60" />
+  </g>
+
+  <!-- Infinity Pool Edge & Water Deck -->
+  <!-- Pool Basin -->
+  <polygon points="40,340 760,340 800,600 0,600" fill="url(#waterGrad)" />
+  <!-- Infinity Edge Glass Spillway -->
+  <rect x="40" y="336" width="720" height="5" fill="#E6FFFB" opacity="0.9" />
+
+  <!-- Water Surface Reflections -->
+  <g fill="#E6FFFB" opacity="0.45">
+    <ellipse cx="400" cy="380" rx="90" ry="12" />
+    <ellipse cx="280" cy="430" rx="140" ry="16" />
+    <ellipse cx="500" cy="460" rx="160" ry="18" />
+    <ellipse cx="380" cy="510" rx="200" ry="22" />
+  </g>
+
+  <!-- Sun Golden Reflection on Water -->
+  <polygon points="360,340 440,340 470,600 330,600" fill="#FFE59E" opacity="0.4" />
+
+  <!-- Poolside Teak Wood Loungers on Left Edge -->
+  <g transform="translate(60, 480)">
+    <polygon points="0,30 90,20 120,45 30,55" fill="#8C5C35" />
+    <polygon points="10,25 80,18 90,30 20,38" fill="#FFFFFF" opacity="0.9" />
+    <!-- Umbrella -->
+    <line x1="120" y1="40" x2="120" y2="-40" stroke="#4A3423" stroke-width="4" />
+    <polygon points="70,-40 170,-40 120,-75" fill="#FFE8A3" />
+  </g>
+
+  <!-- Poolside Teak Wood Loungers on Right Edge -->
+  <g transform="translate(620, 480)">
+    <polygon points="0,20 90,30 60,55 -30,45" fill="#8C5C35" />
+    <polygon points="10,18 80,25 70,38 0,30" fill="#FFFFFF" opacity="0.9" />
+    <!-- Umbrella -->
+    <line x1="-10" y1="40" x2="-10" y2="-40" stroke="#4A3423" stroke-width="4" />
+    <polygon points="-60,-40 40,-40 -10,-75" fill="#FFE8A3" />
+  </g>
+
+  <!-- Badge -->
+  <rect x="30" y="30" width="180" height="28" rx="6" fill="#0A192F" fill-opacity="0.85" stroke="#D49B42" stroke-width="1.5" />
+  <text x="120" y="49" fill="#FFE8A3" font-size="12" font-family="Inter, sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">HỒ BƠI VÔ CỰC 50M</text>
+</svg>

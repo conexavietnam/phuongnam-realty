@@ -13,11 +13,19 @@ export const MobilePropertyCard: React.FC<MobilePropertyCardProps> = ({ property
       to={`/chuyen-nhuong/${property.slug}`}
       className="flex bg-white rounded-xl shadow-sm overflow-hidden p-3 mb-3 border border-slate-100 active:scale-[0.98] transition-transform"
     >
-      <div className="relative shrink-0 w-32 h-32">
+      <div className="relative shrink-0 w-32 h-32 bg-navy-950 rounded-lg overflow-hidden">
         <img 
           src={property.thumbnail} 
           alt={property.title} 
           className="w-full h-full object-cover rounded-lg"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== '/images/properties/luxury-apartment.svg') {
+              target.src = '/images/properties/luxury-apartment.svg';
+            }
+          }}
         />
         <div className="absolute top-2 left-2 bg-gold-500/90 text-white text-[10px] font-medium px-2 py-1 rounded">
           {property.category}

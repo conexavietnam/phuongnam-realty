@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="genSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#040B14" />
+      <stop offset="60%" stop-color="#0B203E" />
+      <stop offset="100%" stop-color="#1D4E89" />
+    </linearGradient>
+    <linearGradient id="genGlass" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#102A45" />
+      <stop offset="50%" stop-color="#2B74B3" />
+      <stop offset="100%" stop-color="#173B61" />
+    </linearGradient>
+    <linearGradient id="neonCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5CDBD3" />
+      <stop offset="100%" stop-color="#13C2C2" />
+    </linearGradient>
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Sky with Star Cluster -->
+  <rect width="800" height="600" fill="url(#genSky)" />
+  <g fill="#FFFFFF" opacity="0.8">
+    <circle cx="180" cy="80" r="1.5" />
+    <circle cx="290" cy="110" r="1" />
+    <circle cx="580" cy="70" r="2" />
+    <circle cx="680" cy="140" r="1.2" />
+  </g>
+
+  <!-- Distant Tech City Silhouettes -->
+  <g fill="#071526" opacity="0.7">
+    <rect x="50" y="320" width="60" height="280" />
+    <rect x="130" y="270" width="70" height="330" />
+    <rect x="620" y="290" width="65" height="310" />
+    <rect x="700" y="340" width="55" height="260" />
+  </g>
+
+  <!-- Tower 1 (West Wing) -->
+  <g transform="translate(240, 90)">
+    <polygon points="0,70 20,0 120,0 140,70 140,460 0,460" fill="url(#genGlass)" />
+    <!-- Diagonal Geometric Facade Bracing -->
+    <g stroke="url(#neonCyan)" stroke-width="2" opacity="0.75" filter="url(#neonGlow)">
+      <line x1="0" y1="120" x2="140" y2="200" />
+      <line x1="140" y1="200" x2="0" y2="280" />
+      <line x1="0" y1="280" x2="140" y2="360" />
+      <line x1="140" y1="360" x2="0" y2="440" />
+    </g>
+    <!-- Warm Illuminated Window Grid -->
+    <g fill="#FFE59E" opacity="0.6">
+      <rect x="25" y="40" width="18" height="10" rx="1" />
+      <rect x="60" y="40" width="18" height="10" rx="1" />
+      <rect x="95" y="40" width="18" height="10" rx="1" />
+      <rect x="25" y="100" width="18" height="10" rx="1" />
+      <rect x="95" y="100" width="18" height="10" rx="1" />
+      <rect x="25" y="160" width="18" height="10" rx="1" />
+      <rect x="60" y="160" width="18" height="10" rx="1" />
+      <rect x="95" y="220" width="18" height="10" rx="1" />
+      <rect x="25" y="320" width="18" height="10" rx="1" />
+      <rect x="60" y="320" width="18" height="10" rx="1" />
+      <rect x="95" y="320" width="18" height="10" rx="1" />
+    </g>
+    <!-- Tower Spire -->
+    <line x1="70" y1="0" x2="70" y2="-40" stroke="#FFE8A3" stroke-width="3" />
+    <circle cx="70" cy="-40" r="4" fill="#FF4D4F" filter="url(#neonGlow)" />
+  </g>
+
+  <!-- Tower 2 (East Wing) -->
+  <g transform="translate(420, 130)">
+    <polygon points="0,50 20,0 130,0 150,50 150,420 0,420" fill="url(#genGlass)" />
+    <!-- Diagonal Bracing -->
+    <g stroke="url(#neonCyan)" stroke-width="2" opacity="0.75" filter="url(#neonGlow)">
+      <line x1="150" y1="100" x2="0" y2="180" />
+      <line x1="0" y1="180" x2="150" y2="260" />
+      <line x1="150" y1="260" x2="0" y2="340" />
+      <line x1="0" y1="340" x2="150" y2="420" />
+    </g>
+    <g fill="#69C0FF" opacity="0.5">
+      <rect x="30" y="60" width="20" height="12" rx="1" />
+      <rect x="70" y="60" width="20" height="12" rx="1" />
+      <rect x="30" y="140" width="20" height="12" rx="1" />
+      <rect x="100" y="140" width="20" height="12" rx="1" />
+      <rect x="70" y="220" width="20" height="12" rx="1" />
+    </g>
+    <line x1="75" y1="0" x2="75" y2="-30" stroke="#FFE8A3" stroke-width="3" />
+    <circle cx="75" cy="-30" r="3" fill="#FF4D4F" />
+  </g>
+
+  <!-- High-Rise Co-working Skybridge Connecting the Towers -->
+  <g transform="translate(370, 260)">
+    <rect x="0" y="0" width="60" height="32" rx="4" fill="#0A192F" stroke="#FFE8A3" stroke-width="2" />
+    <rect x="5" y="6" width="50" height="20" rx="2" fill="#FFE59E" filter="url(#neonGlow)" opacity="0.9" />
+    <text x="30" y="21" fill="#0A192F" font-size="8" font-family="monospace" font-weight="900" text-anchor="middle">SKY LAB</text>
+  </g>
+
+  <!-- Modern Plaza & Smart Tech Boulevard Forecourt -->
+  <polygon points="0,520 800,500 800,600 0,600" fill="#0E2135" />
+  <!-- Illuminated Plaza Paths -->
+  <line x1="100" y1="600" x2="350" y2="520" stroke="url(#neonCyan)" stroke-width="2" opacity="0.7" />
+  <line x1="700" y1="600" x2="450" y2="520" stroke="url(#neonCyan)" stroke-width="2" opacity="0.7" />
+
+  <!-- Badge -->
+  <rect x="30" y="30" width="120" height="28" rx="6" fill="#0A192F" fill-opacity="0.85" stroke="#13C2C2" stroke-width="1.5" />
+  <text x="90" y="49" fill="#E6FFFB" font-size="12" font-family="Inter, sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">GENERA</text>
+</svg>

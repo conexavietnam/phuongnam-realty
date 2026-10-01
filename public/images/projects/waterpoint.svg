@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="wpSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F2D48" />
+      <stop offset="50%" stop-color="#245A87" />
+      <stop offset="85%" stop-color="#F2994A" />
+      <stop offset="100%" stop-color="#F2C94C" />
+    </linearGradient>
+    <linearGradient id="wpBay" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#006994" />
+      <stop offset="60%" stop-color="#0D4B75" />
+      <stop offset="100%" stop-color="#052033" />
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#wpSky)" />
+
+  <!-- Shophouse Boulevard Skyline on the Shore -->
+  <g transform="translate(60, 220)">
+    <!-- Buildings Row -->
+    <rect x="0" y="40" width="110" height="150" fill="#EAE5DF" stroke="#D1C7BA" stroke-width="2" />
+    <polygon points="-5,40 55,0 115,40" fill="#A84323" />
+    <rect x="15" y="60" width="30" height="35" rx="2" fill="#FFE59E" />
+    <rect x="65" y="60" width="30" height="35" rx="2" fill="#FFE59E" />
+
+    <rect x="120" y="20" width="130" height="170" fill="#F4ECE1" stroke="#D1C7BA" stroke-width="2" />
+    <polygon points="115,20 185,-15 255,20" fill="#8A3E26" />
+    <rect x="140" y="40" width="35" height="40" rx="2" fill="#FFE59E" />
+    <rect x="195" y="40" width="35" height="40" rx="2" fill="#FFE59E" />
+
+    <rect x="260" y="40" width="110" height="150" fill="#EAE5DF" stroke="#D1C7BA" stroke-width="2" />
+    <polygon points="255,40 315,0 375,40" fill="#A84323" />
+    <rect x="280" y="60" width="30" height="35" rx="2" fill="#FFE59E" />
+    <rect x="330" y="60" width="30" height="35" rx="2" fill="#FFE59E" />
+
+    <rect x="380" y="30" width="120" height="160" fill="#F4ECE1" stroke="#D1C7BA" stroke-width="2" />
+    <polygon points="375,30 440,-5 505,30" fill="#C95B32" />
+  </g>
+
+  <!-- Green Park Promontory -->
+  <polygon points="0,410 800,410 800,440 0,440" fill="#2E7D32" />
+
+  <!-- 8.6ha Freshwater Bay & Marina Basin -->
+  <rect x="0" y="430" width="800" height="170" fill="url(#wpBay)" />
+
+  <!-- Kayaks / Sailing Boats on the Bay -->
+  <!-- Sailboat 1 -->
+  <g transform="translate(240, 460)">
+    <polygon points="0,20 60,20 50,28 10,28" fill="#FFFFFF" />
+    <polygon points="30,-30 30,18 55,18" fill="#FF4D4F" />
+    <polygon points="28,-25 28,18 8,18" fill="#FFE59E" />
+  </g>
+  <!-- Sailboat 2 -->
+  <g transform="translate(520, 480) scale(0.8)">
+    <polygon points="0,20 60,20 50,28 10,28" fill="#FFFFFF" />
+    <polygon points="30,-30 30,18 55,18" fill="#40A9FF" />
+    <polygon points="28,-25 28,18 8,18" fill="#FFFFFF" />
+  </g>
+
+  <!-- Sunset Glow Reflections -->
+  <ellipse cx="400" cy="510" rx="140" ry="25" fill="#F2C94C" opacity="0.4" />
+  <line x1="280" y1="520" x2="520" y2="520" stroke="#FFE8A3" stroke-width="2" opacity="0.6" stroke-linecap="round" />
+  <line x1="320" y1="550" x2="480" y2="550" stroke="#FFE8A3" stroke-width="2.5" opacity="0.5" stroke-linecap="round" />
+
+  <!-- Badge -->
+  <rect x="30" y="30" width="140" height="28" rx="6" fill="#0A192F" fill-opacity="0.85" stroke="#F2C94C" stroke-width="1.5" />
+  <text x="100" y="49" fill="#FFF1B8" font-size="12" font-family="Inter, sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">WATERPOINT</text>
+</svg>

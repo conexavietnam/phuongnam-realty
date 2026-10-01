@@ -5,7 +5,7 @@
     "title": "Chuyên viên tư vấn BĐS",
     "phone": "0901 234 567",
     "zaloLink": "https://zalo.me/0901234567",
-    "avatar": "https://placehold.co/400x400/0A192F/D49B42?text=Nguyen+Thi+Lan+Anh"
+    "avatar": "/images/avatars/avatar-agent-1.svg"
   },
   {
     "id": "agent-002",
@@ -13,6 +13,6 @@
     "title": "Trưởng phòng kinh doanh",
     "phone": "0901 234 568",
     "zaloLink": "https://zalo.me/0901234568",
-    "avatar": "https://placehold.co/400x400/0A192F/D49B42?text=Tran+Minh+Duc"
+    "avatar": "/images/avatars/avatar-agent-2.svg"
   }
 ]

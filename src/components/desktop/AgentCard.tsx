@@ -15,6 +15,7 @@ export function AgentCard({ agent }: AgentCardProps) {
           src={agent.avatar}
           alt={agent.name}
           className="w-full h-full rounded-full object-cover border-2 border-gold-500 shadow-md"
+          referrerPolicy="no-referrer"
         />
         <span className="absolute bottom-1 right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" />
       </div>

@@ -32,6 +32,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
           src={images[currentIndex]}
           alt={`Hình ảnh ${currentIndex + 1}`}
           className="w-full h-full object-cover transition-all duration-300"
+          referrerPolicy="no-referrer"
         />
 
         {/* Navigation Arrows */}
@@ -77,6 +78,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
                 src={img}
                 alt={`Thumbnail ${idx + 1}`}
                 className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
               />
             </button>
           ))}

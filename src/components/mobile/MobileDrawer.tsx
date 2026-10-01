@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { X, Phone, Mail, Share2, Video, Camera } from 'lucide-react';
 import { companyService } from '@/services/companyService';
+import { Logo } from '@/components/common/Logo';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -42,7 +43,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-100">
-          <div className="font-bold text-navy-900 text-lg">PN REALTY</div>
+          <Logo variant="dark" size="sm" showTagline={false} />
           <button 
             onClick={onClose}
             className="p-2 -mr-2 text-slate-500 hover:text-navy-900 focus:outline-none"

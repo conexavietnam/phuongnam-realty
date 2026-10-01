@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="avBg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#142B47" />
+      <stop offset="100%" stop-color="#0A192F" />
+    </linearGradient>
+    <linearGradient id="avGold2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE8A3" />
+      <stop offset="100%" stop-color="#D49B42" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="100" fill="url(#avBg2)" />
+  <circle cx="100" cy="100" r="95" stroke="url(#avGold2)" stroke-width="2" />
+  <!-- Head -->
+  <circle cx="100" cy="72" r="30" fill="#DEB05E" />
+  <!-- Short hair -->
+  <path d="M72 70 C72 45 128 45 128 70 C125 52 75 52 72 70 Z" fill="#0A192F" />
+  <!-- Suit Shoulders -->
+  <path d="M40 185 C40 135 75 120 100 120 C125 120 160 135 160 185 Z" fill="#1C3857" />
+  <!-- White Shirt & Gold Necktie -->
+  <polygon points="90,120 100,140 110,120" fill="#FFFFFF" />
+  <polygon points="100,128 95,145 100,178 105,145" fill="url(#avGold2)" />
+</svg>

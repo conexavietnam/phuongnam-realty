@@ -1,0 +1,271 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 960" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Sky Gradients -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#050C18" />
+      <stop offset="40%" stop-color="#0A192F" />
+      <stop offset="70%" stop-color="#142B47" />
+      <stop offset="88%" stop-color="#2C3D5A" />
+      <stop offset="100%" stop-color="#4A3F35" />
+    </linearGradient>
+
+    <!-- Horizon Warm Dusk Glow -->
+    <radialGradient id="duskGlow" cx="65%" cy="85%" r="60%">
+      <stop offset="0%" stop-color="#D49B42" stop-opacity="0.45" />
+      <stop offset="35%" stop-color="#E8C47A" stop-opacity="0.2" />
+      <stop offset="70%" stop-color="#1E3A5F" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- River Water Gradient -->
+    <linearGradient id="riverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0D233A" />
+      <stop offset="40%" stop-color="#091A2C" />
+      <stop offset="100%" stop-color="#050E18" />
+    </linearGradient>
+
+    <!-- Gold Metallic Light -->
+    <linearGradient id="goldBeam" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFEBB3" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#D49B42" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#8F5E16" stop-opacity="0.3" />
+    </linearGradient>
+
+    <!-- Tower Glass Gradients -->
+    <linearGradient id="towerGlass1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#163456" />
+      <stop offset="50%" stop-color="#244F7D" />
+      <stop offset="100%" stop-color="#122A46" />
+    </linearGradient>
+    <linearGradient id="towerGlass2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1C4066" />
+      <stop offset="50%" stop-color="#356E9E" />
+      <stop offset="100%" stop-color="#183657" />
+    </linearGradient>
+    <linearGradient id="landmarkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1A3B63" />
+      <stop offset="40%" stop-color="#3A7FB8" />
+      <stop offset="60%" stop-color="#2D6391" />
+      <stop offset="100%" stop-color="#152F50" />
+    </linearGradient>
+
+    <!-- Window Pattern -->
+    <pattern id="windowGrid" width="16" height="24" patternUnits="userSpaceOnUse">
+      <rect x="2" y="3" width="5" height="7" fill="#FFE59E" fill-opacity="0.65" rx="0.5" />
+      <rect x="9" y="3" width="5" height="7" fill="#69C0FF" fill-opacity="0.5" rx="0.5" />
+      <rect x="2" y="13" width="5" height="7" fill="#FFE59E" fill-opacity="0.5" rx="0.5" />
+      <rect x="9" y="13" width="5" height="7" fill="#FFFFFF" fill-opacity="0.75" rx="0.5" />
+    </pattern>
+
+    <pattern id="condoWindows" width="28" height="18" patternUnits="userSpaceOnUse">
+      <rect x="3" y="2" width="10" height="6" fill="#FFE7A8" fill-opacity="0.75" rx="1" />
+      <rect x="15" y="2" width="10" height="6" fill="#FFE7A8" fill-opacity="0.45" rx="1" />
+      <rect x="3" y="10" width="22" height="2" fill="#D49B42" fill-opacity="0.6" />
+    </pattern>
+
+    <!-- Water Glow Filter -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Sky Canvas -->
+  <rect width="1920" height="960" fill="url(#skyGrad)" />
+  <rect width="1920" height="850" fill="url(#duskGlow)" />
+
+  <!-- Stars & Constellations -->
+  <g fill="#FFFFFF" opacity="0.6">
+    <circle cx="210" cy="110" r="1.5" />
+    <circle cx="450" cy="85" r="1" />
+    <circle cx="680" cy="140" r="2" opacity="0.8" />
+    <circle cx="890" cy="70" r="1.5" />
+    <circle cx="1120" cy="120" r="2" opacity="0.9" />
+    <circle cx="1340" cy="95" r="1.2" />
+    <circle cx="1580" cy="160" r="2" opacity="0.7" />
+    <circle cx="1780" cy="90" r="1.5" />
+    <circle cx="340" cy="220" r="1.2" />
+    <circle cx="820" cy="260" r="1" />
+    <circle cx="1650" cy="240" r="1.5" />
+  </g>
+
+  <!-- Distant Background Skyline (Silhouettes) -->
+  <g fill="#081424" opacity="0.7">
+    <rect x="80" y="520" width="70" height="240" />
+    <polygon points="80,520 115,480 150,520" />
+    <rect x="180" y="470" width="90" height="290" />
+    <rect x="300" y="540" width="60" height="220" />
+    <rect x="390" y="490" width="85" height="270" />
+    <polygon points="432,440 433,490 431,490" stroke="#FFE59E" stroke-width="2" />
+    <rect x="520" y="530" width="110" height="230" />
+    <rect x="660" y="460" width="75" height="300" />
+    <rect x="1450" y="510" width="80" height="250" />
+    <rect x="1560" y="460" width="100" height="300" />
+    <polygon points="1610,410 1611,460 1609,460" stroke="#FFE59E" stroke-width="2" />
+    <rect x="1690" y="530" width="70" height="230" />
+    <rect x="1780" y="490" width="90" height="270" />
+  </g>
+
+  <!-- Midground Skyline: Modern Commercial & Residential Towers -->
+  <!-- Tower Left A (Contemporary Glass) -->
+  <g>
+    <rect x="420" y="320" width="130" height="440" fill="url(#towerGlass1)" rx="4" />
+    <rect x="420" y="320" width="130" height="440" fill="url(#windowGrid)" opacity="0.7" rx="4" />
+    <rect x="420" y="315" width="130" height="6" fill="#D49B42" />
+    <line x1="485" y1="315" x2="485" y2="270" stroke="#E8C47A" stroke-width="3" />
+    <circle cx="485" cy="268" r="4" fill="#FF4D4F" filter="url(#softGlow)" />
+  </g>
+
+  <!-- Tower Left B (Curved Luxury Residences) -->
+  <g>
+    <path d="M570 260 Q640 240 710 260 L710 760 L570 760 Z" fill="url(#towerGlass2)" />
+    <path d="M570 260 Q640 240 710 260 L710 760 L570 760 Z" fill="url(#condoWindows)" opacity="0.85" />
+    <!-- Horizontal Balcony Rings -->
+    <path d="M565 310 Q640 290 715 310" stroke="#D49B42" stroke-width="3" fill="none" />
+    <path d="M565 370 Q640 350 715 370" stroke="#D49B42" stroke-width="3" fill="none" />
+    <path d="M565 430 Q640 410 715 430" stroke="#D49B42" stroke-width="3" fill="none" />
+    <path d="M565 490 Q640 470 715 490" stroke="#D49B42" stroke-width="3" fill="none" />
+    <path d="M565 550 Q640 530 715 550" stroke="#D49B42" stroke-width="3" fill="none" />
+    <path d="M565 610 Q640 590 715 610" stroke="#D49B42" stroke-width="3" fill="none" />
+    <!-- Crown Sky Garden -->
+    <rect x="610" y="235" width="60" height="15" fill="#389E0D" rx="4" opacity="0.8" />
+    <line x1="640" y1="235" x2="640" y2="180" stroke="#FFE8A3" stroke-width="3" />
+    <circle cx="640" cy="178" r="4" fill="#D49B42" filter="url(#softGlow)" />
+  </g>
+
+  <!-- Central Supertall Landmark Tower (Iconic Crown) -->
+  <g>
+    <!-- Base & Body -->
+    <polygon points="780,760 830,190 910,190 960,760" fill="url(#landmarkGrad)" />
+    <!-- Facet Shadow -->
+    <polygon points="870,190 910,190 960,760 870,760" fill="#0D233A" opacity="0.35" />
+    <!-- Window Pattern -->
+    <polygon points="785,750 833,200 907,200 955,750" fill="url(#windowGrid)" opacity="0.85" />
+    <!-- Vertical Gold Architectural Light Strips -->
+    <line x1="870" y1="190" x2="870" y2="760" stroke="#FFE8A3" stroke-width="4" stroke-opacity="0.9" />
+    <line x1="840" y1="230" x2="800" y2="760" stroke="#D49B42" stroke-width="2" stroke-opacity="0.7" />
+    <line x1="900" y1="230" x2="940" y2="760" stroke="#D49B42" stroke-width="2" stroke-opacity="0.7" />
+
+    <!-- Landmark Spire (Tiered) -->
+    <polygon points="840,190 850,140 890,140 900,190" fill="#255585" stroke="#FFE8A3" stroke-width="2" />
+    <polygon points="855,140 862,90 878,90 885,140" fill="#3D75A8" />
+    <!-- High Apex Needle -->
+    <line x1="870" y1="90" x2="870" y2="25" stroke="#FFE8A3" stroke-width="4" />
+    <!-- Crown Spire Light Flare -->
+    <circle cx="870" cy="25" r="7" fill="#FFFFFF" filter="url(#softGlow)" />
+    <circle cx="870" cy="25" r="16" fill="#D49B42" fill-opacity="0.4" filter="url(#softGlow)" />
+  </g>
+
+  <!-- Tower Right A (Twin Towers with Skybridge) -->
+  <g>
+    <!-- Tower 1 -->
+    <rect x="1010" y="280" width="95" height="480" fill="url(#towerGlass1)" rx="3" />
+    <rect x="1010" y="280" width="95" height="480" fill="url(#windowGrid)" opacity="0.75" />
+    <!-- Tower 2 -->
+    <rect x="1140" y="300" width="95" height="460" fill="url(#towerGlass2)" rx="3" />
+    <rect x="1140" y="300" width="95" height="460" fill="url(#windowGrid)" opacity="0.75" />
+    <!-- Skybridge Connector -->
+    <rect x="1100" y="440" width="45" height="24" fill="#E8C47A" rx="4" opacity="0.9" />
+    <rect x="1105" y="446" width="35" height="12" fill="#0A192F" />
+    <!-- Spire -->
+    <line x1="1057" y1="280" x2="1057" y2="220" stroke="#E8C47A" stroke-width="3" />
+    <circle cx="1057" cy="218" r="3" fill="#FF4D4F" />
+  </g>
+
+  <!-- Tower Right B (Modern Tiered High-Rise) -->
+  <g>
+    <rect x="1260" y="360" width="120" height="400" fill="url(#towerGlass1)" />
+    <rect x="1260" y="360" width="120" height="400" fill="url(#condoWindows)" opacity="0.8" />
+    <rect x="1280" y="320" width="80" height="40" fill="url(#towerGlass2)" />
+    <rect x="1295" y="290" width="50" height="30" fill="url(#towerGlass1)" />
+    <line x1="1320" y1="290" x2="1320" y2="240" stroke="#FFE8A3" stroke-width="2.5" />
+  </g>
+
+  <!-- Waterfront Promenade & Riverbank Deck -->
+  <g>
+    <!-- River Embankment Stone Seawall -->
+    <polygon points="0,750 1920,735 1920,775 0,785" fill="#1C2E42" />
+    <polygon points="0,750 1920,735 1920,742 0,757" fill="#D49B42" opacity="0.8" />
+
+    <!-- Promenade Tree Silhouettes & Amber Post Lights -->
+    <g fill="#0B1B2B">
+      <!-- Palms -->
+      <path d="M380 750 Q385 710 390 670 Q410 655 425 660 Q405 675 395 685 Q415 690 410 705 Z" />
+      <path d="M400 750 Q403 700 405 665 Q375 650 365 660 Q385 675 395 680 Z" />
+      <path d="M730 740 Q735 695 740 660 Q760 645 775 650 Q750 670 745 680 Z" />
+      <path d="M1230 735 Q1235 690 1240 655 Q1265 640 1280 645 Q1255 665 1245 675 Z" />
+      <path d="M1390 735 Q1395 690 1400 655 Q1420 645 1435 650 Q1415 665 1405 675 Z" />
+    </g>
+
+    <!-- Glowing Street Lamps on Boardwalk -->
+    <g fill="#FFE59E" filter="url(#softGlow)">
+      <circle cx="350" cy="745" r="3.5" />
+      <circle cx="500" cy="740" r="3.5" />
+      <circle cx="700" cy="735" r="4" />
+      <circle cx="950" cy="730" r="4" />
+      <circle cx="1180" cy="728" r="3.5" />
+      <circle cx="1360" cy="726" r="3.5" />
+      <circle cx="1520" cy="725" r="3.5" />
+    </g>
+  </g>
+
+  <!-- The River (Saigon River Waters) -->
+  <rect x="0" y="760" width="1920" height="200" fill="url(#riverGrad)" />
+
+  <!-- Water Reflections of City Lights -->
+  <g opacity="0.65">
+    <!-- Landmark Tower Gold Reflection -->
+    <polygon points="840,760 900,760 930,960 810,960" fill="url(#goldBeam)" opacity="0.5" filter="url(#softGlow)" />
+    <!-- Surrounding Tower Blue/Amber Reflections -->
+    <ellipse cx="485" cy="830" rx="45" ry="120" fill="#69C0FF" opacity="0.25" filter="url(#softGlow)" />
+    <ellipse cx="640" cy="840" rx="55" ry="110" fill="#FFE59E" opacity="0.3" filter="url(#softGlow)" />
+    <ellipse cx="1060" cy="830" rx="50" ry="120" fill="#FFE59E" opacity="0.3" filter="url(#softGlow)" />
+    <ellipse cx="1200" cy="830" rx="40" ry="100" fill="#69C0FF" opacity="0.2" filter="url(#softGlow)" />
+    <ellipse cx="1320" cy="840" rx="40" ry="90" fill="#D49B42" opacity="0.25" filter="url(#softGlow)" />
+  </g>
+
+  <!-- Water Ripple Lines -->
+  <g stroke="#69C0FF" stroke-width="1.5" stroke-opacity="0.3" stroke-linecap="round">
+    <line x1="120" y1="785" x2="280" y2="785" />
+    <line x1="450" y1="800" x2="680" y2="800" stroke="#FFE59E" stroke-opacity="0.5" stroke-width="2" />
+    <line x1="320" y1="835" x2="520" y2="835" />
+    <line x1="780" y1="790" x2="960" y2="790" stroke="#FFE8A3" stroke-opacity="0.6" stroke-width="2.5" />
+    <line x1="820" y1="825" x2="940" y2="825" stroke="#FFE8A3" stroke-opacity="0.6" stroke-width="2" />
+    <line x1="750" y1="870" x2="990" y2="870" stroke="#FFE8A3" stroke-opacity="0.5" stroke-width="2.5" />
+    <line x1="800" y1="915" x2="950" y2="915" stroke="#FFE8A3" stroke-opacity="0.4" stroke-width="3" />
+    <line x1="1020" y1="805" x2="1240" y2="805" stroke="#FFE59E" stroke-opacity="0.5" stroke-width="2" />
+    <line x1="1100" y1="850" x2="1350" y2="850" />
+    <line x1="1300" y1="895" x2="1520" y2="895" />
+    <line x1="1550" y1="820" x2="1750" y2="820" />
+  </g>
+
+  <!-- Luxury Yacht on the River -->
+  <g transform="translate(680, 810) scale(0.85)">
+    <!-- Hull -->
+    <path d="M0 35 L120 35 L145 15 L20 15 Z" fill="#FFFFFF" opacity="0.95" />
+    <path d="M5 35 L120 35 L115 42 L15 42 Z" fill="#0A192F" />
+    <!-- Cabin -->
+    <polygon points="35,15 50,0 105,0 115,15" fill="#152D4A" />
+    <!-- Cabin Windows (Gold Glow) -->
+    <rect x="55" y="4" width="45" height="7" rx="1.5" fill="#FFE59E" filter="url(#softGlow)" />
+    <!-- Yacht Deck Lights -->
+    <circle cx="25" cy="18" r="2" fill="#FF4D4F" />
+    <circle cx="140" cy="18" r="2" fill="#52C41A" />
+    <circle cx="75" cy="0" r="2" fill="#FFE59E" />
+    <!-- Mast -->
+    <line x1="75" y1="0" x2="75" y2="-18" stroke="#FFFFFF" stroke-width="2" />
+    <!-- Wake ripple -->
+    <line x1="-15" y1="38" x2="140" y2="38" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.5" />
+  </g>
+
+  <!-- Luxury Modern Villa / Clubhouse on Left Forebank -->
+  <g transform="translate(180, 715)">
+    <rect x="0" y="0" width="140" height="42" fill="#FFFFFF" opacity="0.9" rx="2" />
+    <rect x="15" y="8" width="110" height="26" fill="#10253B" rx="1" />
+    <rect x="25" y="12" width="40" height="18" fill="#FFE59E" opacity="0.8" rx="1" />
+    <rect x="75" y="12" width="40" height="18" fill="#69C0FF" opacity="0.6" rx="1" />
+    <!-- Overhanging Cantilever Roof -->
+    <rect x="-8" y="-6" width="156" height="6" fill="#D49B42" rx="1" />
+    <!-- Warm Ambient Glow under Roof -->
+    <rect x="0" y="0" width="140" height="3" fill="#FFE8A3" opacity="0.9" />
+  </g>
+</svg>

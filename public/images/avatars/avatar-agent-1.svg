@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="avBg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F2942" />
+      <stop offset="100%" stop-color="#0A192F" />
+    </linearGradient>
+    <linearGradient id="avGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE8A3" />
+      <stop offset="100%" stop-color="#D49B42" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="100" fill="url(#avBg1)" />
+  <circle cx="100" cy="100" r="95" stroke="url(#avGold)" stroke-width="2" />
+  <!-- Professional Silhouette / Portrait Motif -->
+  <!-- Head -->
+  <circle cx="100" cy="75" r="32" fill="#E8C47A" />
+  <!-- Hair Elegance -->
+  <path d="M68 75 C68 45 132 45 132 75 C125 60 75 60 68 75 Z" fill="#2C3D5A" />
+  <path d="M68 75 C68 95 80 100 80 100 C75 90 70 85 70 75 Z" fill="#2C3D5A" />
+  <!-- Suit Shoulders -->
+  <path d="M45 180 C45 135 75 125 100 125 C125 125 155 135 155 180 Z" fill="#1C3857" />
+  <!-- Gold Lapel & Tie -->
+  <polygon points="100,125 90,150 100,175 110,150" fill="url(#avGold)" />
+  <polygon points="100,125 93,135 107,135" fill="#FFE8A3" />
+</svg>

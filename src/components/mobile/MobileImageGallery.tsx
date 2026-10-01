@@ -20,18 +20,26 @@ export const MobileImageGallery: React.FC<MobileImageGalleryProps> = ({
   onClose
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [prevOpenState, setPrevOpenState] = useState(isOpen);
+
+  // Synchronize initial index when modal opens without triggering cascading effect render
+  if (isOpen !== prevOpenState) {
+    setPrevOpenState(isOpen);
+    if (isOpen) {
+      setCurrentIndex(initialIndex);
+    }
+  }
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      setCurrentIndex(initialIndex);
     } else {
       document.body.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen, initialIndex]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -44,6 +52,7 @@ export const MobileImageGallery: React.FC<MobileImageGalleryProps> = ({
         <button 
           onClick={onClose}
           className="text-white p-2 -mr-2 bg-black/20 rounded-full"
+          aria-label="Đóng thư viện ảnh"
         >
           <X className="w-6 h-6" />
         </button>
@@ -63,6 +72,7 @@ export const MobileImageGallery: React.FC<MobileImageGalleryProps> = ({
                 src={src} 
                 alt={`Image ${idx + 1}`} 
                 className="w-full max-h-screen object-contain"
+                referrerPolicy="no-referrer"
               />
             </SwiperSlide>
           ))}

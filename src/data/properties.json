@@ -20,11 +20,11 @@
     "shortDescription": "Căn hộ 2 phòng ngủ tòa Landmark 3 sở hữu ban công view trực diện sông và công viên Landmark 81. Nội thất bàn giao đầy đủ cao cấp.",
     "fullDescription": "Chính chủ gửi bán căn hộ 2 phòng ngủ cực đẹp tại tòa tháp Landmark 3 thuộc đại đô thị Vinhomes Central Park. Căn hộ nằm ở tầng 28 thoáng mát, đón gió tự nhiên suốt ngày dài, không bị nắng chiều. Nội thất thiết kế hiện đại, tinh tế với toàn bộ thiết bị bếp Bosch, thiết bị vệ sinh Kohler, sàn gỗ nhập khẩu châu Âu. Cư dân tận hưởng trọn vẹn đặc quyền công viên ven sông 14ha, hồ bơi vô cực, lounge cư dân sang trọng và sảnh đón 5 sao.",
     "images": [
-      "https://placehold.co/800x600/0A192F/D49B42?text=VHCP+Landmark+3+-+Phong+khach",
-      "https://placehold.co/800x600/0A192F/D49B42?text=VHCP+Landmark+3+-+Phong+ngu+Master",
-      "https://placehold.co/800x600/0A192F/D49B42?text=VHCP+Landmark+3+-+Ban+cong+view+song"
+      "/images/properties/luxury-apartment.svg",
+      "/images/projects/palm-river-interior.svg",
+      "/images/projects/palm-river-pool.svg"
     ],
-    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=VHCP+Landmark+3",
+    "thumbnail": "/images/properties/luxury-apartment.svg",
     "featured": true,
     "agentId": "agent-001",
     "createdAt": "2025-01-15T08:00:00Z"
@@ -50,11 +50,11 @@
     "shortDescription": "Căn hộ 2PN Palm River tầng 15 view trực diện sông ngắm hoàng hôn cực đẹp. Thiết kế thông minh tối ưu diện tích sử dụng.",
     "fullDescription": "Căn hộ 2 phòng ngủ tại Palm River có diện tích tim tường 75m², bố trí 2 phòng ngủ riêng biệt, phòng khách rộng liền kề ban công ngắm trọn khúc uốn sông mát mẻ. Bàn giao kèm gói nội thất liền tường chuẩn quốc tế, máy lạnh âm trần multi Daikin, hệ khóa cửa thông minh Yale. Tiện ích tòa nhà có hồ bơi tràn bờ nước mặn, phòng gym đa năng và khu vui chơi nước cho trẻ em.",
     "images": [
-      "https://placehold.co/800x600/0A192F/D49B42?text=Palm+River+2PN+-+Phong+khach",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Palm+River+2PN+-+Khu+bep",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Palm+River+2PN+-+Ban+cong+song"
+      "/images/projects/palm-river.svg",
+      "/images/projects/palm-river-interior.svg",
+      "/images/projects/palm-river-pool.svg"
     ],
-    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Palm+River+2PN",
+    "thumbnail": "/images/projects/palm-river.svg",
     "featured": true,
     "agentId": "agent-001",
     "createdAt": "2025-01-18T09:30:00Z"
@@ -80,11 +80,11 @@
     "shortDescription": "Căn góc 3 phòng ngủ 105m² tại Sensa Park tràn ngập ánh sáng tự nhiên. View ôm trọn hồ sinh thái nội khu thanh bình.",
     "fullDescription": "Căn hộ góc 3 phòng ngủ tầng 12 mang đến trải nghiệm sống nghỉ dưỡng giữa thiên nhiên Nam Sài Gòn. Căn góc sở hữu 2 mặt thoáng, ban công kính tràn viền kéo dài từ phòng khách sang phòng ngủ master. Không gian bếp đảo sang trọng, trang thiết bị bàn giao cao cấp từ các thương hiệu hàng đầu Châu Âu. Liền kề khu đô thị Phú Mỹ Hưng, thuận tiện di chuyển tới trường quốc tế RMIT, SSIS và bệnh viện FV.",
     "images": [
-      "https://placehold.co/800x600/0A192F/D49B42?text=Sensa+Park+3PN+-+Goc+phong+khach",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Sensa+Park+3PN+-+Phong+ngu+chinh",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Sensa+Park+3PN+-+View+ho+nuoc"
+      "/images/projects/sensa-park.svg",
+      "/images/properties/luxury-apartment.svg",
+      "/images/projects/palm-river-interior.svg"
     ],
-    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Sensa+Park+3PN",
+    "thumbnail": "/images/projects/sensa-park.svg",
     "featured": true,
     "agentId": "agent-001",
     "createdAt": "2025-01-22T14:15:00Z"
@@ -110,11 +110,11 @@
     "shortDescription": "Shophouse khối đế duplex 2 tầng tại Genera với chiều cao thông tầng 6.5m. Vị trí vàng kinh doanh đón lưu lượng hàng chục ngàn cư dân.",
     "fullDescription": "Căn shophouse thương mại 2 tầng tọa lạc ngay lối vào sảnh chính tháp căn hộ Genera Thủ Đức. Với diện tích sàn 120m² và mặt tiền kính cường lực rộng 8m, đây là cơ hội đầu tư sinh lời vượt trội cho các mô hình cà phê thương hiệu, siêu thị tiện lợi, nhà thuốc hay phòng giao dịch ngân hàng. Cụm cư dân hiện hữu trẻ trung, năng động với mức chi tiêu cao.",
     "images": [
-      "https://placehold.co/800x600/0A192F/D49B42?text=Genera+Shophouse+-+Mat+tien+kinh+doanh",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Genera+Shophouse+-+Mat+bang+tang+1",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Genera+Shophouse+-+Khong+gian+tang+lung"
+      "/images/properties/luxury-shophouse.svg",
+      "/images/projects/genera.svg",
+      "/images/properties/luxury-penthouse.svg"
     ],
-    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Genera+Shophouse",
+    "thumbnail": "/images/properties/luxury-shophouse.svg",
     "featured": true,
     "agentId": "agent-001",
     "createdAt": "2025-01-25T11:00:00Z"
@@ -140,11 +140,11 @@
     "shortDescription": "Căn hộ 2PN đẳng cấp The Metropole Thủ Thiêm, chỉ vài bước chân qua cầu Ba Son tới trung tâm Quận 1.",
     "fullDescription": "The Metropole Thủ Thiêm khẳng định vị thế sống danh giá của chủ nhân ngay tâm điểm tài chính mới của thành phố. Căn hộ 70m² được hoàn thiện theo tiêu chuẩn 6 sao, nội thất liền tường mạ kim loại sang trọng, sàn đá cẩm thạch và hệ tủ bếp thông minh. Tầm nhìn thoáng đãng hướng về skyline trung tâm Sài Gòn lung linh ánh đèn về đêm.",
     "images": [
-      "https://placehold.co/800x600/0A192F/D49B42?text=Metropole+-+Phong+khach+sang+trong",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Metropole+-+Phong+ngu+view+song",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Metropole+-+Tien+ich+ho+boi"
+      "/images/properties/luxury-penthouse.svg",
+      "/images/properties/luxury-apartment.svg",
+      "/images/projects/palm-river-interior.svg"
     ],
-    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=The+Metropole+2PN",
+    "thumbnail": "/images/properties/luxury-penthouse.svg",
     "featured": false,
     "agentId": "agent-001",
     "createdAt": "2025-02-02T10:20:00Z"
@@ -170,11 +170,11 @@
     "shortDescription": "Căn hộ 3PN cao cấp tại Sunwah Pearl, layout vuông vắn, ban công kính bao quát toàn cảnh sông và bán đảo Thủ Thiêm.",
     "fullDescription": "Sunwah Pearl là kiệt tác căn hộ bên sông được phát triển bởi tập đoàn Sunwah Group (Hong Kong). Căn hộ 3 phòng ngủ 120m² sở hữu phòng khách siêu rộng liên thông khu vực ăn uống và ban công trải dài. Thiết bị bàn giao từ các thương hiệu danh tiếng Duravit, Hansgrohe, Bosch. Tận hưởng tiện ích đẳng cấp như hồ bơi chân mây 1000m², khu BBQ ngoài trời, phòng gym cao cấp và sảnh đón tiếp khách lộng lẫy.",
     "images": [
-      "https://placehold.co/800x600/0A192F/D49B42?text=Sunwah+Pearl+-+Living+Room",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Sunwah+Pearl+-+Master+Bedroom",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Sunwah+Pearl+-+River+View"
+      "/images/properties/luxury-apartment.svg",
+      "/images/projects/palm-river.svg",
+      "/images/projects/palm-river-pool.svg"
     ],
-    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Sunwah+Pearl+3PN",
+    "thumbnail": "/images/properties/luxury-apartment.svg",
     "featured": false,
     "agentId": "agent-001",
     "createdAt": "2025-02-05T16:00:00Z"
@@ -200,11 +200,11 @@
     "shortDescription": "Biệt thự đơn lập sân vườn rộng rãi, mặt sau tiếp giáp kênh đào câu cá yên ả. Đầy đủ nội thất gỗ tự nhiên cao cấp.",
     "fullDescription": "Tuyệt tác biệt thự đơn lập phân khu Hoa Sữa tại Vinhomes Riverside mang phong cách kiến trúc Tân Cổ Điển sang trọng. Khuôn viên đất 300m² được bố trí sân vườn tiểu cảnh xanh mướt, hồ cá Koi và chòi nghỉ thư giãn ngay sát mặt nước kênh sinh thái. Bên trong gồm 4 phòng ngủ master khép kín, phòng khách thông tầng bề thế, phòng xông hơi và hầm rượu riêng. An ninh bảo vệ đa lớp kiểm soát nghiêm ngặt 24/7.",
     "images": [
-      "https://placehold.co/800x600/0A192F/D49B42?text=VH+Riverside+-+Ngoai+that+biet+thu",
-      "https://placehold.co/800x600/0A192F/D49B42?text=VH+Riverside+-+San+vuon+ho+ca+Koi",
-      "https://placehold.co/800x600/0A192F/D49B42?text=VH+Riverside+-+Phong+khach+tan+co+dien"
+      "/images/properties/luxury-villa.svg",
+      "/images/projects/vinhomes-riverside.svg",
+      "/images/projects/palm-river-interior.svg"
     ],
-    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=VH+Riverside+Biet+Thu",
+    "thumbnail": "/images/properties/luxury-villa.svg",
     "featured": false,
     "agentId": "agent-001",
     "createdAt": "2025-02-10T11:45:00Z"
@@ -230,11 +230,11 @@
     "shortDescription": "Nhà phố hoàn thiện mặt ngoài tại The Suite Aqua City. Thiết kế Địa Trung Hải khoáng đạt, đường trước nhà 14m thông thoáng.",
     "fullDescription": "Căn nhà phố hiện đại tại phân khu The Suite thuộc khu đô thị sinh thái thông minh Aqua City. Xây dựng 1 trệt 2 lầu đồng bộ, mặt tiền rộng 6m với gara đỗ xe hơi thoải mái trong nhà. Bước chân ra ngõ là công viên cảnh quan, đường chạy bộ ven sông và cụm tiện ích clubhouse có hồ bơi, sân tennis. Cơ hội sở hữu nhà phố sinh thái ven sông với mức giá hấp dẫn trước thềm hoàn thiện sân bay Long Thành.",
     "images": [
-      "https://placehold.co/800x600/0A192F/D49B42?text=Aqua+City+Nha+Pho+-+Phoi+canh+day+nha",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Aqua+City+Nha+Pho+-+Thiet+ke+tang+tret",
-      "https://placehold.co/800x600/0A192F/D49B42?text=Aqua+City+Nha+Pho+-+Cong+vien+truoc+nha"
+      "/images/projects/palm-city.svg",
+      "/images/projects/aqua-city.svg",
+      "/images/properties/luxury-shophouse.svg"
     ],
-    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Aqua+City+Nha+Pho",
+    "thumbnail": "/images/projects/palm-city.svg",
     "featured": false,
     "agentId": "agent-001",
     "createdAt": "2025-02-14T09:00:00Z"

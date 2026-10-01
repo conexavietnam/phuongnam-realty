@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="spSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1B3B5F" />
+      <stop offset="60%" stop-color="#4A7596" />
+      <stop offset="100%" stop-color="#C5E2DC" />
+    </linearGradient>
+    <linearGradient id="spLake" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2B7A78" />
+      <stop offset="100%" stop-color="#17252A" />
+    </linearGradient>
+    <linearGradient id="spFacade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E8E8E8" />
+      <stop offset="50%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#D1D5DB" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="600" fill="url(#spSky)" />
+
+  <!-- Eco Residential Towers with Terrace Gardens -->
+  <!-- Tower 1 Left -->
+  <g transform="translate(140, 100)">
+    <rect x="0" y="0" width="160" height="360" fill="url(#spFacade)" rx="4" />
+    <!-- Vertical Timber Louvers & Balconies -->
+    <g fill="#A67C52">
+      <rect x="10" y="40" width="40" height="8" rx="2" />
+      <rect x="10" y="80" width="40" height="8" rx="2" />
+      <rect x="10" y="120" width="40" height="8" rx="2" />
+      <rect x="10" y="160" width="40" height="8" rx="2" />
+      <rect x="10" y="200" width="40" height="8" rx="2" />
+      <rect x="10" y="240" width="40" height="8" rx="2" />
+      <rect x="10" y="280" width="40" height="8" rx="2" />
+    </g>
+    <!-- Glass Windows (Emerald Green tint) -->
+    <g fill="#52C41A" opacity="0.35">
+      <rect x="65" y="30" width="80" height="25" rx="2" />
+      <rect x="65" y="70" width="80" height="25" rx="2" />
+      <rect x="65" y="110" width="80" height="25" rx="2" />
+      <rect x="65" y="150" width="80" height="25" rx="2" />
+      <rect x="65" y="190" width="80" height="25" rx="2" />
+      <rect x="65" y="230" width="80" height="25" rx="2" />
+      <rect x="65" y="270" width="80" height="25" rx="2" />
+    </g>
+    <!-- Rooftop Solar Pergola -->
+    <rect x="-10" y="-12" width="180" height="12" fill="#0A192F" rx="2" />
+    <rect x="10" y="-8" width="140" height="4" fill="#69C0FF" />
+    <!-- Sky Garden Greenery on Terraces -->
+    <ellipse cx="30" cy="115" rx="15" ry="8" fill="#389E0D" />
+    <ellipse cx="30" cy="195" rx="18" ry="9" fill="#52C41A" />
+  </g>
+
+  <!-- Tower 2 Right -->
+  <g transform="translate(340, 140)">
+    <rect x="0" y="0" width="180" height="320" fill="url(#spFacade)" rx="4" />
+    <g fill="#A67C52">
+      <rect x="110" y="30" width="55" height="8" rx="2" />
+      <rect x="110" y="70" width="55" height="8" rx="2" />
+      <rect x="110" y="110" width="55" height="8" rx="2" />
+      <rect x="110" y="150" width="55" height="8" rx="2" />
+      <rect x="110" y="190" width="55" height="8" rx="2" />
+      <rect x="110" y="230" width="55" height="8" rx="2" />
+    </g>
+    <g fill="#52C41A" opacity="0.35">
+      <rect x="20" y="25" width="75" height="25" rx="2" />
+      <rect x="20" y="65" width="75" height="25" rx="2" />
+      <rect x="20" y="105" width="75" height="25" rx="2" />
+      <rect x="20" y="145" width="75" height="25" rx="2" />
+      <rect x="20" y="185" width="75" height="25" rx="2" />
+      <rect x="20" y="225" width="75" height="25" rx="2" />
+    </g>
+    <rect x="-10" y="-12" width="200" height="12" fill="#0A192F" rx="2" />
+  </g>
+
+  <!-- 5-Hectare Botanical Park & Rolling Hills Landscape -->
+  <!-- Back Hill -->
+  <path d="M0 420 Q200 370 450 400 Q700 380 800 410 L800 600 L0 600 Z" fill="#237804" />
+  <!-- Fore Hill with Jogging Track -->
+  <path d="M0 450 Q300 410 600 440 Q750 430 800 460 L800 600 L0 600 Z" fill="#389E0D" />
+
+  <!-- Eco Lake -->
+  <path d="M120 480 Q380 450 680 480 Q760 550 420 570 Q160 560 120 480 Z" fill="url(#spLake)" />
+  <!-- Lake Wooden Footbridge -->
+  <path d="M260 485 Q400 465 540 485" stroke="#A67C52" stroke-width="6" fill="none" />
+  <line x1="330" y1="475" x2="330" y2="495" stroke="#4A3423" stroke-width="3" />
+  <line x1="470" y1="475" x2="470" y2="495" stroke="#4A3423" stroke-width="3" />
+
+  <!-- Botanical Trees & Canopy Cluster -->
+  <g fill="#135200">
+    <ellipse cx="60" cy="430" rx="35" ry="40" />
+    <ellipse cx="90" cy="425" rx="40" ry="45" fill="#237804" />
+    <ellipse cx="125" cy="440" rx="30" ry="35" />
+    <ellipse cx="650" cy="420" rx="45" ry="50" fill="#237804" />
+    <ellipse cx="710" cy="415" rx="50" ry="55" />
+    <ellipse cx="770" cy="435" rx="40" ry="45" fill="#389E0D" />
+  </g>
+
+  <!-- Badge -->
+  <rect x="30" y="30" width="140" height="28" rx="6" fill="#0A192F" fill-opacity="0.85" stroke="#52C41A" stroke-width="1.5" />
+  <text x="100" y="49" fill="#D9F7BE" font-size="12" font-family="Inter, sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">SENSA PARK</text>
+</svg>

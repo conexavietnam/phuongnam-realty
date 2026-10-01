@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="apSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0B1A2D" />
+      <stop offset="50%" stop-color="#1A385C" />
+      <stop offset="90%" stop-color="#3D5A80" />
+      <stop offset="100%" stop-color="#E0FBFC" />
+    </linearGradient>
+    <linearGradient id="apInterior" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E232E" />
+      <stop offset="100%" stop-color="#2D3748" />
+    </linearGradient>
+    <linearGradient id="goldBeam" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE59E" />
+      <stop offset="100%" stop-color="#D49B42" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky view from 28th floor -->
+  <rect width="800" height="600" fill="url(#apSky)" />
+
+  <!-- Panoramic Floor to Ceiling Glass Windows -->
+  <!-- River & Landmark 81 in distance -->
+  <polygon points="510,140 525,80 545,80 560,140 575,340 495,340" fill="#152D4A" />
+  <line x1="535" y1="80" x2="535" y2="40" stroke="#FFE8A3" stroke-width="2" />
+  <circle cx="535" cy="40" r="3" fill="#FF4D4F" />
+
+  <!-- River curve -->
+  <path d="M0 320 Q400 280 800 340 L800 380 Q400 320 0 360 Z" fill="#0E2338" />
+
+  <!-- Apartment Interior Forecourt -->
+  <polygon points="0,340 800,340 800,600 0,600" fill="url(#apInterior)" />
+  <!-- Italian Marble Floor tiles -->
+  <polygon points="0,380 800,380 800,600 0,600" fill="#202634" />
+  <line x1="160" y1="380" x2="60" y2="600" stroke="#2D3748" stroke-width="2" />
+  <line x1="400" y1="380" x2="350" y2="600" stroke="#2D3748" stroke-width="2" />
+  <line x1="640" y1="380" x2="680" y2="600" stroke="#2D3748" stroke-width="2" />
+
+  <!-- Designer Lounge Furniture -->
+  <g transform="translate(180, 390)">
+    <!-- Sofa -->
+    <rect x="0" y="40" width="380" height="80" rx="14" fill="#EAE5DF" stroke="#D5CEC5" stroke-width="2" />
+    <rect x="0" y="0" width="380" height="50" rx="10" fill="#DCD4C8" />
+    <rect x="30" y="10" width="90" height="40" rx="6" fill="#F4ECE1" stroke="url(#goldBeam)" stroke-width="1.5" />
+    <rect x="140" y="10" width="90" height="40" rx="6" fill="#F4ECE1" stroke="url(#goldBeam)" stroke-width="1.5" />
+    <rect x="250" y="10" width="90" height="40" rx="6" fill="#D49B42" opacity="0.85" />
+  </g>
+
+  <!-- Modern Circular Coffee Table -->
+  <ellipse cx="370" cy="530" rx="110" ry="36" fill="#FFFFFF" stroke="url(#goldBeam)" stroke-width="3" />
+  <ellipse cx="370" cy="530" rx="90" ry="26" fill="#F8FAFC" />
+
+  <!-- Balcony Glass Railing -->
+  <line x1="0" y1="340" x2="800" y2="340" stroke="#FFE8A3" stroke-width="3" opacity="0.8" />
+
+  <!-- Badge -->
+  <rect x="30" y="30" width="160" height="28" rx="6" fill="#0A192F" fill-opacity="0.85" stroke="#D49B42" stroke-width="1.5" />
+  <text x="110" y="49" fill="#FFE8A3" font-size="12" font-family="Inter, sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">CĂN HỘ CAO CẤP</text>
+</svg>

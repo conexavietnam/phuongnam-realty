@@ -19,22 +19,26 @@ export function MobileHomePage() {
   return (
     <MobileLayout>
       {/* Hero section */}
-      <section className="relative h-64 bg-navy-900 w-full overflow-hidden">
+      <section className="relative min-h-[320px] bg-navy-950 w-full overflow-hidden flex items-center">
         <img 
-          src="/images/hero.jpg" 
-          alt="Hero" 
-          className="absolute inset-0 w-full h-full object-cover opacity-30" 
+          src="/images/hero-banner.svg" 
+          alt="Phương Nam Realty Hero" 
+          className="absolute inset-0 w-full h-full object-cover opacity-40 scale-110" 
+          referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-          <h2 className="text-gold-500 font-bold tracking-wider text-sm mb-2">{companyInfo.name}</h2>
-          <h1 className="text-2xl font-bold text-white mb-2 leading-tight">{companyInfo.heroTitle}</h1>
-          <p className="text-sm text-slate-300 mb-6">{companyInfo.heroSubtitle}</p>
-          <div className="flex flex-col gap-3 w-full max-w-[200px]">
-            <Link to="/bat-dong-san">
-              <Button variant="primary" className="w-full text-sm">TÌM BĐS</Button>
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-900/80 to-navy-950/60" />
+        <div className="relative z-10 flex flex-col items-center justify-center p-6 text-center w-full">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold-500/15 border border-gold-500/30 text-gold-400 font-bold text-xs tracking-wider uppercase mb-2">
+            {companyInfo.name}
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2 leading-tight tracking-tight">{companyInfo.heroTitle}</h1>
+          <p className="text-xs text-slate-200/80 mb-5 max-w-xs">{companyInfo.heroSubtitle}</p>
+          <div className="flex gap-3 w-full max-w-xs justify-center">
+            <Link to="/chuyen-nhuong" className="flex-1">
+              <Button variant="primary" className="w-full text-xs font-semibold py-2.5 shadow-md shadow-gold-500/20">TÌM BĐS</Button>
             </Link>
-            <Link to="/ky-gui">
-              <Button variant="outline" className="w-full text-sm border-white text-white hover:bg-white hover:text-navy-900">KÝ GỬI BĐS</Button>
+            <Link to="/ky-gui" className="flex-1">
+              <Button variant="outline" className="w-full text-xs font-semibold py-2.5 border-white/80 text-white hover:bg-white hover:text-navy-900">KÝ GỬI</Button>
             </Link>
           </div>
         </div>

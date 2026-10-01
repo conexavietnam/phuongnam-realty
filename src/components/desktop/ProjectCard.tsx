@@ -14,12 +14,20 @@ export function ProjectCard({ project }: ProjectCardProps) {
       className="group block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100 flex flex-col h-full"
     >
       {/* Thumbnail with Badge Overlay */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-navy-950">
         <img
           src={project.thumbnail}
           alt={project.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            // Zero-Broken-Image Policy: graceful fallback to premier project artwork
+            const target = e.currentTarget;
+            if (target.src !== '/images/projects/palm-river.svg') {
+              target.src = '/images/projects/palm-river.svg';
+            }
+          }}
         />
         <Badge variant="navy">
           {project.categoryLabel || project.category}

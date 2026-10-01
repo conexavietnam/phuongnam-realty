@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="phSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#040914" />
+      <stop offset="50%" stop-color="#0F1E36" />
+      <stop offset="100%" stop-color="#2D4059" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky with Stars -->
+  <rect width="800" height="600" fill="url(#phSky)" />
+  <circle cx="200" cy="80" r="1.5" fill="#FFF" />
+  <circle cx="450" cy="110" r="2" fill="#FFF" opacity="0.8" />
+  <circle cx="680" cy="60" r="1.5" fill="#FFF" />
+
+  <!-- Double-Height Glass Curtain Wall of Duplex Penthouse -->
+  <rect x="80" y="40" width="640" height="420" fill="#0C1B2E" rx="8" />
+  <line x1="80" y1="250" x2="720" y2="250" stroke="#FFE8A3" stroke-width="3" opacity="0.7" />
+  <line x1="400" y1="40" x2="400" y2="460" stroke="#1A2D46" stroke-width="6" />
+
+  <!-- City Skyline View Beyond Glass -->
+  <g fill="#071321" opacity="0.85">
+    <rect x="180" y="270" width="50" height="150" />
+    <rect x="250" y="240" width="60" height="180" />
+    <polygon points="280,180 281,240 279,240" stroke="#FFE8A3" stroke-width="2" />
+    <rect x="440" y="220" width="70" height="200" />
+    <rect x="530" y="260" width="50" height="160" />
+  </g>
+
+  <!-- Interior Floating Mezzanine & Glass Staircase -->
+  <polygon points="80,240 380,240 340,260 80,260" fill="#D49B42" />
+  <!-- Glass Railing -->
+  <line x1="80" y1="210" x2="380" y2="210" stroke="#69C0FF" stroke-width="3" opacity="0.6" />
+
+  <!-- Grand Crystal Chandelier -->
+  <g transform="translate(400, 110)">
+    <line x1="0" y1="-70" x2="0" y2="0" stroke="#FFE8A3" stroke-width="2" />
+    <!-- Rings -->
+    <ellipse cx="0" cy="10" rx="60" ry="18" fill="none" stroke="#FFE8A3" stroke-width="3" />
+    <ellipse cx="0" cy="35" rx="40" ry="12" fill="none" stroke="#FFE8A3" stroke-width="2.5" />
+    <ellipse cx="0" cy="55" rx="20" ry="7" fill="none" stroke="#FFE8A3" stroke-width="2" />
+    <!-- Chandelier Crystals -->
+    <circle cx="0" cy="70" r="4" fill="#FFFFFF" />
+  </g>
+
+  <!-- Lower Lounge Floor -->
+  <polygon points="0,460 800,460 800,600 0,600" fill="#141924" />
+  <g transform="translate(260, 470)">
+    <rect x="0" y="20" width="280" height="70" rx="10" fill="#EAE5DF" />
+    <rect x="30" y="0" width="220" height="35" rx="6" fill="#D5CEC5" />
+  </g>
+
+  <!-- Badge -->
+  <rect x="30" y="30" width="180" height="28" rx="6" fill="#0A192F" fill-opacity="0.85" stroke="#D49B42" stroke-width="1.5" />
+  <text x="120" y="49" fill="#FFE8A3" font-size="12" font-family="Inter, sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">SKY PENTHOUSE</text>
+</svg>

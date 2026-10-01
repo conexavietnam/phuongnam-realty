@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Building2, Phone } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import { companyService } from '@/services/companyService';
 import { Button } from '@/components/common/Button';
+import { Logo } from '@/components/common/Logo';
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -20,20 +21,13 @@ export function Header() {
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 bg-white ${
-        isScrolled ? 'shadow-md py-2' : 'shadow-sm py-4'
+        isScrolled ? 'shadow-md py-2.5' : 'shadow-sm py-3.5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Left: Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="bg-navy-900 p-2 rounded text-gold-500 group-hover:bg-gold-500 group-hover:text-white transition-colors">
-              <Building2 className="w-6 h-6" />
-            </div>
-            <span className="font-bold text-xl tracking-tight text-navy-900 uppercase">
-              {companyInfo.name}
-            </span>
-          </Link>
+          <Logo variant="dark" size={isScrolled ? 'sm' : 'md'} showTagline={!isScrolled} />
 
           {/* Center: Navigation */}
           <nav className="hidden md:flex items-center gap-8">

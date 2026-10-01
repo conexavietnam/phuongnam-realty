@@ -14,12 +14,19 @@ export function NewsCard({ article }: NewsCardProps) {
       className="group block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100 flex flex-col h-full"
     >
       {/* Thumbnail with Category Badge */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-navy-950">
         <img
           src={article.thumbnail}
           alt={article.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== '/images/projects/palm-river.svg') {
+              target.src = '/images/projects/palm-river.svg';
+            }
+          }}
         />
         <Badge variant="navy">
           {article.categoryLabel}

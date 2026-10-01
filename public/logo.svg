@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE8A3" />
+      <stop offset="35%" stop-color="#E5B25D" />
+      <stop offset="70%" stop-color="#C58C32" />
+      <stop offset="100%" stop-color="#8F5E16" />
+    </linearGradient>
+    <linearGradient id="goldLightGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D49B42" />
+      <stop offset="50%" stop-color="#FFF1C2" />
+      <stop offset="100%" stop-color="#E5B25D" />
+    </linearGradient>
+    <linearGradient id="navyBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F2942" />
+      <stop offset="100%" stop-color="#0A192F" />
+    </linearGradient>
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Base shield / luxury octagon shape -->
+  <rect x="8" y="8" width="184" height="184" rx="36" fill="url(#navyBg)" stroke="url(#goldGrad)" stroke-width="3" />
+  <rect x="16" y="16" width="168" height="168" rx="28" stroke="url(#goldGrad)" stroke-width="1" stroke-opacity="0.4" stroke-dasharray="4 4" />
+
+  <!-- Architectural Tower & Diamond Apex Motif -->
+  <!-- Central Spire / Apex Diamond -->
+  <polygon points="100,32 112,48 100,64 88,48" fill="url(#goldLightGrad)" filter="url(#goldGlow)" />
+  <circle cx="100" cy="48" r="2.5" fill="#FFFFFF" />
+
+  <!-- Left Tower Pillar (P shape flow) -->
+  <path d="M68 68 L88 56 L88 152 L68 140 Z" fill="url(#goldGrad)" />
+  <path d="M88 68 C118 68 118 104 88 104 Z" fill="url(#goldLightGrad)" opacity="0.9" />
+  <path d="M88 78 C104 78 104 94 88 94 Z" fill="#0A192F" />
+
+  <!-- Right Tower Pillar (N diagonal connection) -->
+  <path d="M112 84 L132 72 L132 152 L112 140 Z" fill="url(#goldGrad)" />
+  <polygon points="88,96 112,126 112,142 88,112" fill="url(#goldLightGrad)" opacity="0.85" />
+
+  <!-- Base Pedestal / Horizon Steps -->
+  <rect x="52" y="152" width="96" height="5" rx="2" fill="url(#goldGrad)" />
+  <rect x="64" y="160" width="72" height="3" rx="1.5" fill="url(#goldLightGrad)" opacity="0.7" />
+
+  <!-- Sparkle Accents -->
+  <path d="M145 46 Q145 52 151 52 Q145 52 145 58 Q145 52 139 52 Q145 52 145 46 Z" fill="#FFE8A3" />
+  <path d="M52 120 Q52 124 56 124 Q52 124 52 128 Q52 124 48 124 Q52 124 52 120 Z" fill="#FFE8A3" />
+</svg>

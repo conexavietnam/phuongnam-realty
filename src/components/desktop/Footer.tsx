@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Building2, MapPin, Phone, Mail, Globe } from 'lucide-react';
+import { MapPin, Phone, Mail, Globe } from 'lucide-react';
 import { companyService } from '@/services/companyService';
-
+import { Logo } from '@/components/common/Logo';
 
 export function Footer() {
   const companyInfo = companyService.getCompanyInfo();
@@ -13,14 +13,9 @@ export function Footer() {
           
           {/* Col 1: Company Info */}
           <div className="md:col-span-4">
-            <Link to="/" className="flex items-center gap-2 mb-6 group">
-              <div className="bg-white/10 p-2 rounded text-gold-500 group-hover:bg-gold-500 group-hover:text-white transition-colors">
-                <Building2 className="w-8 h-8" />
-              </div>
-              <span className="font-bold text-2xl tracking-tight text-white uppercase">
-                {companyInfo.name}
-              </span>
-            </Link>
+            <div className="mb-6">
+              <Logo variant="light" size="lg" showTagline={true} />
+            </div>
             
             <ul className="space-y-4 mb-8">
               <li className="flex items-start gap-3">

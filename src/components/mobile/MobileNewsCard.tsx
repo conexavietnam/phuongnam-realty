@@ -13,11 +13,19 @@ export const MobileNewsCard: React.FC<MobileNewsCardProps> = ({ article }) => {
       to={`/tin-tuc/${article.slug}`}
       className="flex bg-white rounded-xl shadow-sm overflow-hidden p-3 mb-3 border border-slate-100 active:scale-[0.98] transition-transform"
     >
-      <div className="relative shrink-0 w-28 h-20">
+      <div className="relative shrink-0 w-28 h-20 bg-navy-950 rounded-lg overflow-hidden">
         <img 
           src={article.thumbnail} 
           alt={article.title} 
           className="w-full h-full object-cover rounded-lg"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== '/images/projects/palm-river.svg') {
+              target.src = '/images/projects/palm-river.svg';
+            }
+          }}
         />
       </div>
       

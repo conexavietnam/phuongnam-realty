@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, Phone } from 'lucide-react';
 import { companyService } from '@/services/companyService';
+import { Logo } from '@/components/common/Logo';
 import { MobileDrawer } from './MobileDrawer';
 
 export const MobileHeader: React.FC = () => {
@@ -13,17 +14,17 @@ export const MobileHeader: React.FC = () => {
         <button 
           onClick={() => setIsDrawerOpen(true)}
           className="p-2 -ml-2 text-navy-900 focus:outline-none"
+          aria-label="Mở menu"
         >
           <Menu className="w-6 h-6" />
         </button>
 
-        <div className="font-bold text-navy-900 text-lg tracking-wide truncate">
-          PN REALTY
-        </div>
+        <Logo variant="dark" size="sm" />
 
         <a 
           href={`tel:${companyInfo.hotline.replace(/\s/g, '')}`}
           className="p-2 -mr-2 text-gold-500 focus:outline-none"
+          aria-label="Gọi hotline"
         >
           <Phone className="w-6 h-6" />
         </a>
