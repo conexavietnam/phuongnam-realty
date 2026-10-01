@@ -29,19 +29,15 @@ export function NotFoundPage() {
                 Về trang chủ
               </Button>
             </Link>
-            <button
+            <Button
+              variant="outline"
+              size="md"
+              icon={<ArrowLeft className="w-4 h-4" />}
+              className="w-full sm:w-auto font-semibold"
               onClick={() => window.history.back()}
-              className="w-full sm:w-auto"
             >
-              <Button
-                variant="outline"
-                size="md"
-                icon={<ArrowLeft className="w-4 h-4" />}
-                className="w-full font-semibold"
-              >
-                Quay lại
-              </Button>
-            </button>
+              Quay lại
+            </Button>
           </div>
         </div>
       </div>
