@@ -1,0 +1,6 @@
+{
+  "name": "Phương Nam Realty",
+  "description": "Bất động sản Phương Nam — Kiến tạo giá trị, Đồng hành cùng bạn. Phân phối, chuyển nhượng, ký gửi bất động sản uy tín.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
