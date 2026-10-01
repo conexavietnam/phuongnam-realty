@@ -1,0 +1,18 @@
+[
+  {
+    "id": "agent-001",
+    "name": "Nguyễn Thị Lan Anh",
+    "title": "Chuyên viên tư vấn BĐS",
+    "phone": "0901 234 567",
+    "zaloLink": "https://zalo.me/0901234567",
+    "avatar": "https://placehold.co/400x400/0A192F/D49B42?text=Nguyen+Thi+Lan+Anh"
+  },
+  {
+    "id": "agent-002",
+    "name": "Trần Minh Đức",
+    "title": "Trưởng phòng kinh doanh",
+    "phone": "0901 234 568",
+    "zaloLink": "https://zalo.me/0901234568",
+    "avatar": "https://placehold.co/400x400/0A192F/D49B42?text=Tran+Minh+Duc"
+  }
+]

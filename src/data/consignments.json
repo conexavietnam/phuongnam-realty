@@ -1,0 +1,80 @@
+[
+  {
+    "id": "consign-01",
+    "slug": "vinhomes-central-park-landmark-3",
+    "name": "Vinhomes Central Park – Landmark 3",
+    "category": "can-ho",
+    "location": "TP. Thủ Đức, TP. Hồ Chí Minh",
+    "shortDescription": "Khu căn hộ cao cấp kế bên tòa tháp Landmark 81 với hạ tầng đồng bộ hàng đầu Việt Nam. Phương Nam Realty nhận ký gửi chuyển nhượng và cho thuê giá tốt nhất thị trường.",
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+-+VHCP+Landmark+3",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+VHCP+-+Hinh+1",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+VHCP+-+Hinh+2"
+    ]
+  },
+  {
+    "id": "consign-02",
+    "slug": "the-mizuki-park",
+    "name": "The Mizuki Park",
+    "category": "biet-thu",
+    "location": "Huyện Bình Chánh, TP. Hồ Chí Minh",
+    "shortDescription": "Khu biệt thự đảo thượng lưu phong cách Nhật Bản giữa không gian kênh đào sinh thái trong lành. Hỗ trợ thủ tục chuyển nhượng nhanh chóng, an toàn và bảo mật thông tin.",
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+-+The+Mizuki+Park",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+Mizuki+-+Hinh+1",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+Mizuki+-+Hinh+2"
+    ]
+  },
+  {
+    "id": "consign-03",
+    "slug": "sunrise-riverside",
+    "name": "Sunrise Riverside",
+    "category": "can-ho",
+    "location": "Huyện Nhà Bè, TP. Hồ Chí Minh",
+    "shortDescription": "Cụm căn hộ hiện đại 3 mặt hướng sông liền kề khu đô thị kiểu mẫu Phú Mỹ Hưng. Nhu cầu tìm thuê và mua lại rất cao từ khách hàng nước ngoài và chuyên gia.",
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+-+Sunrise+Riverside",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+Sunrise+-+Hinh+1",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+Sunrise+-+Hinh+2"
+    ]
+  },
+  {
+    "id": "consign-04",
+    "slug": "novaworld-phan-thiet",
+    "name": "NovaWorld Phan Thiết",
+    "category": "dat-nen",
+    "location": "Phan Thiết, Tỉnh Bình Thuận",
+    "shortDescription": "Đại đô thị du lịch nghỉ dưỡng giải trí ven biển quy mô 1.000ha kết nối thuận tiện qua cao tốc Phan Thiết. Nhận ký gửi chuyển nhượng các phân khu Florida, PGA Golf Villas thanh khoản tốt.",
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+-+NovaWorld+Phan+Thiet",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+NovaWorld+-+Hinh+1",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+NovaWorld+-+Hinh+2"
+    ]
+  },
+  {
+    "id": "consign-05",
+    "slug": "the-global-city",
+    "name": "The Global City",
+    "category": "can-ho",
+    "location": "TP. Thủ Đức, TP. Hồ Chí Minh",
+    "shortDescription": "Tâm điểm phong cách sống chuẩn quốc tế mới tại khu Đông Sài Gòn với chuỗi tiện ích đẳng cấp thế giới. Kênh kết nối uy tín giữa chủ sở hữu và nhà đầu tư sành sỏi.",
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+-+The+Global+City",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+Global+City+-+Hinh+1",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+Global+City+-+Hinh+2"
+    ]
+  },
+  {
+    "id": "consign-06",
+    "slug": "ecopark-grand-the-island",
+    "name": "Ecopark Grand - The Island",
+    "category": "dat-nen",
+    "location": "Văn Giang, Hưng Yên",
+    "shortDescription": "Tuyệt phẩm biệt thự đảo sinh thái nước tuần hoàn tự nhiên độc nhất vô nhị tại miền Bắc. Chuyên hỗ trợ định giá chuẩn xác và chuyển nhượng nhanh gọn cho quý chủ nhà.",
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+-+Ecopark+Grand",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+Ecopark+-+Hinh+1",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Ky+Gui+Ecopark+-+Hinh+2"
+    ]
+  }
+]

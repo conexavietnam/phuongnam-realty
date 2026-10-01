@@ -1,0 +1,57 @@
+{
+  "desktop": [
+    {
+      "label": "Trang chủ",
+      "path": "/",
+      "exact": true
+    },
+    {
+      "label": "Dự án",
+      "path": "/du-an"
+    },
+    {
+      "label": "Chuyển nhượng",
+      "path": "/chuyen-nhuong"
+    },
+    {
+      "label": "Tin tức",
+      "path": "/tin-tuc"
+    },
+    {
+      "label": "Về chúng tôi",
+      "path": "/ve-chung-toi"
+    },
+    {
+      "label": "Liên hệ",
+      "path": "/lien-he"
+    }
+  ],
+  "mobileBottomNav": [
+    {
+      "label": "Trang chủ",
+      "path": "/",
+      "icon": "Home",
+      "exact": true
+    },
+    {
+      "label": "Dự án",
+      "path": "/du-an",
+      "icon": "Building2"
+    },
+    {
+      "label": "Ký gửi",
+      "path": "/ky-gui",
+      "icon": "Send"
+    },
+    {
+      "label": "Tin tức",
+      "path": "/tin-tuc",
+      "icon": "Newspaper"
+    },
+    {
+      "label": "Liên hệ",
+      "path": "/lien-he",
+      "icon": "Phone"
+    }
+  ]
+}

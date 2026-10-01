@@ -1,0 +1,254 @@
+[
+  {
+    "id": "project-01",
+    "slug": "palm-river",
+    "name": "Palm River",
+    "category": "cao-cap",
+    "categoryLabel": "Căn hộ cao cấp",
+    "location": "Quận 2, TP. Thủ Đức, TP. Hồ Chí Minh",
+    "priceFrom": "4.5 tỷ/căn",
+    "bedrooms": "2PN – 3PN",
+    "area": "65 – 120m²",
+    "shortDescription": "Dự án căn hộ cao cấp ven sông Sài Gòn với phong cách kiến trúc nhiệt đới xanh mát. Sở hữu tầm nhìn bao quát toàn thành phố cùng chuỗi tiện ích chuẩn nghỉ dưỡng thượng lưu.",
+    "fullDescription": "Palm River tọa lạc tại vị trí đắc địa tại Quận 2, TP. Thủ Đức, nằm sát bên nhánh sông Sài Gòn mang lại luồng sinh khí thịnh vượng cùng không gian sống thoáng đãng, mát lành. Dự án được quy hoạch đồng bộ với mật độ xây dựng chỉ dưới 30%, phần lớn diện tích dành cho công viên cây xanh, hồ bơi vô cực phong cách resort và đường chạy bộ ven sông. Các căn hộ được thiết kế tối ưu hóa công năng, mở rộng ban công đón gió và ánh sáng tự nhiên. Với mạng lưới kết nối giao thông hoàn chỉnh qua hầm Thủ Thiêm và cầu Ba Son, Palm River là chốn an cư lý tưởng cho cộng đồng cư dân tinh hoa.",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Palm+River+-+Toan+canh",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Palm+River+-+Noi+that+phong+khach",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Palm+River+-+Ho+boi+vo+cuc"
+    ],
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Palm+River+-+Quan+2",
+    "featured": true,
+    "highlights": [
+      "Tầm nhìn trực diện sông Sài Gòn",
+      "Hồ bơi vô cực 50m chuẩn Olympic",
+      "Mật độ xây dựng thấp chỉ 28%",
+      "Bàn giao nội thất cao cấp nhập khẩu"
+    ],
+    "investor": "Keppel Land & Tiến Phước",
+    "status": "Đang mở bán giai đoạn 2"
+  },
+  {
+    "id": "project-02",
+    "slug": "sensa-park",
+    "name": "Sensa Park",
+    "category": "cao-cap",
+    "categoryLabel": "Căn hộ cao cấp",
+    "location": "Huyện Nhà Bè, TP. Hồ Chí Minh",
+    "priceFrom": "3.2 tỷ/căn",
+    "bedrooms": "2PN – 3PN",
+    "area": "70 – 110m²",
+    "shortDescription": "Khu đô thị sinh thái kết hợp căn hộ thông minh tại Nam Sài Gòn. Môi trường sống trong lành với công viên sinh thái rộng hơn 5 hecta.",
+    "fullDescription": "Sensa Park kiến tạo phong cách sống xanh đa tầng tại cửa ngõ Nam Sài Gòn. Nằm trên trục đường Nguyễn Hữu Thọ, dự án kết nối nhanh chóng đến trung tâm Phú Mỹ Hưng chỉ trong 10 phút di chuyển. Thiết kế thông minh tối ưu năng lượng gió và ánh sáng mặt trời, tích hợp công nghệ Smart Home hiện đại trong từng căn hộ. Dự án tích hợp hệ tiện ích đa dạng như quảng trường thể thao, khu cắm trại gia đình, hồ bơi trẻ em và trung tâm chăm sóc sức khỏe toàn diện.",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Sensa+Park+-+Phoi+canh",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Sensa+Park+-+Can+ho+mau",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Sensa+Park+-+Cong+vien+trung+tam"
+    ],
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Sensa+Park+-+Nha+Be",
+    "featured": true,
+    "highlights": [
+      "Công viên sinh thái 5ha nội khu",
+      "Tích hợp công nghệ Smart Home",
+      "Gần kề Phú Mỹ Hưng và tuyến Metro 4",
+      "Chính sách thanh toán linh hoạt 1%/tháng"
+    ],
+    "investor": "Sensa Real Estate Holding",
+    "status": "Đang bàn giao căn hộ"
+  },
+  {
+    "id": "project-03",
+    "slug": "genera",
+    "name": "Genera",
+    "category": "cao-cap",
+    "categoryLabel": "Căn hộ cao cấp",
+    "location": "TP. Thủ Đức, TP. Hồ Chí Minh",
+    "priceFrom": "2.8 tỷ/căn",
+    "bedrooms": "1PN – 3PN",
+    "area": "45 – 105m²",
+    "shortDescription": "Biểu tượng năng động dành cho thế hệ trẻ tri thức tại trung tâm công nghệ cao Thủ Đức. Không gian sống tích hợp co-working space và tiện ích số.",
+    "fullDescription": "Dự án Genera là khu phức hợp căn hộ thế hệ mới tại trung tâm thành phố sáng tạo Thủ Đức. Được lấy cảm hứng từ phong cách kiến trúc Bắc Âu tối giản mà ấm cúng, căn hộ Genera đem đến giải pháp an cư hoàn hảo cho các chuyên gia và gia đình trẻ. Dự án trang bị hệ thống co-working space cao cấp, thư viện số, phòng gym công nghệ thực tế ảo và vườn thiền trên mái tầng 35 với tầm nhìn 360 độ ngắm toàn cảnh Sài Gòn.",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Genera+-+Phoi+canh+toa+thap",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Genera+-+Khong+gian+Co-working",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Genera+-+Sky+Garden+tang+thuong"
+    ],
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Genera+-+TP+Thu+Duc",
+    "featured": true,
+    "highlights": [
+      "Vị trí ngay lõi Khu Công nghệ cao Thủ Đức",
+      "Hệ sinh thái tiện ích số thông minh",
+      "Thiết kế ban công rộng mở",
+      "Suất sinh lời cho thuê ấn tượng 8%/năm"
+    ],
+    "investor": "Genera Investment Group",
+    "status": "Đang xây dựng tầng 18"
+  },
+  {
+    "id": "project-04",
+    "slug": "the-global-city",
+    "name": "The Global City",
+    "category": "shophouse",
+    "categoryLabel": "Shophouse thương mại",
+    "location": "An Phú, TP. Thủ Đức, TP. Hồ Chí Minh",
+    "priceFrom": "12 tỷ/căn",
+    "bedrooms": "4PN – 5PN",
+    "area": "120 – 250m²",
+    "shortDescription": "Khu đô thị biểu tượng đẳng cấp quốc tế được thiết kế bởi Foster + Partners. Trung tâm thương mại và dãy nhà phố shophouse sôi động bậc nhất.",
+    "fullDescription": "The Global City được định vị trở thành khu đô thị phức hợp chuẩn quốc tế ngay trung tâm mới của TP. Hồ Chí Minh. Dự án sở hữu dãy nhà phố thương mại Soho với thiết kế linh hoạt vừa ở vừa kinh doanh, mặt tiền rộng 8–12m đón trọn dòng khách tham quan sầm uất. Điểm nhấn là khu kênh đào nhạc nước quy mô lớn nhất Đông Nam Á cùng trung tâm thương mại hạng A rộng 123.000m².",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=The+Global+City+-+Kenh+nhac+nuoc",
+      "https://placehold.co/800x600/0A192F/D49B42?text=The+Global+City+-+Pho+Soho+thuong+mai",
+      "https://placehold.co/800x600/0A192F/D49B42?text=The+Global+City+-+Noi+that+shophouse"
+    ],
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=The+Global+City+-+An+Phu",
+    "featured": false,
+    "highlights": [
+      "Kiến trúc thiết kế bởi Foster + Partners",
+      "Kênh đào nhạc nước lớn nhất Đông Nam Á",
+      "Mặt tiền thương mại 8–12m cực thoáng",
+      "Pháp lý hoàn chỉnh, sở hữu lâu dài"
+    ],
+    "investor": "Masterise Homes",
+    "status": "Đang bàn giao phân khu Soho"
+  },
+  {
+    "id": "project-05",
+    "slug": "vinhomes-riverside",
+    "name": "Vinhomes Riverside",
+    "category": "biet-thu",
+    "categoryLabel": "Biệt thự cao cấp",
+    "location": "Long Biên, Hà Nội",
+    "priceFrom": "15 tỷ/căn",
+    "bedrooms": "4PN – 6PN",
+    "area": "200 – 500m²",
+    "shortDescription": "Quần thể biệt thự sinh thái bên sông phong cách Venice đẳng cấp giữa lòng thủ đô. Sở hữu hệ thống kênh đào nhân tạo dài hơn 12.8km.",
+    "fullDescription": "Vinhomes Riverside là biểu tượng của cuộc sống thượng lưu và cộng đồng danh gia vọng tộc tại Hà Nội. Với không gian xanh ngút ngàn và hệ thống kênh đào uốn lượn sau từng căn biệt thự, dự án đem lại trải nghiệm sống resort đích thực. Hệ thống trường liên cấp Vinschool, trung tâm hội nghị Almaz, sân tập golf quốc tế và trung tâm thương mại Vincom Plaza đáp ứng mọi nhu cầu hưởng thụ xa hoa của chủ nhân.",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Vinhomes+Riverside+-+Biet+thu+ben+song",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Vinhomes+Riverside+-+San+vuon+rieng",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Vinhomes+Riverside+-+Kenh+dao+sinh+thai"
+    ],
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Vinhomes+Riverside+-+Long+Bien",
+    "featured": false,
+    "highlights": [
+      "Hệ thống kênh sinh thái xanh mát 12.8km",
+      "An ninh đa lớp khép kín 24/7",
+      "Tiện ích tiêu chuẩn 5 sao Almaz & Golf",
+      "Sổ đỏ trao tay, cộng đồng văn minh"
+    ],
+    "investor": "Tập đoàn Vingroup",
+    "status": "Đã bàn giao hoàn thiện"
+  },
+  {
+    "id": "project-06",
+    "slug": "aqua-city",
+    "name": "Aqua City",
+    "category": "cao-cap",
+    "categoryLabel": "Căn hộ cao cấp",
+    "location": "Biên Hòa, Đồng Nai",
+    "priceFrom": "3.5 tỷ/căn",
+    "bedrooms": "1PN – 3PN",
+    "area": "55 – 120m²",
+    "shortDescription": "Đại đô thị sinh thái thông minh ven sông Đồng Nai với quy mô lên tới 1.000ha. Nơi hội tụ hơn 32km đường bờ sông xanh ngát.",
+    "fullDescription": "Aqua City được bao bọc bởi các nhánh sông Đồng Nai trù phú, tạo nên không gian sinh thái nguyên bản hiếm có. Dự án được quy hoạch bài bản với các phân khu hiện đại, bến du thuyền 5 sao Aqua Marina, trung tâm thể thao đa năng Aqua Sport Complex và hệ thống giáo dục liên cấp quốc tế. Chỉ cách sân bay quốc tế Long Thành và trung tâm TP.HCM khoảng 20 phút lái xe qua cao tốc Long Thành - Dầu Giây.",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Aqua+City+-+Ben+du+thuyen+Aqua+Marina",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Aqua+City+-+Khong+gian+sinh+thai",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Aqua+City+-+Trung+tam+Aqua+Sport"
+    ],
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Aqua+City+-+Bien+Hoa",
+    "featured": false,
+    "highlights": [
+      "32km đường bờ sông bao bọc dự án",
+      "Bến du thuyền tiêu chuẩn quốc tế",
+      "Quảng trường phong cách Ý rộng lớn",
+      "Hạ tầng giao thông kết nối liên vùng hoàn hảo"
+    ],
+    "investor": "Novaland Group",
+    "status": "Đang mở bán phân khu mới"
+  },
+  {
+    "id": "project-07",
+    "slug": "palm-city",
+    "name": "Palm City",
+    "category": "nha-pho",
+    "categoryLabel": "Nhà phố liền kề",
+    "location": "Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh",
+    "priceFrom": "7.5 tỷ/căn",
+    "bedrooms": "3PN – 4PN",
+    "area": "100 – 150m²",
+    "shortDescription": "Khu nhà phố compound biệt lập ven sông Giồng Ông Tố, kết hợp hài hòa giữa cảnh quan thiên nhiên và phong cách kiến trúc hiện đại.",
+    "fullDescription": "Palm City mang đến không gian an cư thanh bình với những dãy nhà phố liền kề khang trang, mặt tiền rộng 5–10m. Dự án sở hữu công viên cảnh quan ven sông dài 1.8km, trường học quốc tế TAS, bệnh viện tiêu chuẩn quốc tế và khu phức hợp thể thao phong phú. Vị trí tiếp giáp đường Song Hành cao tốc TP.HCM - Long Thành giúp việc kết nối vào quận 1 chỉ mất 15 phút.",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Palm+City+-+Day+nha+pho+lien+ke",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Palm+City+-+Cong+vien+ven+song",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Palm+City+-+Khu+the+thao+clubhouse"
+    ],
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Palm+City+-+Quan+9",
+    "featured": false,
+    "highlights": [
+      "Mô hình compound khép kín an ninh tuyệt đối",
+      "Đường dạo bộ ven sông Giồng Ông Tố 1.8km",
+      "Gần trường quốc tế The American School",
+      "Pháp lý sở hữu lâu dài có sổ hồng riêng"
+    ],
+    "investor": "Keppel Land",
+    "status": "Đang hoàn thiện bàn giao"
+  },
+  {
+    "id": "project-08",
+    "slug": "waterpoint",
+    "name": "Waterpoint",
+    "category": "shophouse",
+    "categoryLabel": "Shophouse thương mại",
+    "location": "Bến Lức, Long An",
+    "priceFrom": "6.5 tỷ/căn",
+    "bedrooms": "3PN – 4PN",
+    "area": "100 – 200m²",
+    "shortDescription": "Thành phố bên sông Vàm Cỏ Đông quy mô 355ha. Tâm điểm thịnh vượng vùng Tây Nam với các tuyến phố thương mại sầm uất.",
+    "fullDescription": "Waterpoint là đại đô thị sinh thái sông nước lớn nhất khu vực Tây Nam TP.HCM. Dự án được quy hoạch bao bọc bởi 5.8km sông Vàm Cỏ Đông tự nhiên với các phân khu shophouse hiện đại mặt tiền rộng 8–15m, vừa tiện nghi để sinh sống vừa tối ưu doanh thu kinh doanh bán lẻ, ẩm thực và dịch vụ. Hệ sinh thái tiện ích đồng bộ gồm bến du thuyền, vịnh nước ngọt 8.6ha và cụm sân thể thao quốc tế Country Club.",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=Waterpoint+-+Vinh+nuoc+ngot",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Waterpoint+-+Shophouse+thuong+mai",
+      "https://placehold.co/800x600/0A192F/D49B42?text=Waterpoint+-+Country+Club"
+    ],
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=Waterpoint+-+Long+An",
+    "featured": false,
+    "highlights": [
+      "Vịnh nước ngọt nhân tạo 8.6ha độc đáo",
+      "5.8km mặt tiền sông Vàm Cỏ Đông trù phú",
+      "Khu thể thao Country Club 3ha chuẩn Olympic",
+      "Kết nối thẳng cao tốc Trung Lương - TP.HCM"
+    ],
+    "investor": "Tập đoàn Nam Long & Đối tác Nhật Bản",
+    "status": "Đang mở bán phân khu Rivera"
+  },
+  {
+    "id": "project-09",
+    "slug": "king-bay",
+    "name": "King Bay",
+    "category": "biet-thu",
+    "categoryLabel": "Biệt thự cao cấp",
+    "location": "Nhơn Trạch, Đồng Nai",
+    "priceFrom": "10 tỷ/căn",
+    "bedrooms": "4PN – 5PN",
+    "area": "200 – 400m²",
+    "shortDescription": "Quần thể đô thị sinh thái nghỉ dưỡng với 3 mặt tiền sông Đồng Nai hiếm có. Vị trí đón đầu cầu Nhơn Trạch kết nối trực tiếp TP. Thủ Đức.",
+    "fullDescription": "King Bay sở hữu địa thế phong thủy 'Tam cận lộ - Nhị cận giang' độc tôn với 3 mặt tiếp giáp mặt nước sông lớn, đón trọn bầu không khí mát rượi quanh năm. Mỗi căn biệt thự tại đây đều được thiết kế theo phong cách tân cổ điển quý phái, khuôn viên sân vườn riêng biệt, hồ bơi gia đình và chỗ đỗ du thuyền cá nhân. Khi cầu Nhơn Trạch (Vành Đai 3) hoàn thành, thời gian di chuyển từ King Bay tới trung tâm TP.HCM chỉ còn khoảng 20 phút.",
+    "images": [
+      "https://placehold.co/800x600/0A192F/D49B42?text=King+Bay+-+Biet+thu+ven+song",
+      "https://placehold.co/800x600/0A192F/D49B42?text=King+Bay+-+Ho+boi+san+vuon",
+      "https://placehold.co/800x600/0A192F/D49B42?text=King+Bay+-+Ben+du+thuyen+rieng"
+    ],
+    "thumbnail": "https://placehold.co/800x600/0A192F/D49B42?text=King+Bay+-+Nhon+Trach",
+    "featured": false,
+    "highlights": [
+      "Địa thế 3 mặt tiền sông sinh thái hiếm có",
+      "Đón đầu quy hoạch Vành Đai 3 và cầu Nhơn Trạch",
+      "Bến đỗ du thuyền tư gia đẳng cấp",
+      "Sổ đỏ riêng từng căn, sở hữu vĩnh viễn"
+    ],
+    "investor": "Free Land & Star Beach",
+    "status": "Đang thi công hạ tầng & mở bán"
+  }
+]
