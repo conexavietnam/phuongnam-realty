@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 
 export function HeroBanner() {
   const companyInfo = companyService.getCompanyInfo();
+  const heroImage = (companyInfo as any).heroBannerImage || '/images/hero-banner.svg';
 
   const handleScrollDown = () => {
     window.scrollTo({
@@ -17,7 +18,7 @@ export function HeroBanner() {
     <section className="relative w-full min-h-[500px] lg:min-h-[600px] flex items-center bg-navy-900 overflow-hidden">
       {/* Background Image with Gradient Overlay */}
       <img
-        src="/images/hero-banner.svg"
+        src={heroImage}
         alt="Phương Nam Realty Luxury Skyline"
         className="absolute inset-0 w-full h-full object-cover object-center transform scale-105 transition-transform duration-1000 ease-out"
         referrerPolicy="no-referrer"

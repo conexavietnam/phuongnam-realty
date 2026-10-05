@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { dataStorage } from '@/services/dataStorage';
 
 interface LogoProps {
   className?: string;
@@ -15,6 +16,8 @@ export const Logo: React.FC<LogoProps> = ({
   showTagline = false,
 }) => {
   const isLight = variant === 'light';
+  const company = dataStorage.getCompany();
+  const logoSrc = (company as any).logoImage || '/logo.svg';
 
   const sizeClasses = {
     sm: {
@@ -42,7 +45,7 @@ export const Logo: React.FC<LogoProps> = ({
       {/* Golden Architectural Crest */}
       <div className={`relative ${sizeClasses.icon} shrink-0 transition-transform duration-300 group-hover:scale-105`}>
         <img
-          src="/logo.svg"
+          src={logoSrc}
           alt="Phương Nam Realty"
           className="w-full h-full object-contain filter drop-shadow-sm"
           referrerPolicy="no-referrer"

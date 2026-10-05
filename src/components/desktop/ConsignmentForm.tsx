@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Send, User, Phone, MapPin, Building2, CircleDollarSign, ArrowRight } from 'lucide-react';
+import { Send, User, Phone, MapPin, Building2, CircleDollarSign, ArrowRight, CheckCircle2 } from 'lucide-react';
 import type { ConsignmentFormData } from '@/types';
 import { companyService } from '@/services/companyService';
+import { dataStorage } from '@/services/dataStorage';
+import { telegramService } from '@/services/telegramService';
 import { FormInput } from '@/components/common/FormInput';
 import { FormSelect } from '@/components/common/FormSelect';
 import { FormTextarea } from '@/components/common/FormTextarea';
@@ -26,6 +28,8 @@ export function ConsignmentForm({ onSubmit, className = '' }: ConsignmentFormPro
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof ConsignmentFormData, string>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ConsignmentFormData, string>> = {};
@@ -39,26 +43,72 @@ export function ConsignmentForm({ onSubmit, className = '' }: ConsignmentFormPro
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate() || isSubmitting) return;
 
-    if (onSubmit) {
-      onSubmit(formData);
-    } else {
-      alert('Cảm ơn quý khách! Chúng tôi đã nhận được thông tin ký gửi và sẽ liên hệ thẩm định sớm nhất.');
+    setIsSubmitting(true);
+
+    try {
+      // 1. Save lead to local storage engine
+      dataStorage.addCustomerLead({
+        fullName: formData.fullName,
+        phone: formData.phone,
+        purpose: formData.purpose,
+        region: formData.region,
+        propertyType: formData.propertyType,
+        priceRange: formData.priceRange,
+        note: formData.note,
+        source: 'consignment',
+      });
+
+      // 2. Dispatch real-time Telegram alert to Admin
+      await telegramService.notifyNewConsignment({
+        fullName: formData.fullName,
+        phone: formData.phone,
+        propertyType: formData.propertyType || (formData.purpose === 'ban' ? 'Cần bán BĐS' : 'Cho thuê BĐS'),
+        address: formData.region,
+        expectedPrice: formData.priceRange,
+        note: formData.note,
+      });
+
+      if (onSubmit) {
+        onSubmit(formData);
+      }
+
+      setSubmitted(true);
+      setFormData({
+        fullName: '',
+        phone: '',
+        purpose: 'ban',
+        region: '',
+        propertyType: '',
+        priceRange: '',
+        note: '',
+      });
+    } catch (err) {
+      console.error('Error submitting consignment:', err);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setFormData({
-      fullName: '',
-      phone: '',
-      purpose: 'ban',
-      region: '',
-      propertyType: '',
-      priceRange: '',
-      note: '',
-    });
   };
+
+  if (submitted) {
+    return (
+      <div className={`bg-white rounded-2xl shadow-lg border border-slate-100 p-8 text-center ${className}`}>
+        <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 className="w-9 h-9" />
+        </div>
+        <h3 className="text-2xl font-bold text-navy-900 mb-2">Gửi Ký Gửi Thành Công!</h3>
+        <p className="text-slate-600 text-sm max-w-md mx-auto mb-6">
+          Cảm ơn quý khách. Yêu cầu ký gửi đã được chuyển ngay lập tức tới bộ phận thẩm định của Phương Nam Realty qua hệ thống quản trị. Chuyên viên sẽ gọi điện tư vấn trong vòng 15 phút.
+        </p>
+        <Button variant="primary" size="md" onClick={() => setSubmitted(false)}>
+          Gửi thêm yêu cầu khác
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className={`bg-white rounded-2xl shadow-lg border border-slate-100 p-6 lg:p-8 ${className}`}>

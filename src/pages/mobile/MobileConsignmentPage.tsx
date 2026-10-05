@@ -2,13 +2,12 @@
 import { Link } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
 import { MobileLayout } from '@/layouts/MobileLayout';
-import { FormInput } from '@/components/common/FormInput';
-import { FormSelect } from '@/components/common/FormSelect';
-import { FormTextarea } from '@/components/common/FormTextarea';
-import { Button } from '@/components/common/Button';
+import { ConsignmentForm } from '@/components/desktop/ConsignmentForm';
 import { companyService } from '@/services/companyService';
+import { useDataListener } from '@/hooks';
 
 export function MobileConsignmentPage() {
+  useDataListener();
   const consignments = companyService.getConsignments();
 
   return (
@@ -44,41 +43,7 @@ export function MobileConsignmentPage() {
 
       {/* Form */}
       <div className="px-4 pb-8">
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <FormInput label="Họ và tên (*)" placeholder="Nhập họ và tên" />
-            <FormInput label="Số điện thoại (*)" placeholder="Nhập số điện thoại" type="tel" />
-            <FormSelect 
-              label="Nhu cầu (*)" 
-              options={[
-                { value: 'sell', label: 'Cần bán' },
-                { value: 'rent', label: 'Cho thuê' }
-              ]} 
-            />
-            <FormSelect 
-              label="Khu vực" 
-              options={[
-                { value: 'ho-chi-minh', label: 'Hồ Chí Minh' },
-                { value: 'binh-duong', label: 'Bình Dương' },
-                { value: 'dong-nai', label: 'Đồng Nai' }
-              ]} 
-              placeholder="Chọn khu vực"
-            />
-            <FormSelect 
-              label="Loại hình BĐS" 
-              options={[
-                { value: 'apartment', label: 'Căn hộ' },
-                { value: 'house', label: 'Nhà phố' },
-                { value: 'land', label: 'Đất nền' }
-              ]} 
-              placeholder="Chọn loại hình"
-            />
-            <FormInput label="Giá dự kiến" placeholder="VD: 3 Tỷ 500" />
-            <FormTextarea label="Ghi chú thêm" placeholder="Thông tin thêm về BĐS của bạn..." />
-            
-            <Button variant="primary" className="w-full py-4 text-base mt-4">GỬI THÔNG TIN</Button>
-          </form>
-        </div>
+        <ConsignmentForm />
       </div>
     </MobileLayout>
   );

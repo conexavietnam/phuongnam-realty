@@ -1,19 +1,16 @@
-import companyData from '@/data/company.json';
+import { dataStorage } from '@/services/dataStorage';
 import menuData from '@/data/menu.json';
 import filtersData from '@/data/filters.json';
 import agentsData from '@/data/agents.json';
-import consignmentsData from '@/data/consignments.json';
 import type { CompanyInfo, MenuConfig, FilterConfig, Agent, ConsignmentProject } from '@/types';
 
-const companyInfo = companyData as CompanyInfo;
 const menuConfig = menuData as MenuConfig;
 const filterConfig = filtersData as FilterConfig;
 const agents = agentsData as Agent[];
-const consignments = consignmentsData as ConsignmentProject[];
 
 export const companyService = {
   getCompanyInfo(): CompanyInfo {
-    return companyInfo;
+    return dataStorage.getCompany() as CompanyInfo;
   },
 
   getMenuConfig(): MenuConfig {
@@ -33,10 +30,10 @@ export const companyService = {
   },
 
   getConsignments(): ConsignmentProject[] {
-    return consignments;
+    return dataStorage.getConsignmentProjects();
   },
 
   getConsignmentBySlug(slug: string): ConsignmentProject | undefined {
-    return consignments.find((item) => item.slug === slug);
+    return dataStorage.getConsignmentProjects().find((item) => item.slug === slug);
   },
 };

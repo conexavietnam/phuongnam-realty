@@ -8,11 +8,13 @@ import { PropertyCard } from '@/components/desktop/PropertyCard';
 import { CTABanner } from '@/components/desktop/CTABanner';
 import { NewsCard } from '@/components/desktop/NewsCard';
 import { Button } from '@/components/common/Button';
+import { useDataListener } from '@/hooks';
 import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { newsService } from '@/services/newsService';
 
 export function HomePage() {
+  useDataListener();
   const featuredProjects = projectService.getFeatured();
   const featuredProperties = propertyService.getFeatured();
   const featuredNews = newsService.getFeatured(3);

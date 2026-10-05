@@ -6,10 +6,12 @@ import { SectionTitle } from '@/components/common/SectionTitle';
 import { ProjectCard } from '@/components/desktop/ProjectCard';
 import { PropertyCard } from '@/components/desktop/PropertyCard';
 import { Button } from '@/components/common/Button';
+import { useDataListener } from '@/hooks';
 import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 
 export function ProjectsPage() {
+  useDataListener();
   const projects = projectService.getAll();
   const relatedProperties = propertyService.getFeatured().slice(0, 3);
 

@@ -4,9 +4,11 @@ import { SectionTitle } from '@/components/common/SectionTitle';
 import { NewsCard } from '@/components/desktop/NewsCard';
 import { Pagination } from '@/components/common/Pagination';
 import { usePagination } from '@/hooks/usePagination';
+import { useDataListener } from '@/hooks';
 import { newsService } from '@/services/newsService';
 
 export function NewsPage() {
+  useDataListener();
   const allNews = newsService.getAll();
 
   const {

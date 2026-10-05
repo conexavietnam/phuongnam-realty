@@ -26,6 +26,9 @@ import { MobileNewsDetailPage } from '@/pages/mobile/MobileNewsDetailPage'
 import { MobileContactPage } from '@/pages/mobile/MobileContactPage'
 import { MobileNotFoundPage } from '@/pages/mobile/MobileNotFoundPage'
 
+// Admin Pages
+import { AdminPage } from '@/pages/admin/AdminPage'
+
 function ScrollToTop() {
   useScrollTop()
   return null
@@ -55,6 +58,7 @@ export default function App() {
     <>
       <ScrollToTop />
       <Routes>
+        <Route path="/admin" element={<AdminPage />} />
         {routes.map(({ path, desktop: DesktopPage, mobile: MobilePage }) => (
           <Route
             key={path}

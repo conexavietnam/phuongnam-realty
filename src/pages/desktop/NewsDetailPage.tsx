@@ -92,11 +92,33 @@ export function NewsDetailPage() {
 
           {/* Body Content */}
           <div className="prose prose-slate lg:prose-lg max-w-none text-slate-700 leading-relaxed space-y-6">
-            {article.content.split('\n\n').map((paragraph, index) => (
-              <p key={index} className="text-base sm:text-lg leading-relaxed">
-                {paragraph}
-              </p>
-            ))}
+            {article.content.split('\n\n').map((paragraph, index) => {
+              const imgMatch = paragraph.trim().match(/^!\[(.*?)\]\((.*?)\)$/);
+              if (imgMatch) {
+                const [, altText, imgSrc] = imgMatch;
+                return (
+                  <figure key={index} className="my-8">
+                    <img
+                      src={imgSrc}
+                      alt={altText}
+                      className="rounded-2xl w-full max-h-[520px] object-cover shadow-lg border border-slate-200"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                    {altText && (
+                      <figcaption className="text-center text-xs sm:text-sm text-slate-500 mt-2.5 italic">
+                        {altText}
+                      </figcaption>
+                    )}
+                  </figure>
+                );
+              }
+              return (
+                <p key={index} className="text-base sm:text-lg leading-relaxed">
+                  {paragraph}
+                </p>
+              );
+            })}
           </div>
 
           {/* Bottom Actions */}

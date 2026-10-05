@@ -121,7 +121,13 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
           <p>&copy; 2025 Phương Nam Realty. All rights reserved.</p>
-          <p>{companyInfo.slogan || "Kiến tạo giá trị – Đồng hành cùng bạn!"}</p>
+          <div className="flex items-center gap-4">
+            <p>{companyInfo.slogan || "Kiến tạo giá trị – Đồng hành cùng bạn!"}</p>
+            <span className="text-white/20">•</span>
+            <Link to="/admin" className="text-slate-500 hover:text-gold-400 text-xs transition-colors">
+              Hệ thống Quản trị
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

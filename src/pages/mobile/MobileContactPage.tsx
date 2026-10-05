@@ -1,11 +1,11 @@
 import { MapPin, Phone, Mail, Share2, Video, Camera } from 'lucide-react';
 import { MobileLayout } from '@/layouts/MobileLayout';
-import { FormInput } from '@/components/common/FormInput';
-import { FormTextarea } from '@/components/common/FormTextarea';
-import { Button } from '@/components/common/Button';
+import { ContactForm } from '@/components/desktop/ContactForm';
 import { companyService } from '@/services/companyService';
+import { useDataListener } from '@/hooks';
 
 export function MobileContactPage() {
+  useDataListener();
   const companyInfo = companyService.getCompanyInfo();
 
   return (
@@ -47,14 +47,7 @@ export function MobileContactPage() {
 
       {/* Contact Form */}
       <div className="px-4 pb-8">
-        <h2 className="font-bold text-navy-900 mb-4 border-l-4 border-gold-500 pl-2">Gửi tin nhắn cho chúng tôi</h2>
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-          <FormInput label="Họ và tên" placeholder="Nhập họ và tên" />
-          <FormInput label="Số điện thoại" placeholder="Nhập số điện thoại" type="tel" />
-          <FormInput label="Email" placeholder="Nhập địa chỉ email" type="email" />
-          <FormTextarea label="Nội dung" placeholder="Nhập nội dung cần tư vấn..." />
-          <Button variant="primary" className="w-full py-4 text-base">GỬI TIN NHẮN</Button>
-        </form>
+        <ContactForm />
       </div>
 
       {/* Maps */}

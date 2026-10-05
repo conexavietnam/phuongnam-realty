@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useDataListener } from '@/hooks';
 import { DesktopLayout } from '@/layouts/DesktopLayout';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { SearchFilter } from '@/components/desktop/SearchFilter';
@@ -10,20 +11,23 @@ import { propertyService } from '@/services/propertyService';
 import type { PropertyFilter } from '@/types';
 
 export function PropertiesPage() {
+  const dataVersion = useDataListener();
   const [filters, setFilters] = useState<PropertyFilter>({});
   const [displayLimit, setDisplayLimit] = useState(8);
 
   const filteredProperties = useMemo(() => {
+    if (dataVersion < 0) return [];
     return propertyService.filter(filters);
-  }, [filters]);
+  }, [filters, dataVersion]);
 
   const featuredList = useMemo(() => {
     return filteredProperties.slice(0, displayLimit);
   }, [filteredProperties, displayLimit]);
 
   const similarList = useMemo(() => {
+    if (dataVersion < 0) return [];
     return propertyService.getAll().slice(0, 4);
-  }, []);
+  }, [dataVersion]);
 
   return (
     <DesktopLayout>

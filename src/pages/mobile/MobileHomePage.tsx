@@ -5,13 +5,16 @@ import { MobileProjectCard } from '@/components/mobile/MobileProjectCard';
 import { MobilePropertyCard } from '@/components/mobile/MobilePropertyCard';
 import { MobileNewsCard } from '@/components/mobile/MobileNewsCard';
 import { Button } from '@/components/common/Button';
+import { useDataListener } from '@/hooks';
 import { companyService } from '@/services/companyService';
 import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { newsService } from '@/services/newsService';
 
 export function MobileHomePage() {
+  useDataListener();
   const companyInfo = companyService.getCompanyInfo();
+  const heroImage = (companyInfo as any).heroBannerImage || '/images/hero-banner.svg';
   const featuredProjects = projectService.getFeatured();
   const featuredProperties = propertyService.getFeatured();
   const featuredNews = newsService.getFeatured(3);
@@ -21,7 +24,7 @@ export function MobileHomePage() {
       {/* Hero section */}
       <section className="relative min-h-[320px] bg-navy-950 w-full overflow-hidden flex items-center">
         <img 
-          src="/images/hero-banner.svg" 
+          src={heroImage} 
           alt="Phương Nam Realty Hero" 
           className="absolute inset-0 w-full h-full object-cover opacity-40 scale-110" 
           referrerPolicy="no-referrer"

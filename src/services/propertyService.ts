@@ -1,7 +1,5 @@
-import propertiesData from '@/data/properties.json';
+import { dataStorage } from '@/services/dataStorage';
 import type { Property, PropertyFilter, PaginatedResult, PaginationParams } from '@/types';
-
-const properties = propertiesData as Property[];
 
 function normalizeForSearch(text: string): string {
   return text
@@ -62,26 +60,27 @@ function matchesRegion(property: Property, region: string): boolean {
 
 export const propertyService = {
   getAll(): Property[] {
-    return properties;
+    return dataStorage.getProperties();
   },
 
   getFeatured(): Property[] {
-    return properties.filter((p) => p.featured);
+    return dataStorage.getProperties().filter((p) => p.featured);
   },
 
   getBySlug(slug: string): Property | undefined {
-    return properties.find((p) => p.slug === slug);
+    return dataStorage.getPropertyBySlug(slug);
   },
 
   getById(id: string): Property | undefined {
-    return properties.find((p) => p.id === id);
+    return dataStorage.getProperties().find((p) => p.id === id);
   },
 
   getByProjectId(projectId: string): Property[] {
-    return properties.filter((p) => p.projectId === projectId);
+    return dataStorage.getProperties().filter((p) => p.projectId === projectId);
   },
 
   getRelated(currentId: string, limit: number = 3): Property[] {
+    const properties = dataStorage.getProperties();
     const current = properties.find((p) => p.id === currentId);
     if (!current) {
       return properties.filter((p) => p.id !== currentId).slice(0, limit);
@@ -99,6 +98,7 @@ export const propertyService = {
   },
 
   filter(filters: PropertyFilter): Property[] {
+    const properties = dataStorage.getProperties();
     return properties.filter((item) => {
       if (filters.type && item.type !== filters.type) {
         return false;
@@ -121,7 +121,7 @@ export const propertyService = {
   },
 
   getPaginated(params: PaginationParams, filters?: PropertyFilter): PaginatedResult<Property> {
-    const items = filters ? this.filter(filters) : properties;
+    const items = filters ? this.filter(filters) : dataStorage.getProperties();
     const { page, pageSize } = params;
     const start = (page - 1) * pageSize;
     const data = items.slice(start, start + pageSize);

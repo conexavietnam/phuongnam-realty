@@ -6,9 +6,20 @@ interface ModalProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+const SIZE_CLASSES = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  '3xl': 'max-w-3xl',
+  '4xl': 'max-w-4xl',
+};
+
+export function Modal({ isOpen, onClose, title, children, size = 'lg' }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -29,8 +40,8 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         onClick={onClose}
       />
       
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
+      <div className={`relative bg-white rounded-2xl shadow-2xl w-full ${SIZE_CLASSES[size] || 'max-w-lg'} max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200`}>
+        <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
           {title ? (
             <h3 className="text-xl font-bold text-navy-900">{title}</h3>
           ) : (

@@ -50,6 +50,8 @@ export interface CompanyInfo {
   slogan: string;
   heroTitle: string;
   heroSubtitle: string;
+  heroBannerImage?: string;
+  logoImage?: string;
   address: string;
   hotline: string;
   email: string;
