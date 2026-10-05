@@ -81,9 +81,14 @@ Serve the site over HTTPS only: the session cookie is `Secure`, `HttpOnly`, `Sam
 | `auth/verify` | POST `{otp}` | public | 5 attempts per OTP (then 429), regenerates session, returns CSRF token |
 | `auth/me` | GET | session | `{authenticated, csrf}` |
 | `auth/logout` | POST | admin + CSRF | destroy session |
+| `settings/admin` | GET | admin | `{phone, chatIdMasked, botUsername}` (bot username fetched once via `getMe` and cached in `admin_settings.json`) |
+| `settings/telegram/request` | POST `{newChatId?, newPhone?}` | admin + CSRF | probe message to the new chat id (422 if Telegram rejects it), then OTP sent to the OLD chat id only; 3 per 10 min per session+IP |
+| `settings/telegram/confirm` | POST `{otp}` | admin + CSRF | 5 attempts then 429 and pending cleared; on success writes `data/admin_settings.json` and notifies old and new chat |
 | `upload` | POST multipart `file`, `category` | admin + CSRF | JPG/PNG/WebP/GIF only (finfo + getimagesize), 5MB, random name, appended to `media` |
 
 If Telegram cannot deliver the OTP, `auth/otp` returns 502 and no OTP stays valid.
+
+Effective admin phone and chat id come from `data/admin_settings.json` when present, otherwise from `config.php`. The bot token is only ever read from `config.php`.
 
 ## Local development
 

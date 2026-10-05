@@ -13,6 +13,12 @@ export class ApiError extends Error {
   }
 }
 
+export interface AdminSettings {
+  phone: string;
+  chatIdMasked: string;
+  botUsername: string;
+}
+
 let csrfToken: string | null = null;
 
 export function setCsrfToken(token: string | null): void {
@@ -96,6 +102,18 @@ export const api = {
     const res = await request<{ authenticated: boolean; csrf?: string }>('auth/me');
     setCsrfToken(res.authenticated ? (res.csrf ?? null) : null);
     return res.authenticated;
+  },
+
+  getAdminSettings(): Promise<AdminSettings> {
+    return request<AdminSettings>('settings/admin');
+  },
+
+  requestTelegramChange(change: { newChatId?: string; newPhone?: string }): Promise<{ ok: true; expiresIn: number }> {
+    return request('settings/telegram/request', { method: 'POST', json: change });
+  },
+
+  confirmTelegramChange(otp: string): Promise<{ ok: true; phone: string; chatIdMasked: string }> {
+    return request('settings/telegram/confirm', { method: 'POST', json: { otp } });
   },
 
   async logout(): Promise<void> {

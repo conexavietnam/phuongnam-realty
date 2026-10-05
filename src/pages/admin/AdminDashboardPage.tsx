@@ -32,6 +32,7 @@ import { Modal } from '@/components/common/Modal';
 import { ImageField } from '@/components/admin/ImageField';
 import { GalleryField } from '@/components/admin/GalleryField';
 import { ImagePickerModal } from '@/components/admin/ImagePickerModal';
+import { TelegramSettingsCard } from '@/components/admin/TelegramSettingsCard';
 import { dataStorage } from '@/services/dataStorage';
 import type { CustomerLead } from '@/services/dataStorage';
 import { mediaService } from '@/services/mediaService';
@@ -1352,6 +1353,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
         {/* ===================== TAB 7: SETTINGS ===================== */}
         {activeTab === 'settings' && (
           <div className="space-y-8 animate-in fade-in duration-200">
+            <TelegramSettingsCard />
+
             {/* Company Info & Visual Assets Configuration Form */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
               <h3 className="text-base font-bold text-navy-900 mb-1">

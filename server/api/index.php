@@ -11,6 +11,7 @@ ini_set('log_errors', '1');
 require $serverDir . '/src/bootstrap.php';
 require $serverDir . '/src/storage.php';
 require $serverDir . '/src/auth.php';
+require $serverDir . '/src/settings.php';
 require $serverDir . '/src/handlers.php';
 
 set_exception_handler(static function (Throwable $e): void {
@@ -39,6 +40,12 @@ switch (trim($route, '/')) {
         pn_handle_logout();
     case 'auth/me':
         pn_handle_me();
+    case 'settings/admin':
+        pn_handle_settings_get();
+    case 'settings/telegram/request':
+        pn_handle_settings_request();
+    case 'settings/telegram/confirm':
+        pn_handle_settings_confirm();
     default:
         pn_fail(404, 'Not found');
 }

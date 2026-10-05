@@ -4,24 +4,19 @@ declare(strict_types=1);
 const PN_OTP_TTL_SECONDS = 180;
 const PN_OTP_MAX_ATTEMPTS = 5;
 
-function pn_telegram_send(string $htmlText): bool
+/** Calls a Telegram Bot API method. Returns the decoded response on ok=true, otherwise null. */
+function pn_telegram_call(string $method, array $payload): ?array
 {
     $cfg = pn_config();
     $token = $cfg['telegram_bot_token'];
-    $chatId = $cfg['telegram_admin_chat_id'];
-    if (preg_match('/^[0-9]+:[A-Za-z0-9_-]+$/', $token) !== 1 || $chatId === '') {
-        error_log('telegram: bot token or admin chat id is not configured');
-        return false;
+    if (preg_match('/^[0-9]+:[A-Za-z0-9_-]+$/', $token) !== 1) {
+        error_log('telegram: bot token is not configured');
+        return null;
     }
-    $ch = curl_init($cfg['telegram_api_base'] . '/bot' . $token . '/sendMessage');
+    $ch = curl_init($cfg['telegram_api_base'] . '/bot' . $token . '/' . $method);
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => json_encode([
-            'chat_id' => $chatId,
-            'text' => $htmlText,
-            'parse_mode' => 'HTML',
-            'disable_web_page_preview' => true,
-        ], JSON_UNESCAPED_UNICODE),
+        CURLOPT_POSTFIELDS => $payload === [] ? '{}' : json_encode($payload, JSON_UNESCAPED_UNICODE),
         CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 5,
@@ -32,10 +27,26 @@ function pn_telegram_send(string $htmlText): bool
     $curlError = curl_error($ch);
     $decoded = is_string($response) ? json_decode($response, true) : null;
     if ($status !== 200 || !is_array($decoded) || ($decoded['ok'] ?? false) !== true) {
-        error_log('telegram: send failed, http=' . $status . ' curl="' . $curlError . '"');
+        error_log('telegram: ' . $method . ' failed, http=' . $status . ' curl="' . $curlError . '"');
+        return null;
+    }
+    return $decoded;
+}
+
+/** Sends an HTML message to $chatId, defaulting to the effective admin chat id. */
+function pn_telegram_send(string $htmlText, ?string $chatId = null): bool
+{
+    $target = $chatId ?? pn_admin_settings()['chat_id'];
+    if ($target === '') {
+        error_log('telegram: admin chat id is not configured');
         return false;
     }
-    return true;
+    return pn_telegram_call('sendMessage', [
+        'chat_id' => $target,
+        'text' => $htmlText,
+        'parse_mode' => 'HTML',
+        'disable_web_page_preview' => true,
+    ]) !== null;
 }
 
 function pn_session_start(bool $create): bool
@@ -117,29 +128,34 @@ function pn_otp_issue(string $otp): void
     });
 }
 
-/** Returns one of: ok, invalid, locked, expired. */
-function pn_otp_verify(string $code): string
+/**
+ * Verifies a code against the OTP record stored at $path (default: login OTP).
+ * Returns ['status' => ok|invalid|locked|expired, 'record' => array|null]; 'record' is set only on ok.
+ * After PN_OTP_MAX_ATTEMPTS wrong codes the next attempt is answered with locked and the record is deleted.
+ */
+function pn_otp_verify(string $code, ?string $path = null): array
 {
-    $path = pn_otp_path();
-    return (string) pn_with_lock($path, static function () use ($path, $code): string {
+    $path ??= pn_otp_path();
+    return pn_with_lock($path, static function () use ($path, $code): array {
         $record = pn_read_json_file($path);
         if ($record === null || !isset($record['hash'], $record['expires'], $record['attempts'])) {
-            return 'expired';
+            return ['status' => 'expired', 'record' => null];
         }
         if ((int) $record['expires'] < time()) {
             @unlink($path);
-            return 'expired';
+            return ['status' => 'expired', 'record' => null];
         }
         if ((int) $record['attempts'] >= PN_OTP_MAX_ATTEMPTS) {
-            return 'locked';
+            @unlink($path);
+            return ['status' => 'locked', 'record' => null];
         }
         if (password_verify($code, (string) $record['hash'])) {
             @unlink($path);
-            return 'ok';
+            return ['status' => 'ok', 'record' => $record];
         }
         $record['attempts'] = (int) $record['attempts'] + 1;
         pn_atomic_write($path, json_encode($record));
-        return 'invalid';
+        return ['status' => 'invalid', 'record' => null];
     });
 }
 
@@ -152,7 +168,7 @@ function pn_handle_otp_send(): never
     }
     $body = pn_read_json_object();
     $phone = pn_normalize_phone((string) ($body['phone'] ?? ''));
-    $adminPhone = pn_normalize_phone(pn_config()['admin_phone']);
+    $adminPhone = pn_normalize_phone(pn_admin_settings()['phone']);
     if ($adminPhone === '' || !hash_equals($adminPhone, $phone)) {
         pn_fail(403, 'Số điện thoại không hợp lệ.');
     }
@@ -179,7 +195,7 @@ function pn_handle_otp_verify(): never
     if (preg_match('/^[0-9]{6}$/', $code) !== 1) {
         pn_fail(400, 'Mã OTP gồm 6 chữ số.');
     }
-    $result = pn_otp_verify($code);
+    $result = pn_otp_verify($code)['status'];
     if ($result === 'locked') {
         pn_fail(429, 'Mã OTP đã bị khóa do nhập sai quá nhiều lần. Vui lòng yêu cầu mã mới.');
     }
