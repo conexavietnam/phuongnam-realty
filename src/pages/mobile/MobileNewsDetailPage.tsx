@@ -1,4 +1,5 @@
 
+import DOMPurify from 'dompurify';
 import { useParams } from 'react-router-dom';
 import { Calendar, User, Clock } from 'lucide-react';
 import { MobileLayout } from '@/layouts/MobileLayout';
@@ -44,7 +45,7 @@ export function MobileNewsDetailPage() {
 
         <div 
           className="prose prose-sm prose-slate max-w-none prose-img:rounded-lg mb-10"
-          dangerouslySetInnerHTML={{ __html: newsItem.content }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(newsItem.content) }}
         />
 
         <div className="border-t border-slate-100 pt-6">

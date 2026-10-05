@@ -50,7 +50,7 @@ export function GalleryField({
       const uploaded = await mediaService.uploadFile(file, category);
       handleAddImage(uploaded.url);
     } catch (err) {
-      console.error('Error uploading gallery image:', err);
+      alert(err instanceof Error ? err.message : 'Tải ảnh lên thất bại.');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {

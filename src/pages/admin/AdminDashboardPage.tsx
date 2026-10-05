@@ -15,10 +15,7 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
-  AlertCircle,
-  Send,
   MessageSquare,
-  RefreshCw,
   Eye,
   Star,
   Download,
@@ -37,8 +34,6 @@ import { GalleryField } from '@/components/admin/GalleryField';
 import { ImagePickerModal } from '@/components/admin/ImagePickerModal';
 import { dataStorage } from '@/services/dataStorage';
 import type { CustomerLead } from '@/services/dataStorage';
-import { telegramService } from '@/services/telegramService';
-import type { TelegramConfig } from '@/services/telegramService';
 import { mediaService } from '@/services/mediaService';
 import type { MediaItem } from '@/services/mediaService';
 import type { Project, ProjectCategory } from '@/types/project';
@@ -61,21 +56,6 @@ type TabType =
 
 export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-
-  // Telegram Config State
-  const [telegramConfig, setTelegramConfig] = useState<TelegramConfig>(telegramService.getConfig());
-  const [botTestResult, setBotTestResult] = useState<string | null>(null);
-  const [isTestingBot, setIsTestingBot] = useState(false);
-
-  // Security 2-Step Change State
-  const [newPhone, setNewPhone] = useState(telegramConfig.adminPhone);
-  const [newChatId, setNewChatId] = useState(telegramConfig.adminChatId);
-  const [changeOtp, setChangeOtp] = useState('');
-  const [expectedChangeOtp, setExpectedChangeOtp] = useState<string | null>(null);
-  const [isSendingChangeOtp, setIsSendingChangeOtp] = useState(false);
-  const [changeOtpSent, setChangeOtpSent] = useState(false);
-  const [changeSuccessMessage, setChangeSuccessMessage] = useState<string | null>(null);
-  const [changeErrorMessage, setChangeErrorMessage] = useState<string | null>(null);
 
   // Data Collections State
   const [projects, setProjects] = useState<Project[]>(dataStorage.getProjects());
@@ -118,13 +98,26 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     setTimeout(() => setActionSuccess(null), 4000);
   };
 
+  const showError = (err: unknown) => {
+    alert(err instanceof Error ? err.message : 'Thao tác thất bại. Vui lòng thử lại.');
+  };
+
+  const attempt = async (action: () => Promise<unknown>): Promise<boolean> => {
+    try {
+      await action();
+      return true;
+    } catch (err) {
+      showError(err);
+      return false;
+    }
+  };
+
   const refreshAllData = () => {
     setProjects(dataStorage.getProjects());
     setProperties(dataStorage.getProperties());
     setNews(dataStorage.getNews());
     setLeads(dataStorage.getCustomerLeads());
     setCompany(dataStorage.getCompany());
-    setTelegramConfig(telegramService.getConfig());
     setMediaList(mediaService.getAll());
   };
 
@@ -140,91 +133,9 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     };
   }, []);
 
-  // Test Telegram connection
-  const handleTestBot = async () => {
-    setIsTestingBot(true);
-    setBotTestResult(null);
-    try {
-      const res = await telegramService.testConnection(telegramConfig.adminChatId);
-      if (res.success) {
-        setBotTestResult(`Đã gửi tin nhắn test thành công tới Telegram ID: ${telegramConfig.adminChatId}`);
-      } else {
-        setBotTestResult(`Lỗi kết nối bot: ${res.error || 'Vui lòng kiểm tra lại ID'}`);
-      }
-    } catch (e: any) {
-      setBotTestResult(`Lỗi: ${e.message || 'Không thể kết nối'}`);
-    } finally {
-      setIsTestingBot(false);
-    }
-  };
-
-  // 2-Step OTP Change Phone & Telegram ID
-  const handleRequestChangeOTP = async () => {
-    setChangeErrorMessage(null);
-    setChangeSuccessMessage(null);
-
-    if (!newPhone.trim() || !newChatId.trim()) {
-      setChangeErrorMessage('Vui lòng nhập đầy đủ Số điện thoại mới và Telegram Chat ID mới');
-      return;
-    }
-
-    setIsSendingChangeOtp(true);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    setExpectedChangeOtp(otp);
-
-    try {
-      const oldChatId = telegramConfig.adminChatId;
-      const res = await telegramService.sendOTP(
-        otp,
-        `Xác nhận đổi SĐT quản trị sang [${newPhone}] và Telegram ID sang [${newChatId}]`,
-        oldChatId,
-      );
-
-      setChangeOtpSent(true);
-      if (res.success) {
-        setChangeSuccessMessage(
-          `Mã OTP xác thực 6 số đã được gửi về Telegram ID CŨ: ${oldChatId}. Vui lòng kiểm tra tin nhắn Telegram cũ để xác nhận chuyển đổi!`,
-        );
-      } else {
-        setChangeSuccessMessage(
-          `Đã tạo mã xác thực OTP. (Ghi chú bot: ${res.error || 'Kiểm tra Telegram ID cũ'}).`,
-        );
-      }
-    } catch {
-      setChangeOtpSent(true);
-      setChangeSuccessMessage(`Đã sinh mã xác thực OTP.`);
-    } finally {
-      setIsSendingChangeOtp(false);
-    }
-  };
-
-  const handleConfirmChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setChangeErrorMessage(null);
-
-    if (!changeOtp.trim() || changeOtp.trim() !== expectedChangeOtp) {
-      setChangeErrorMessage('Mã OTP xác thực không đúng. Vui lòng kiểm tra tin nhắn gửi tới Telegram ID CŨ.');
-      return;
-    }
-
-    const updated = telegramService.saveConfig({
-      adminPhone: newPhone.trim(),
-      adminChatId: newChatId.trim(),
-    });
-
-    setTelegramConfig(updated);
-    setChangeOtpSent(false);
-    setChangeOtp('');
-    setExpectedChangeOtp(null);
-    setChangeSuccessMessage(
-      `CẬP NHẬT THÀNH CÔNG! Số điện thoại quản trị mới: ${updated.adminPhone}, Telegram ID mới: ${updated.adminChatId}.`,
-    );
-
-    await telegramService.sendMessage(
-      `🎉 <b>KÍCH HOẠT QUẢN TRỊ VIÊN THÀNH CÔNG!</b>\n\nTài khoản Telegram này (ID: <code>${updated.adminChatId}</code>) đã trở thành quản trị viên chính thức của Phương Nam Realty.\nSố điện thoại: <b>${updated.adminPhone}</b>\n\nTừ bây giờ bạn sẽ nhận tất cả thông báo ký gửi và OTP bảo mật tại đây.`,
-      updated.adminChatId,
-    );
-  };
+  useEffect(() => {
+    Promise.all([dataStorage.loadAdmin(), mediaService.load()]).catch(showError);
+  }, []);
 
   // === PROJECT CRUD ACTIONS ===
   const handleOpenAddProject = () => {
@@ -259,7 +170,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     setIsProjectModalOpen(true);
   };
 
-  const handleSaveProject = (e: React.FormEvent) => {
+  const handleSaveProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProject || !editingProject.name.trim()) return;
 
@@ -275,15 +186,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           .replace(/[^a-z0-9]/g, '-'),
     };
 
-    dataStorage.saveProject(projectToSave);
+    if (!(await attempt(() => dataStorage.saveProject(projectToSave)))) return;
     refreshAllData();
     setIsProjectModalOpen(false);
     showNotification(`Đã lưu dự án "${projectToSave.name}" thành công!`);
   };
 
-  const handleDeleteProject = (id: string, name: string) => {
+  const handleDeleteProject = async (id: string, name: string) => {
     if (confirm(`Bạn có chắc chắn muốn xóa dự án "${name}" không?`)) {
-      dataStorage.deleteProject(id);
+      if (!(await attempt(() => dataStorage.deleteProject(id)))) return;
       refreshAllData();
       showNotification(`Đã xóa dự án "${name}".`);
     }
@@ -325,7 +236,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     setIsPropertyModalOpen(true);
   };
 
-  const handleSaveProperty = (e: React.FormEvent) => {
+  const handleSaveProperty = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProperty || !editingProperty.title.trim()) return;
 
@@ -341,15 +252,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           .replace(/[^a-z0-9]/g, '-'),
     };
 
-    dataStorage.saveProperty(propToSave);
+    if (!(await attempt(() => dataStorage.saveProperty(propToSave)))) return;
     refreshAllData();
     setIsPropertyModalOpen(false);
     showNotification(`Đã lưu BĐS "${propToSave.title}" thành công!`);
   };
 
-  const handleDeleteProperty = (id: string, title: string) => {
+  const handleDeleteProperty = async (id: string, title: string) => {
     if (confirm(`Bạn có chắc chắn muốn xóa bất động sản "${title}" không?`)) {
-      dataStorage.deleteProperty(id);
+      if (!(await attempt(() => dataStorage.deleteProperty(id)))) return;
       refreshAllData();
       showNotification(`Đã xóa bất động sản "${title}".`);
     }
@@ -379,7 +290,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     setIsNewsModalOpen(true);
   };
 
-  const handleSaveNews = (e: React.FormEvent) => {
+  const handleSaveNews = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingNews || !editingNews.title.trim()) return;
 
@@ -395,15 +306,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           .replace(/[^a-z0-9]/g, '-'),
     };
 
-    dataStorage.saveNews(newsToSave);
+    if (!(await attempt(() => dataStorage.saveNews(newsToSave)))) return;
     refreshAllData();
     setIsNewsModalOpen(false);
     showNotification(`Đã lưu bài viết "${newsToSave.title}" thành công!`);
   };
 
-  const handleDeleteNews = (id: string, title: string) => {
+  const handleDeleteNews = async (id: string, title: string) => {
     if (confirm(`Bạn có chắc chắn muốn xóa bài viết "${title}" không?`)) {
-      dataStorage.deleteNews(id);
+      if (!(await attempt(() => dataStorage.deleteNews(id)))) return;
       refreshAllData();
       showNotification(`Đã xóa bài viết "${title}".`);
     }
@@ -421,15 +332,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   };
 
   // === LEADS MANAGEMENT ===
-  const handleUpdateLeadStatus = (id: string, status: CustomerLead['status']) => {
-    dataStorage.updateLeadStatus(id, status);
+  const handleUpdateLeadStatus = async (id: string, status: CustomerLead['status']) => {
+    if (!(await attempt(() => dataStorage.updateLeadStatus(id, status)))) return;
     refreshAllData();
     showNotification(`Đã cập nhật trạng thái đơn.`);
   };
 
-  const handleDeleteLead = (id: string) => {
+  const handleDeleteLead = async (id: string) => {
     if (confirm('Bạn có chắc chắn muốn xóa đơn ký gửi/yêu cầu này?')) {
-      dataStorage.deleteLead(id);
+      if (!(await attempt(() => dataStorage.deleteLead(id)))) return;
       refreshAllData();
       showNotification(`Đã xóa đơn.`);
     }
@@ -446,7 +357,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
       refreshAllData();
       showNotification(`Đã tải ảnh "${file.name}" lên kho thành công!`);
     } catch (err) {
-      console.error(err);
+      showError(err);
     } finally {
       if (mediaTabFileInputRef.current) {
         mediaTabFileInputRef.current.value = '';
@@ -454,11 +365,11 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     }
   };
 
-  const handleAddVpsUrlFromTab = (e: React.FormEvent) => {
+  const handleAddVpsUrlFromTab = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!directVpsUrl.trim()) return;
 
-    mediaService.addServerUrl(directVpsUrl, directVpsName, directVpsCat);
+    if (!(await attempt(() => mediaService.addServerUrl(directVpsUrl, directVpsName, directVpsCat)))) return;
     setDirectVpsUrl('');
     setDirectVpsName('');
     setIsMediaUploadModalOpen(false);
@@ -472,9 +383,9 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   };
 
   // === COMPANY INFO SAVE ===
-  const handleSaveCompany = (e: React.FormEvent) => {
+  const handleSaveCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    dataStorage.saveCompany(company);
+    if (!(await attempt(() => dataStorage.saveCompany(company)))) return;
     refreshAllData();
     showNotification('Đã cập nhật thông tin công ty thành công!');
   };
@@ -497,21 +408,25 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const content = event.target?.result as string;
-      if (dataStorage.importAllData(content)) {
-        refreshAllData();
-        showNotification('Phục hồi dữ liệu thành công!');
-      } else {
-        alert('File JSON không hợp lệ hoặc dữ liệu bị hỏng.');
+      try {
+        if (await dataStorage.importAllData(content)) {
+          refreshAllData();
+          showNotification('Phục hồi dữ liệu thành công!');
+        } else {
+          alert('File JSON không hợp lệ hoặc dữ liệu bị hỏng.');
+        }
+      } catch (err) {
+        showError(err);
       }
     };
     reader.readAsText(file);
   };
 
-  const handleResetDefault = () => {
+  const handleResetDefault = async () => {
     if (confirm('CẢNH BÁO: Thao tác này sẽ xóa toàn bộ các tùy chỉnh và khôi phục dữ liệu ban đầu từ file gốc. Bạn có chắc không?')) {
-      dataStorage.resetToDefault();
+      if (!(await attempt(() => dataStorage.resetToDefault()))) return;
       refreshAllData();
       showNotification('Đã khôi phục dữ liệu gốc thành công!');
     }
@@ -558,12 +473,10 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Telegram Bot Indicator */}
+            {/* Telegram Notification Indicator */}
             <div className="hidden md:flex items-center gap-2 bg-navy-950/80 px-3 py-1.5 rounded-lg border border-gold-500/30 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-slate-300">Bot: @{telegramConfig.botUsername}</span>
-              <span className="text-slate-500">|</span>
-              <span className="text-gold-400 font-mono">ID: {telegramConfig.adminChatId}</span>
+              <span className="text-slate-300">Telegram: cấu hình tại máy chủ</span>
             </div>
 
             <Link
@@ -673,7 +586,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             }`}
           >
             <Settings className="w-4 h-4" />
-            Cài đặt & Telegram OTP
+            Cài đặt
           </button>
 
           <button
@@ -757,58 +670,16 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
             {/* Telegram Real-time Push Status Card */}
             <div className="bg-gradient-to-r from-navy-900 via-navy-800 to-navy-900 rounded-2xl p-6 text-white shadow-lg border border-gold-500/30">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold-500/20 text-gold-400 font-semibold text-xs mb-2">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    KẾT NỐI TELEGRAM BOT THỜI GIAN THỰC
-                  </div>
-                  <h3 className="text-lg font-bold text-white">
-                    Thông Báo Ký Gửi BĐS & Mã OTP Đang Kích Hoạt
-                  </h3>
-                  <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                    Khi khách hàng gửi form Ký gửi hoặc Liên hệ ngoài UI web, tin nhắn sẽ được đẩy tự động trực tiếp về Telegram ID: <span className="text-gold-400 font-bold font-mono">{telegramConfig.adminChatId}</span> qua bot <span className="text-gold-400 font-bold">@{telegramConfig.botUsername}</span>.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleTestBot}
-                    disabled={isTestingBot}
-                    className="text-xs shadow-md"
-                  >
-                    {isTestingBot ? (
-                      <span className="flex items-center gap-1.5">
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        Đang gửi...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1.5">
-                        <Send className="w-3.5 h-3.5" />
-                        Gửi Tin Nhắn Test Ngay
-                      </span>
-                    )}
-                  </Button>
-
-                  <a
-                    href={`https://t.me/${telegramConfig.botUsername}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg transition-colors"
-                  >
-                    Mở Chat Bot @{telegramConfig.botUsername}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold-500/20 text-gold-400 font-semibold text-xs mb-2">
+                <MessageSquare className="w-3.5 h-3.5" />
+                THÔNG BÁO TELEGRAM TỪ MÁY CHỦ
               </div>
-
-              {botTestResult && (
-                <div className="mt-4 p-3 rounded-xl bg-white/10 border border-white/20 text-xs text-gold-300 animate-in fade-in">
-                  {botTestResult}
-                </div>
-              )}
+              <h3 className="text-lg font-bold text-white">
+                Thông Báo Ký Gửi BĐS & Mã OTP Được Gửi Bởi Máy Chủ
+              </h3>
+              <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+                Khi khách hàng gửi form Ký gửi hoặc Liên hệ, máy chủ sẽ lưu yêu cầu và đẩy thông báo về Telegram quản trị. Cấu hình bot nằm trong file cấu hình trên máy chủ.
+              </p>
             </div>
 
             {/* Recent Leads Preview */}
@@ -1445,10 +1316,10 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                           </a>
                           <button
                             type="button"
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
                               if (confirm('Bạn có chắc muốn xóa ảnh này khỏi kho?')) {
-                                mediaService.deleteMedia(item.id);
+                                if (!(await attempt(() => mediaService.deleteMedia(item.id)))) return;
                                 refreshAllData();
                                 showNotification('Đã xóa ảnh khỏi kho.');
                               }
@@ -1478,156 +1349,9 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           </div>
         )}
 
-        {/* ===================== TAB 7: SETTINGS & 2-STEP TELEGRAM OTP ===================== */}
+        {/* ===================== TAB 7: SETTINGS ===================== */}
         {activeTab === 'settings' && (
           <div className="space-y-8 animate-in fade-in duration-200">
-            {/* Security Box: 2-Step OTP Change Phone & Telegram ID */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gold-500/40 p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/5 rounded-bl-full pointer-events-none" />
-
-              <div className="flex items-start gap-3 mb-6">
-                <div className="p-3 bg-gold-500/10 text-gold-600 rounded-xl">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-navy-900">
-                    Bảo Mật 2 Lớp: Đổi Số Điện Thoại Quản Trị & Telegram ID
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-3xl">
-                    Theo quy định an toàn hệ thống: Khi đổi Số điện thoại đăng nhập hoặc đổi Telegram ID mới, bạn cần bấm vào bot Telegram <span className="font-semibold text-navy-900">@{telegramConfig.botUsername}</span> để kết nối. Sau đó, mã OTP xác nhận sẽ được gửi về <span className="text-rose-600 font-bold font-mono">Telegram ID CŨ ({telegramConfig.adminChatId})</span> trước khi hệ thống kích hoạt ID mới.
-                  </p>
-                </div>
-              </div>
-
-              {/* Status & Feedback */}
-              {changeErrorMessage && (
-                <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl p-3.5 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                  <span>{changeErrorMessage}</span>
-                </div>
-              )}
-
-              {changeSuccessMessage && (
-                <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl p-3.5 flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>{changeSuccessMessage}</span>
-                </div>
-              )}
-
-              {/* Developer helper for OTP */}
-              {expectedChangeOtp && (
-                <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl p-3 flex items-center justify-between">
-                  <span>Mã OTP vừa gửi về Telegram ID cũ: <strong className="font-mono text-base ml-2">{expectedChangeOtp}</strong></span>
-                  <span className="text-slate-500 text-[11px]">(Bạn có thể nhập trực tiếp vào ô xác nhận bên dưới)</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-200 mb-6">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Số Điện Thoại Quản Trị Mới (*)
-                  </label>
-                  <input
-                    type="tel"
-                    value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
-                    placeholder="VD: 0984635286"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-gold-500/50"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Hiện tại: <span className="font-mono text-navy-900 font-semibold">{telegramConfig.adminPhone}</span>
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Telegram Chat ID Mới (*)
-                    </label>
-                    <a
-                      href={`https://t.me/${telegramConfig.botUsername}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-gold-600 hover:text-gold-700 underline font-medium"
-                    >
-                      Bấm vào bot @{telegramConfig.botUsername} để lấy ID &rarr;
-                    </a>
-                  </div>
-                  <input
-                    type="text"
-                    value={newChatId}
-                    onChange={(e) => setNewChatId(e.target.value)}
-                    placeholder="VD: 5456744480"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-mono font-medium focus:ring-2 focus:ring-gold-500/50"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Hiện tại: <span className="font-mono text-navy-900 font-semibold">{telegramConfig.adminChatId}</span>
-                  </p>
-                </div>
-              </div>
-
-              {!changeOtpSent ? (
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={handleRequestChangeOTP}
-                  disabled={isSendingChangeOtp}
-                  className="font-semibold text-xs py-3 px-6 shadow-md"
-                >
-                  {isSendingChangeOtp ? (
-                    <span className="flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Đang gửi OTP về Telegram ID cũ...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <Send className="w-4 h-4" />
-                      YÊU CẦU MÃ OTP VỀ TELEGRAM ID CŨ ({telegramConfig.adminChatId})
-                    </span>
-                  )}
-                </Button>
-              ) : (
-                <form onSubmit={handleConfirmChange} className="space-y-4 max-w-md">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                      Nhập mã OTP 6 số gửi về Telegram ID cũ (*)
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={changeOtp}
-                      onChange={(e) => setChangeOtp(e.target.value.replace(/\D/g, ''))}
-                      placeholder="• • • • • •"
-                      autoFocus
-                      className="w-full text-center tracking-[0.4em] font-mono text-lg font-bold px-4 py-2.5 rounded-xl border border-gold-500 text-navy-900 bg-white"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      disabled={changeOtp.length < 6}
-                      className="text-xs font-semibold py-2.5 px-6"
-                    >
-                      Xác Nhận & Cập Nhật Sang Telegram ID Mới
-                    </Button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setChangeOtpSent(false);
-                        setChangeOtp('');
-                        setExpectedChangeOtp(null);
-                      }}
-                      className="text-xs text-slate-500 hover:text-slate-700 underline"
-                    >
-                      Hủy thao tác
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-
             {/* Company Info & Visual Assets Configuration Form */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
               <h3 className="text-base font-bold text-navy-900 mb-1">

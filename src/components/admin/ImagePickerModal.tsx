@@ -91,23 +91,31 @@ export function ImagePickerModal({
   };
 
   // Handle direct VPS URL submission
-  const handleAddVpsUrl = (e: React.FormEvent) => {
+  const handleAddVpsUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!vpsUrl.trim()) return;
 
-    const item = mediaService.addServerUrl(vpsUrl, vpsName, vpsCategory);
-    setSelectedUrl(item.url);
-    setVpsUrl('');
-    setVpsName('');
-    refreshMedia();
-    setActiveTab('library');
+    try {
+      const item = await mediaService.addServerUrl(vpsUrl, vpsName, vpsCategory);
+      setSelectedUrl(item.url);
+      setVpsUrl('');
+      setVpsName('');
+      refreshMedia();
+      setActiveTab('library');
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Không thể liên kết ảnh');
+    }
   };
 
   // Delete media item
-  const handleDeleteMedia = (e: React.MouseEvent, id: string) => {
+  const handleDeleteMedia = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (confirm('Bạn có chắc chắn muốn xóa ảnh này khỏi kho ảnh?')) {
-      mediaService.deleteMedia(id);
+      try {
+        await mediaService.deleteMedia(id);
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : 'Không thể xóa ảnh');
+      }
       refreshMedia();
     }
   };

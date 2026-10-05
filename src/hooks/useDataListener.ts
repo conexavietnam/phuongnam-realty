@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DATA_CHANGED_EVENT } from '@/services/dataStorage';
 
 export function useDataListener(): number {
   const [version, setVersion] = useState(0);
@@ -8,12 +9,10 @@ export function useDataListener(): number {
       setVersion((v) => v + 1);
     };
 
-    window.addEventListener('pn_data_changed', handleUpdate);
-    window.addEventListener('storage', handleUpdate);
+    window.addEventListener(DATA_CHANGED_EVENT, handleUpdate);
 
     return () => {
-      window.removeEventListener('pn_data_changed', handleUpdate);
-      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener(DATA_CHANGED_EVENT, handleUpdate);
     };
   }, []);
 

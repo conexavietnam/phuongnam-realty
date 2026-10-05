@@ -1,0 +1,92 @@
+{
+  "regions": [
+    {
+      "value": "tp-thu-duc",
+      "label": "TP. Thủ Đức"
+    },
+    {
+      "value": "quan-2",
+      "label": "Quận 2"
+    },
+    {
+      "value": "quan-7",
+      "label": "Quận 7"
+    },
+    {
+      "value": "quan-9",
+      "label": "Quận 9"
+    },
+    {
+      "value": "binh-chanh",
+      "label": "Huyện Bình Chánh"
+    },
+    {
+      "value": "nha-be",
+      "label": "Huyện Nhà Bè"
+    },
+    {
+      "value": "long-bien-ha-noi",
+      "label": "Long Biên Hà Nội"
+    },
+    {
+      "value": "nhon-trach-dong-nai",
+      "label": "Nhơn Trạch Đồng Nai"
+    },
+    {
+      "value": "bien-hoa-dong-nai",
+      "label": "Biên Hòa Đồng Nai"
+    },
+    {
+      "value": "phan-thiet-binh-thuan",
+      "label": "Phan Thiết Bình Thuận"
+    },
+    {
+      "value": "van-giang-hung-yen",
+      "label": "Văn Giang Hưng Yên"
+    }
+  ],
+  "propertyTypes": [
+    {
+      "value": "can-ho",
+      "label": "Căn hộ"
+    },
+    {
+      "value": "nha-pho",
+      "label": "Nhà phố"
+    },
+    {
+      "value": "biet-thu",
+      "label": "Biệt thự"
+    },
+    {
+      "value": "shophouse",
+      "label": "Shophouse"
+    },
+    {
+      "value": "dat-nen",
+      "label": "Đất nền"
+    }
+  ],
+  "priceRanges": [
+    {
+      "value": "duoi-3-ty",
+      "label": "Dưới 3 tỷ"
+    },
+    {
+      "value": "3-5-ty",
+      "label": "3–5 tỷ"
+    },
+    {
+      "value": "5-10-ty",
+      "label": "5–10 tỷ"
+    },
+    {
+      "value": "10-20-ty",
+      "label": "10–20 tỷ"
+    },
+    {
+      "value": "tren-20-ty",
+      "label": "Trên 20 tỷ"
+    }
+  ]
+}

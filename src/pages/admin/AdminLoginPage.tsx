@@ -3,17 +3,15 @@ import { ShieldCheck, Send, KeyRound, AlertCircle, ArrowLeft, MessageSquare, Che
 import { Link } from 'react-router-dom';
 import { Logo } from '@/components/common/Logo';
 import { Button } from '@/components/common/Button';
-import { telegramService } from '@/services/telegramService';
+import { api } from '@/services/apiClient';
 
 interface AdminLoginPageProps {
   onLoginSuccess: () => void;
 }
 
 export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
-  const [config] = useState(telegramService.getConfig());
-  const [phone, setPhone] = useState(config.adminPhone);
+  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
   const [otpSent, setOtpSent] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -33,47 +31,26 @@ export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    const activeConfig = telegramService.getConfig();
-    const cleanInputPhone = phone.trim().replace(/\s/g, '');
-    const cleanAdminPhone = activeConfig.adminPhone.trim().replace(/\s/g, '');
-
-    if (cleanInputPhone !== cleanAdminPhone) {
-      setErrorMessage(`Số điện thoại không chính xác. Tài khoản quản trị hiện tại là ${activeConfig.adminPhone}`);
+    if (!phone.trim()) {
+      setErrorMessage('Vui lòng nhập số điện thoại quản trị');
       return;
     }
 
     setIsSendingOtp(true);
-    // Generate secure 6-digit OTP
-    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(newOtp);
-
     try {
-      const res = await telegramService.sendOTP(
-        newOtp,
-        'Đăng nhập trang Quản Trị Hệ Thống (CMS)',
-        activeConfig.adminChatId,
-      );
-
-      if (res.success) {
-        setOtpSent(true);
-        setCountdown(180); // 3 minutes
-        setSuccessMessage(`Mã xác thực OTP đã được gửi về Telegram ID: ${activeConfig.adminChatId} qua bot @${activeConfig.botUsername}.`);
-      } else {
-        // Fallback still active for testing if Telegram API times out or is blocked by network
-        setOtpSent(true);
-        setCountdown(180);
-        setSuccessMessage(`Đã tạo mã OTP xác thực. (Ghi chú bot: ${res.error || 'Vui lòng kiểm tra bot'}).`);
-      }
-    } catch {
+      const res = await api.requestOtp(phone.trim());
       setOtpSent(true);
-      setCountdown(180);
-      setSuccessMessage('Đã tạo mã OTP xác thực đăng nhập.');
+      setOtp('');
+      setCountdown(res.expiresIn);
+      setSuccessMessage('Mã xác thực OTP đã được gửi về Telegram quản trị.');
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Không thể gửi mã OTP.');
     } finally {
       setIsSendingOtp(false);
     }
   };
 
-  const handleVerify = (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -83,20 +60,13 @@ export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
     }
 
     setIsVerifying(true);
-
-    if (generatedOtp && otp.trim() === generatedOtp) {
-      // Store authenticated session
-      const sessionData = {
-        phone,
-        telegramId: config.adminChatId,
-        authenticatedAt: new Date().toISOString(),
-      };
-      sessionStorage.setItem('pn_admin_session', JSON.stringify(sessionData));
-      setIsVerifying(false);
+    try {
+      await api.verifyOtp(otp.trim());
       onLoginSuccess();
-    } else {
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Xác thực thất bại.');
+    } finally {
       setIsVerifying(false);
-      setErrorMessage('Mã OTP không đúng hoặc đã hết hạn. Vui lòng kiểm tra lại tin nhắn Telegram.');
     }
   };
 
@@ -120,33 +90,19 @@ export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
             Đăng Nhập Quản Trị Viên
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Xác thực bảo mật 2 lớp qua bot Telegram @{config.botUsername}
+            Xác thực bảo mật 2 lớp qua Telegram
           </p>
         </div>
 
         {/* Login Card */}
         <div className="bg-white/10 backdrop-blur-xl py-8 px-6 sm:px-8 shadow-2xl rounded-2xl border border-white/15">
-          {/* Telegram Target Info Banner */}
           <div className="bg-navy-900/80 rounded-xl p-3.5 border border-gold-500/30 mb-6 flex items-start gap-3">
             <div className="p-2 rounded-lg bg-gold-500/20 text-gold-400 shrink-0 mt-0.5">
               <MessageSquare className="w-4 h-4" />
             </div>
-            <div className="text-xs text-slate-300">
-              <div className="font-semibold text-white mb-0.5 flex items-center justify-between">
-                <span>Telegram Bot: @{config.botUsername}</span>
-                <a
-                  href={`https://t.me/${config.botUsername}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-gold-400 hover:text-gold-300 underline font-medium"
-                >
-                  Mở chat bot &rarr;
-                </a>
-              </div>
-              <p className="text-slate-400">
-                OTP sẽ được gửi đến Telegram ID: <span className="font-mono text-gold-400 font-bold">{config.adminChatId}</span>
-              </p>
-            </div>
+            <p className="text-xs text-slate-400">
+              Mã OTP sẽ được gửi đến Telegram của quản trị viên và có hiệu lực trong 3 phút.
+            </p>
           </div>
 
           {/* Error Message */}
@@ -165,21 +121,6 @@ export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
             </div>
           )}
 
-          {/* Development / Demo helper banner */}
-          {generatedOtp && (
-            <div className="mb-5 bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">Mã OTP Telegram vừa gửi:</span>
-                <span className="font-mono font-bold text-base text-gold-400 tracking-widest bg-black/40 px-2 py-0.5 rounded border border-gold-500/30">
-                  {generatedOtp}
-                </span>
-              </div>
-              <p className="text-[11px] text-amber-300/80 mt-1">
-                (Đã gửi tin nhắn tới Telegram ID: {config.adminChatId}. Bạn có thể nhập mã này trực tiếp vào ô bên dưới).
-              </p>
-            </div>
-          )}
-
           <form onSubmit={handleVerify} className="space-y-5">
             {/* Phone Number Input */}
             <div>
@@ -191,7 +132,7 @@ export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="0984635286"
+                  placeholder="Số điện thoại quản trị"
                   disabled={otpSent}
                   className="w-full px-4 py-3 rounded-xl bg-navy-950/70 border border-white/20 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500 transition-colors disabled:opacity-60"
                 />
@@ -280,7 +221,6 @@ export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
                     onClick={() => {
                       setOtpSent(false);
                       setOtp('');
-                      setGeneratedOtp(null);
                       setErrorMessage(null);
                       setSuccessMessage(null);
                     }}

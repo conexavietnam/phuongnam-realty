@@ -1,22 +1,24 @@
+// Data-access layer. Reads are synchronous from an in-memory cache that is filled
+// from the PHP API at startup (bundled JSON is the read-only fallback); writes update
+// the cache optimistically and persist through the API. Swapping the backend later
+// only requires changing this file and apiClient.ts.
 import type { Project } from '@/types/project';
 import type { Property } from '@/types/property';
 import type { NewsArticle } from '@/types/news';
-import type { ConsignmentProject } from '@/types/contact';
+import type { Agent, ConsignmentProject } from '@/types/contact';
+import type { FilterConfig, MenuConfig } from '@/types/common';
 
 import initialProjects from '@/data/projects.json';
 import initialProperties from '@/data/properties.json';
 import initialNews from '@/data/news.json';
 import initialCompany from '@/data/company.json';
 import initialConsignments from '@/data/consignments.json';
+import initialAgents from '@/data/agents.json';
+import initialMenu from '@/data/menu.json';
+import initialFilters from '@/data/filters.json';
+import { api } from '@/services/apiClient';
 
-const STORAGE_KEYS = {
-  PROJECTS: 'pn_storage_projects',
-  PROPERTIES: 'pn_storage_properties',
-  NEWS: 'pn_storage_news',
-  COMPANY: 'pn_storage_company',
-  CONSIGNMENTS: 'pn_storage_consignments',
-  CUSTOMER_LEADS: 'pn_storage_customer_leads',
-};
+export const DATA_CHANGED_EVENT = 'pn_data_changed';
 
 export interface CustomerLead {
   id: string;
@@ -32,217 +34,206 @@ export interface CustomerLead {
   source: 'consignment' | 'contact';
 }
 
-function getFromStorage<T>(key: string, defaultValue: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-  } catch (e) {
-    console.warn(`Error reading ${key} from storage:`, e);
-  }
-  return defaultValue;
+type Company = typeof initialCompany & { heroBannerImage?: string; logoImage?: string };
+
+interface Collections {
+  projects: Project[];
+  properties: Property[];
+  news: NewsArticle[];
+  agents: Agent[];
+  consignments: ConsignmentProject[];
+  company: Company;
+  menu: MenuConfig;
+  filters: FilterConfig;
+  customer_leads: CustomerLead[];
 }
 
-function saveToStorage<T>(key: string, value: T): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new CustomEvent('pn_data_changed', { detail: { key } }));
-  } catch (e) {
-    console.warn(`Error saving ${key} to storage:`, e);
+type CollectionName = keyof Collections;
+type PublicCollectionName = Exclude<CollectionName, 'customer_leads'>;
+
+const OBJECT_COLLECTIONS: CollectionName[] = ['company', 'menu', 'filters'];
+const PUBLIC_COLLECTIONS: PublicCollectionName[] = [
+  'projects',
+  'properties',
+  'news',
+  'agents',
+  'consignments',
+  'company',
+  'menu',
+  'filters',
+];
+
+const BUNDLED: Collections = {
+  projects: initialProjects as unknown as Project[],
+  properties: initialProperties as unknown as Property[],
+  news: initialNews as unknown as NewsArticle[],
+  agents: initialAgents as unknown as Agent[],
+  consignments: initialConsignments as unknown as ConsignmentProject[],
+  company: initialCompany,
+  menu: initialMenu as unknown as MenuConfig,
+  filters: initialFilters as unknown as FilterConfig,
+  customer_leads: [],
+};
+
+const cache: Collections = { ...BUNDLED };
+
+function hasValidShape(name: CollectionName, value: unknown): boolean {
+  if (OBJECT_COLLECTIONS.includes(name)) {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
+  return Array.isArray(value);
+}
+
+function emitChange(): void {
+  window.dispatchEvent(new CustomEvent(DATA_CHANGED_EVENT));
+}
+
+async function pull<K extends CollectionName>(name: K): Promise<void> {
+  const value = await api.getData<unknown>(name);
+  if (hasValidShape(name, value)) {
+    cache[name] = value as Collections[K];
+  }
+}
+
+async function persist(name: CollectionName): Promise<void> {
+  try {
+    await api.putData(name, cache[name]);
+  } catch (err) {
+    await pull(name).catch(() => undefined);
+    emitChange();
+    throw err;
+  }
+}
+
+async function commit<K extends CollectionName>(name: K, value: Collections[K]): Promise<void> {
+  cache[name] = value;
+  emitChange();
+  await persist(name);
+}
+
+function upsert<T extends { id: string }>(list: T[], item: T): T[] {
+  const index = list.findIndex((entry) => entry.id === item.id);
+  if (index < 0) return [item, ...list];
+  const next = [...list];
+  next[index] = item;
+  return next;
 }
 
 export const dataStorage = {
+  // Load public collections from the API; bundled JSON stays in place when it is unreachable.
+  async init(): Promise<void> {
+    await Promise.allSettled(PUBLIC_COLLECTIONS.map((name) => pull(name)));
+  },
+
+  // Admin only: refresh everything including leads (requires a valid session).
+  async loadAdmin(): Promise<void> {
+    await Promise.all([this.init(), pull('customer_leads')]);
+    emitChange();
+  },
+
   // === PROJECTS ===
   getProjects(): Project[] {
-    return getFromStorage<Project[]>(
-      STORAGE_KEYS.PROJECTS,
-      initialProjects as unknown as Project[],
-    );
+    return cache.projects;
   },
 
   getProjectBySlug(slug: string): Project | undefined {
-    return this.getProjects().find((p) => p.slug === slug);
+    return cache.projects.find((p) => p.slug === slug);
   },
 
-  saveProject(project: Project): void {
-    const list = this.getProjects();
-    const index = list.findIndex((p) => p.id === project.id);
-    if (index >= 0) {
-      list[index] = project;
-    } else {
-      list.unshift(project);
-    }
-    saveToStorage(STORAGE_KEYS.PROJECTS, list);
+  saveProject(project: Project): Promise<void> {
+    return commit('projects', upsert(cache.projects, project));
   },
 
-  deleteProject(id: string): void {
-    const list = this.getProjects().filter((p) => p.id !== id);
-    saveToStorage(STORAGE_KEYS.PROJECTS, list);
+  deleteProject(id: string): Promise<void> {
+    return commit('projects', cache.projects.filter((p) => p.id !== id));
   },
 
   // === PROPERTIES ===
   getProperties(): Property[] {
-    return getFromStorage<Property[]>(
-      STORAGE_KEYS.PROPERTIES,
-      initialProperties as unknown as Property[],
-    );
+    return cache.properties;
   },
 
   getPropertyBySlug(slug: string): Property | undefined {
-    return this.getProperties().find((p) => p.slug === slug);
+    return cache.properties.find((p) => p.slug === slug);
   },
 
-  saveProperty(property: Property): void {
-    const list = this.getProperties();
-    const index = list.findIndex((p) => p.id === property.id);
-    if (index >= 0) {
-      list[index] = property;
-    } else {
-      list.unshift(property);
-    }
-    saveToStorage(STORAGE_KEYS.PROPERTIES, list);
+  saveProperty(property: Property): Promise<void> {
+    return commit('properties', upsert(cache.properties, property));
   },
 
-  deleteProperty(id: string): void {
-    const list = this.getProperties().filter((p) => p.id !== id);
-    saveToStorage(STORAGE_KEYS.PROPERTIES, list);
+  deleteProperty(id: string): Promise<void> {
+    return commit('properties', cache.properties.filter((p) => p.id !== id));
   },
 
   // === NEWS ===
   getNews(): NewsArticle[] {
-    return getFromStorage<NewsArticle[]>(
-      STORAGE_KEYS.NEWS,
-      initialNews as unknown as NewsArticle[],
-    );
+    return cache.news;
   },
 
   getNewsBySlug(slug: string): NewsArticle | undefined {
-    return this.getNews().find((n) => n.slug === slug);
+    return cache.news.find((n) => n.slug === slug);
   },
 
-  saveNews(article: NewsArticle): void {
-    const list = this.getNews();
-    const index = list.findIndex((n) => n.id === article.id);
-    if (index >= 0) {
-      list[index] = article;
-    } else {
-      list.unshift(article);
-    }
-    saveToStorage(STORAGE_KEYS.NEWS, list);
+  saveNews(article: NewsArticle): Promise<void> {
+    return commit('news', upsert(cache.news, article));
   },
 
-  deleteNews(id: string): void {
-    const list = this.getNews().filter((n) => n.id !== id);
-    saveToStorage(STORAGE_KEYS.NEWS, list);
+  deleteNews(id: string): Promise<void> {
+    return commit('news', cache.news.filter((n) => n.id !== id));
   },
 
-  // === COMPANY INFO ===
-  getCompany(): typeof initialCompany {
-    return getFromStorage(STORAGE_KEYS.COMPANY, initialCompany);
+  // === COMPANY, MENU, FILTERS, AGENTS (site configuration) ===
+  getCompany(): Company {
+    return cache.company;
   },
 
-  saveCompany(info: Partial<typeof initialCompany>): typeof initialCompany {
-    const current = this.getCompany();
-    const updated = { ...current, ...info };
-    saveToStorage(STORAGE_KEYS.COMPANY, updated);
-    return updated;
+  saveCompany(info: Partial<Company>): Promise<void> {
+    return commit('company', { ...cache.company, ...info });
+  },
+
+  getMenu(): MenuConfig {
+    return cache.menu;
+  },
+
+  getFilters(): FilterConfig {
+    return cache.filters;
+  },
+
+  getAgents(): Agent[] {
+    return cache.agents;
   },
 
   // === CONSIGNMENT PROJECTS ===
   getConsignmentProjects(): ConsignmentProject[] {
-    return getFromStorage<ConsignmentProject[]>(
-      STORAGE_KEYS.CONSIGNMENTS,
-      initialConsignments as unknown as ConsignmentProject[],
+    return cache.consignments;
+  },
+
+  // === CUSTOMER LEADS (created through POST lead, managed here by admin) ===
+  getCustomerLeads(): CustomerLead[] {
+    return cache.customer_leads;
+  },
+
+  updateLeadStatus(id: string, status: CustomerLead['status']): Promise<void> {
+    return commit(
+      'customer_leads',
+      cache.customer_leads.map((lead) => (lead.id === id ? { ...lead, status } : lead)),
     );
   },
 
-  saveConsignmentProject(item: ConsignmentProject): void {
-    const list = this.getConsignmentProjects();
-    const index = list.findIndex((c) => c.id === item.id);
-    if (index >= 0) {
-      list[index] = item;
-    } else {
-      list.unshift(item);
-    }
-    saveToStorage(STORAGE_KEYS.CONSIGNMENTS, list);
-  },
-
-  deleteConsignmentProject(id: string): void {
-    const list = this.getConsignmentProjects().filter((c) => c.id !== id);
-    saveToStorage(STORAGE_KEYS.CONSIGNMENTS, list);
-  },
-
-  // === CUSTOMER LEADS & CONSIGNMENT SUBMISSIONS ===
-  getCustomerLeads(): CustomerLead[] {
-    return getFromStorage<CustomerLead[]>(STORAGE_KEYS.CUSTOMER_LEADS, [
-      {
-        id: 'lead-01',
-        fullName: 'Nguyễn Văn Minh',
-        phone: '0912 345 678',
-        purpose: 'ban',
-        region: 'quan-2',
-        propertyType: 'can-ho',
-        priceRange: '4-6',
-        note: 'Cần bán gấp căn 2PN Palm River view sông',
-        createdAt: '2025-02-15T09:30:00Z',
-        status: 'new',
-        source: 'consignment',
-      },
-      {
-        id: 'lead-02',
-        fullName: 'Phạm Thị Mai',
-        phone: '0988 765 432',
-        purpose: 'cho-thue',
-        region: 'nha-be',
-        propertyType: 'biet-thu',
-        priceRange: 'tren-10',
-        note: 'Ký gửi cho thuê biệt thự đảo hoàn thiện nội thất',
-        createdAt: '2025-02-18T14:20:00Z',
-        status: 'contacted',
-        source: 'consignment',
-      },
-    ]);
-  },
-
-  addCustomerLead(lead: Omit<CustomerLead, 'id' | 'createdAt' | 'status'>): CustomerLead {
-    const leads = this.getCustomerLeads();
-    const newLead: CustomerLead = {
-      ...lead,
-      id: `lead-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      status: 'new',
-    };
-    leads.unshift(newLead);
-    saveToStorage(STORAGE_KEYS.CUSTOMER_LEADS, leads);
-    return newLead;
-  },
-
-  updateLeadStatus(id: string, status: CustomerLead['status']): void {
-    const leads = this.getCustomerLeads();
-    const item = leads.find((l) => l.id === id);
-    if (item) {
-      item.status = status;
-      saveToStorage(STORAGE_KEYS.CUSTOMER_LEADS, leads);
-    }
-  },
-
-  deleteLead(id: string): void {
-    const leads = this.getCustomerLeads().filter((l) => l.id !== id);
-    saveToStorage(STORAGE_KEYS.CUSTOMER_LEADS, leads);
+  deleteLead(id: string): Promise<void> {
+    return commit('customer_leads', cache.customer_leads.filter((l) => l.id !== id));
   },
 
   // === BACKUP & RESTORE ===
   exportAllData(): string {
     return JSON.stringify(
       {
-        projects: this.getProjects(),
-        properties: this.getProperties(),
-        news: this.getNews(),
-        company: this.getCompany(),
-        consignments: this.getConsignmentProjects(),
-        leads: this.getCustomerLeads(),
+        projects: cache.projects,
+        properties: cache.properties,
+        news: cache.news,
+        company: cache.company,
+        consignments: cache.consignments,
+        leads: cache.customer_leads,
         exportedAt: new Date().toISOString(),
       },
       null,
@@ -250,28 +241,36 @@ export const dataStorage = {
     );
   },
 
-  importAllData(jsonStr: string): boolean {
+  // Resolves false when the file is not a valid backup; rejects when the server refuses the write.
+  async importAllData(jsonStr: string): Promise<boolean> {
+    let data: Record<string, unknown>;
     try {
-      const data = JSON.parse(jsonStr);
-      if (data.projects) saveToStorage(STORAGE_KEYS.PROJECTS, data.projects);
-      if (data.properties) saveToStorage(STORAGE_KEYS.PROPERTIES, data.properties);
-      if (data.news) saveToStorage(STORAGE_KEYS.NEWS, data.news);
-      if (data.company) saveToStorage(STORAGE_KEYS.COMPANY, data.company);
-      if (data.consignments) saveToStorage(STORAGE_KEYS.CONSIGNMENTS, data.consignments);
-      if (data.leads) saveToStorage(STORAGE_KEYS.CUSTOMER_LEADS, data.leads);
-      return true;
+      data = JSON.parse(jsonStr);
     } catch {
       return false;
     }
+    const mapping: Array<[string, CollectionName]> = [
+      ['projects', 'projects'],
+      ['properties', 'properties'],
+      ['news', 'news'],
+      ['company', 'company'],
+      ['consignments', 'consignments'],
+      ['leads', 'customer_leads'],
+    ];
+    const present = mapping.filter(([key]) => data[key] !== undefined);
+    if (present.length === 0 || present.some(([key, name]) => !hasValidShape(name, data[key]))) {
+      return false;
+    }
+    for (const [key, name] of present) {
+      await commit(name, data[key] as Collections[typeof name]);
+    }
+    return true;
   },
 
-  resetToDefault(): void {
-    localStorage.removeItem(STORAGE_KEYS.PROJECTS);
-    localStorage.removeItem(STORAGE_KEYS.PROPERTIES);
-    localStorage.removeItem(STORAGE_KEYS.NEWS);
-    localStorage.removeItem(STORAGE_KEYS.COMPANY);
-    localStorage.removeItem(STORAGE_KEYS.CONSIGNMENTS);
-    localStorage.removeItem(STORAGE_KEYS.CUSTOMER_LEADS);
-    window.dispatchEvent(new CustomEvent('pn_data_changed', { detail: { reset: true } }));
+  async resetToDefault(): Promise<void> {
+    const names: CollectionName[] = ['projects', 'properties', 'news', 'company', 'consignments'];
+    for (const name of names) {
+      await commit(name, BUNDLED[name] as Collections[typeof name]);
+    }
   },
 };

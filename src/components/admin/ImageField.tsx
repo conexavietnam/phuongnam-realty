@@ -45,7 +45,7 @@ export function ImageField({
       const uploaded = await mediaService.uploadFile(file, category);
       onChange(uploaded.url);
     } catch (err) {
-      console.error('Error uploading image:', err);
+      alert(err instanceof Error ? err.message : 'Tải ảnh lên thất bại.');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {

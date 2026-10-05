@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Send, User, Phone, MapPin, Building2, CircleDollarSign, ArrowRight, CheckCircle2 } from 'lucide-react';
 import type { ConsignmentFormData } from '@/types';
 import { companyService } from '@/services/companyService';
-import { dataStorage } from '@/services/dataStorage';
 import { telegramService } from '@/services/telegramService';
 import { FormInput } from '@/components/common/FormInput';
 import { FormSelect } from '@/components/common/FormSelect';
@@ -30,13 +29,15 @@ export function ConsignmentForm({ onSubmit, className = '' }: ConsignmentFormPro
   const [errors, setErrors] = useState<Partial<Record<keyof ConsignmentFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState('');
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ConsignmentFormData, string>> = {};
     if (!formData.fullName.trim()) newErrors.fullName = 'Vui lòng nhập họ và tên';
     if (!formData.phone.trim()) {
       newErrors.phone = 'Vui lòng nhập số điện thoại';
-    } else if (!/^[0-9+\s-]{9,15}$/.test(formData.phone.trim())) {
+    } else if (!/^(\+84|0)[0-9\s.-]{8,13}$/.test(formData.phone.trim())) {
       newErrors.phone = 'Số điện thoại không hợp lệ';
     }
     setErrors(newErrors);
@@ -50,8 +51,8 @@ export function ConsignmentForm({ onSubmit, className = '' }: ConsignmentFormPro
     setIsSubmitting(true);
 
     try {
-      // 1. Save lead to local storage engine
-      dataStorage.addCustomerLead({
+      setSubmitError(null);
+      await telegramService.submitConsignment({
         fullName: formData.fullName,
         phone: formData.phone,
         purpose: formData.purpose,
@@ -59,17 +60,7 @@ export function ConsignmentForm({ onSubmit, className = '' }: ConsignmentFormPro
         propertyType: formData.propertyType,
         priceRange: formData.priceRange,
         note: formData.note,
-        source: 'consignment',
-      });
-
-      // 2. Dispatch real-time Telegram alert to Admin
-      await telegramService.notifyNewConsignment({
-        fullName: formData.fullName,
-        phone: formData.phone,
-        propertyType: formData.propertyType || (formData.purpose === 'ban' ? 'Cần bán BĐS' : 'Cho thuê BĐS'),
-        address: formData.region,
-        expectedPrice: formData.priceRange,
-        note: formData.note,
+        honeypot,
       });
 
       if (onSubmit) {
@@ -87,7 +78,7 @@ export function ConsignmentForm({ onSubmit, className = '' }: ConsignmentFormPro
         note: '',
       });
     } catch (err) {
-      console.error('Error submitting consignment:', err);
+      setSubmitError(err instanceof Error ? err.message : 'Gửi yêu cầu thất bại. Vui lòng thử lại.');
     } finally {
       setIsSubmitting(false);
     }
@@ -149,6 +140,16 @@ export function ConsignmentForm({ onSubmit, className = '' }: ConsignmentFormPro
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
+        <input
+          type="text"
+          name="website"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="hidden"
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
           <FormInput
             label="Họ và tên *"
@@ -201,6 +202,8 @@ export function ConsignmentForm({ onSubmit, className = '' }: ConsignmentFormPro
           value={formData.note || ''}
           onChange={(e) => setFormData({ ...formData, note: e.target.value })}
         />
+
+        {submitError && <p className="text-red-500 text-xs mb-3" role="alert">{submitError}</p>}
 
         <Button
           type="submit"

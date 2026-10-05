@@ -1,45 +1,46 @@
 import { useState, useEffect } from 'react';
 import { AdminLoginPage } from './AdminLoginPage';
 import { AdminDashboardPage } from './AdminDashboardPage';
+import { api, AUTH_EXPIRED_EVENT } from '@/services/apiClient';
+
+type AuthState = 'checking' | 'anonymous' | 'authenticated';
 
 export function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    try {
-      const session = sessionStorage.getItem('pn_admin_session');
-      return !!session;
-    } catch {
-      return false;
-    }
-  });
+  const [authState, setAuthState] = useState<AuthState>('checking');
 
   useEffect(() => {
-    const checkSession = () => {
-      try {
-        const session = sessionStorage.getItem('pn_admin_session');
-        setIsAuthenticated(!!session);
-      } catch {
-        setIsAuthenticated(false);
-      }
+    let cancelled = false;
+    api
+      .me()
+      .then((ok) => {
+        if (!cancelled) setAuthState(ok ? 'authenticated' : 'anonymous');
+      })
+      .catch(() => {
+        if (!cancelled) setAuthState('anonymous');
+      });
+
+    const handleExpired = () => setAuthState('anonymous');
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleExpired);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(AUTH_EXPIRED_EVENT, handleExpired);
     };
-    window.addEventListener('storage', checkSession);
-    return () => window.removeEventListener('storage', checkSession);
   }, []);
 
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-  };
-
   const handleLogout = () => {
-    try {
-      sessionStorage.removeItem('pn_admin_session');
-    } catch (e) {
-      console.error(e);
-    }
-    setIsAuthenticated(false);
+    api.logout().finally(() => setAuthState('anonymous'));
   };
 
-  if (!isAuthenticated) {
-    return <AdminLoginPage onLoginSuccess={handleLoginSuccess} />;
+  if (authState === 'checking') {
+    return (
+      <div className="min-h-screen bg-navy-950 flex items-center justify-center text-slate-400 text-sm">
+        Đang kiểm tra phiên đăng nhập...
+      </div>
+    );
+  }
+
+  if (authState === 'anonymous') {
+    return <AdminLoginPage onLoginSuccess={() => setAuthState('authenticated')} />;
   }
 
   return <AdminDashboardPage onLogout={handleLogout} />;

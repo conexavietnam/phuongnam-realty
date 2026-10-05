@@ -9,6 +9,13 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    // Local development: run `php -S 127.0.0.1:8080 -t server/api` with a server/config.php.
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8080',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   },
   plugins: [
     react(),
@@ -45,6 +52,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,woff,woff2}'],
         runtimeCaching: [
           {

@@ -6,15 +6,15 @@
    - Bất kỳ thay đổi nào trong Admin phải phản ánh ngay lập tức ra giao diện người dùng ngoài trang web (Desktop & Mobile).
 2. **Xác thực Đăng nhập Admin qua Telegram OTP**:
    - Đường dẫn quản trị: `/admin`.
-   - Tài khoản đăng nhập: Số điện thoại `0984635286`.
-   - Xác thực: Hệ thống sinh mã OTP 6 chữ số ngẫu nhiên, sử dụng Telegram Bot Token (tại file `telegram.tsx`: `8850370411:AAEObR_WjSc_4OApJk-tHHHe3h0b33ZKWB0` - Bot `@vaway_bot`) để gửi tin nhắn OTP trực tiếp về Telegram ID `5456744480`.
+   - Tài khoản đăng nhập: Số điện thoại quản trị `<see server config>`.
+   - Xác thực: Hệ thống sinh mã OTP 6 chữ số ngẫu nhiên, máy chủ PHP gửi tin nhắn OTP qua Telegram Bot về Telegram ID `<see server config>` (token và chat id chỉ nằm trong `server/config.php` trên máy chủ, không bao giờ nằm trong mã client).
    - Admin nhập đúng OTP mới được cấp quyền truy cập phiên làm việc.
 3. **Đẩy thông báo Ký gửi BĐS & Liên hệ về Telegram**:
    - Khi khách hàng gửi yêu cầu ký gửi bất động sản hoặc form liên hệ ngoài UI, hệ thống tự động gửi thông báo chi tiết (Tên khách, SĐT, loại BĐS, giá, nhu cầu, thời gian) về Telegram ID của Admin theo thời gian thực.
 4. **Quy trình Đổi Số Điện Thoại & Đổi Telegram ID (Bảo mật 2 bước)**:
    - Khi Admin muốn đổi số điện thoại quản trị hoặc chuyển sang Telegram ID mới:
-     - Cung cấp link bot `@vaway_bot` để người dùng mới chat/lấy ID.
-     - Hệ thống bắt buộc gửi mã OTP về **Telegram ID CŨ** (`5456744480`) để xác minh quyền sở hữu hiện tại.
+     - Cung cấp link bot (`<see server config>`) để người dùng mới chat/lấy ID.
+     - Hệ thống bắt buộc gửi mã OTP về **Telegram ID CŨ** (`<see server config>`) để xác minh quyền sở hữu hiện tại.
      - Chỉ khi nhập đúng OTP từ Telegram ID cũ thì hệ thống mới cho phép lưu và kích hoạt Telegram ID / Số điện thoại mới.
 
 ---
@@ -30,7 +30,7 @@
 - **Kế hoạch Database cho tương lai**: Hiện tại dữ liệu lưu trữ bền vững tại client/local. Khi kết nối Cloud SQL hoặc Firestore theo yêu cầu sau này, Data Storage Service sẽ đóng vai trò Adapter chuyển tiếp lên API/DB mà không làm thay đổi logic giao diện.
 
 ### B. Tầng Tích Hợp Telegram Bot (`src/services/telegramService.ts`)
-- **Bot Token**: `8850370411:AAEObR_WjSc_4OApJk-tHHHe3h0b33ZKWB0`
+- **Bot Token**: `<see server config>` (chỉ lưu trong `server/config.php`)
 - **Telegram Bot API**: `https://api.telegram.org/bot<TOKEN>/sendMessage`
 - **Các hàm cốt lõi**:
   1. `sendOTP(chatId: string, otpCode: string, purpose: string)`: Gửi mã OTP xác thực đăng nhập hoặc đổi cấu hình bảo mật.

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DOMPurify from 'dompurify';
 import { useParams } from 'react-router-dom';
 import { MapPin, Expand } from 'lucide-react';
 import { MobileLayout } from '@/layouts/MobileLayout';
@@ -60,7 +61,7 @@ export function MobileProjectDetailPage() {
         {/* Description */}
         <div className="mb-6">
           <h2 className="font-bold text-navy-900 mb-3 border-l-4 border-gold-500 pl-2">Tổng quan</h2>
-          <div className={`text-slate-600 text-sm leading-relaxed ${expanded ? '' : 'line-clamp-4'}`} dangerouslySetInnerHTML={{ __html: project.fullDescription }} />
+          <div className={`text-slate-600 text-sm leading-relaxed ${expanded ? '' : 'line-clamp-4'}`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(project.fullDescription) }} />
           <button onClick={() => setExpanded(!expanded)} className="text-gold-500 font-medium text-sm mt-2">
             {expanded ? 'Thu gọn' : 'Xem thêm'}
           </button>
