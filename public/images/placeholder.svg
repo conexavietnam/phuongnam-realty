@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Ảnh đang được cập nhật">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0F2747" />
+      <stop offset="1" stop-color="#0A192F" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)" />
+  <g fill="none" stroke="#C58C32" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity="0.9">
+    <rect x="270" y="105" width="100" height="80" rx="8" />
+    <path d="M282 172l26-30 20 22 14-14 28 22" />
+    <circle cx="344" cy="127" r="7" />
+  </g>
+  <text x="320" y="228" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="600" fill="#E5B25D">Ảnh đang được cập nhật</text>
+  <text x="320" y="254" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" letter-spacing="3" fill="#8FA3BF">PHƯƠNG NAM REALTY</text>
+</svg>

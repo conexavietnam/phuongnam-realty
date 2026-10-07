@@ -827,9 +827,6 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                               src={p.thumbnail}
                               alt={p.name}
                               className="w-12 h-10 object-cover rounded-lg bg-slate-100 shrink-0 border border-slate-200"
-                              onError={(e) => {
-                                (e.target as HTMLElement).style.display = 'none';
-                              }}
                             />
                             <div>
                               <div className="font-bold text-navy-900 text-sm">{p.name}</div>
@@ -943,9 +940,6 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                               src={prop.thumbnail}
                               alt={prop.title}
                               className="w-12 h-10 object-cover rounded-lg bg-slate-100 shrink-0 border border-slate-200"
-                              onError={(e) => {
-                                (e.target as HTMLElement).style.display = 'none';
-                              }}
                             />
                             <div>
                               <div className="font-bold text-navy-900 text-sm max-w-xs truncate">{prop.title}</div>
@@ -1148,9 +1142,6 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                               src={item.thumbnail}
                               alt={item.title}
                               className="w-12 h-10 object-cover rounded-lg bg-slate-100 shrink-0 border border-slate-200"
-                              onError={(e) => {
-                                (e.target as HTMLElement).style.display = 'none';
-                              }}
                             />
                             <div>
                               <div className="font-bold text-navy-900 text-sm max-w-md truncate">{item.title}</div>
@@ -1302,15 +1293,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                       key={item.id}
                       className="group relative rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden hover:border-gold-500 hover:shadow-md transition-all flex flex-col justify-between"
                     >
-                      <div className="aspect-[4/3] w-full bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                      <div className="aspect-[4/3] w-full bg-slate-100 relative overflow-hidden flex items-center justify-center [&:has(img[data-missing])_.missing-badge]:block">
                         <img
                           src={item.url}
                           alt={item.name}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = 'none';
-                          }}
                         />
+                        <span className="missing-badge hidden absolute top-1.5 left-1.5 z-10 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                          Mất file
+                        </span>
 
                         {/* Hover Overlay Actions */}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity p-2">

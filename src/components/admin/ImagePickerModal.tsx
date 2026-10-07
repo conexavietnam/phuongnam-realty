@@ -272,15 +272,16 @@ export function ImagePickerModal(props: ImagePickerModalProps) {
                         }`}
                       >
                         {/* Aspect Ratio Box */}
-                        <div className="aspect-[4/3] w-full bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                        <div className="aspect-[4/3] w-full bg-slate-100 relative overflow-hidden flex items-center justify-center [&:has(img[data-missing])_.missing-badge]:block">
                           <img
                             src={item.url}
                             alt={item.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = 'none';
-                            }}
                           />
+
+                          <span className="missing-badge hidden absolute top-1.5 left-1.5 z-10 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            Mất file
+                          </span>
 
                           {/* Selected Checkmark Badge */}
                           {isMulti && !isSelected && (

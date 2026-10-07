@@ -47,6 +47,7 @@ export const Logo: React.FC<LogoProps> = ({
         <img
           src={logoSrc}
           alt="Phương Nam Realty"
+          data-fallback="logo"
           className="w-full h-full object-contain filter drop-shadow-sm"
           referrerPolicy="no-referrer"
         />

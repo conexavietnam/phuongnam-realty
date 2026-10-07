@@ -20,12 +20,6 @@ export const MobileNewsCard: React.FC<MobileNewsCardProps> = ({ article }) => {
           className="w-full h-full object-cover rounded-lg"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={(e) => {
-            const target = e.currentTarget;
-            if (target.src !== '/images/projects/palm-river.svg') {
-              target.src = '/images/projects/palm-river.svg';
-            }
-          }}
         />
       </div>
       

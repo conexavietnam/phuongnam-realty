@@ -21,13 +21,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={(e) => {
-            // Zero-Broken-Image Policy: graceful fallback to premier project artwork
-            const target = e.currentTarget;
-            if (target.src !== '/images/projects/palm-river.svg') {
-              target.src = '/images/projects/palm-river.svg';
-            }
-          }}
         />
         <Badge variant="navy">
           {project.categoryLabel || project.category}

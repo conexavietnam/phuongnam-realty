@@ -25,6 +25,7 @@ export function MobileHomePage() {
       <section className="relative min-h-[320px] bg-navy-950 w-full overflow-hidden flex items-center">
         <img 
           src={heroImage} 
+          data-fallback="hero"
           alt="Phương Nam Realty Hero" 
           className="absolute inset-0 w-full h-full object-cover opacity-40 scale-110" 
           referrerPolicy="no-referrer"

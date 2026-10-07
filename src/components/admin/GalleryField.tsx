@@ -123,9 +123,6 @@ export function GalleryField({
                   src={imgUrl}
                   alt={`Gallery ${idx + 1}`}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
                 />
 
                 {/* Remove Button */}

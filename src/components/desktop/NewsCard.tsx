@@ -22,12 +22,6 @@ export function NewsCard({ article }: NewsCardProps) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={(e) => {
-            const target = e.currentTarget;
-            if (target.src !== '/images/projects/palm-river.svg') {
-              target.src = '/images/projects/palm-river.svg';
-            }
-          }}
         />
         <Badge variant="navy">
           {article.categoryLabel}
