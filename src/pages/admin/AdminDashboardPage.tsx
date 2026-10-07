@@ -44,6 +44,7 @@ import type { MediaItem } from '@/services/mediaService';
 import type { Project, ProjectCategory } from '@/types/project';
 import type { Property, PropertyType } from '@/types/property';
 import type { NewsArticle, NewsCategory } from '@/types/news';
+import type { CompanyInfo } from '@/types/common';
 
 interface AdminDashboardPageProps {
   onLogout: () => void;
@@ -82,7 +83,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const [properties, setProperties] = useState<Property[]>(dataStorage.getProperties());
   const [news, setNews] = useState<NewsArticle[]>(dataStorage.getNews());
   const [leads, setLeads] = useState<CustomerLead[]>(dataStorage.getCustomerLeads());
-  const [company, setCompany] = useState(dataStorage.getCompany());
+  const [company, setCompany] = useState<CompanyInfo>(dataStorage.getCompany());
   const [mediaList, setMediaList] = useState<MediaItem[]>(mediaService.getAll());
 
   // Search & Filters

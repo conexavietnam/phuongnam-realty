@@ -2,6 +2,7 @@ import type { Project } from '@/types/project';
 import type { Property } from '@/types/property';
 import type { NewsArticle } from '@/types/news';
 import type { ConsignmentProject } from '@/types/contact';
+import type { CompanyInfo } from '@/types/common';
 
 import initialProjects from '@/data/projects.json';
 import initialProperties from '@/data/properties.json';
@@ -139,11 +140,11 @@ export const dataStorage = {
   },
 
   // === COMPANY INFO ===
-  getCompany(): typeof initialCompany {
-    return getFromStorage(STORAGE_KEYS.COMPANY, initialCompany);
+  getCompany(): CompanyInfo {
+    return getFromStorage<CompanyInfo>(STORAGE_KEYS.COMPANY, initialCompany as unknown as CompanyInfo);
   },
 
-  saveCompany(info: Partial<typeof initialCompany>): typeof initialCompany {
+  saveCompany(info: Partial<CompanyInfo>): CompanyInfo {
     const current = this.getCompany();
     const updated = { ...current, ...info };
     saveToStorage(STORAGE_KEYS.COMPANY, updated);
