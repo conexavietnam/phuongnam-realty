@@ -108,6 +108,7 @@ done
 
 echo "-- permissions"
 $REMOTE_SUDO chown -R "$SITE_USER:$SITE_GROUP" "$APP_ROOT/server/src" "$APP_ROOT/server/seed"
+find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -exec $REMOTE_SUDO chown -h "$SITE_USER:$SITE_GROUP" {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -type d -exec chmod 755 {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -type f -exec chmod 644 {} +
 find "$APP_ROOT/server/src" "$APP_ROOT/server/seed" -type d -exec chmod 750 {} +
