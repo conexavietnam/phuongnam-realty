@@ -1,20 +1,26 @@
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Sliders } from 'lucide-react';
 import { MobileLayout } from '@/layouts/MobileLayout';
 import { MobilePropertyCard } from '@/components/mobile/MobilePropertyCard';
 import { MobileSearchFilter } from '@/components/mobile/MobileSearchFilter';
 import { Button } from '@/components/common/Button';
 import { propertyService } from '@/services/propertyService';
+import { companyService } from '@/services/companyService';
+import { filtersFromSearchParams, searchParamsFromFilters } from '@/utils/filterQuery';
 import type { PropertyFilter } from '@/types';
 import { useDataListener } from '@/hooks';
 
 export function MobilePropertiesPage() {
   const dataVersion = useDataListener();
   const [showFilter, setShowFilter] = useState(false);
-  const [filters, setFilters] = useState<PropertyFilter>({});
-  const [filterResetKey, setFilterResetKey] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [displayLimit, setDisplayLimit] = useState(8);
 
+  const filters = useMemo(
+    () => (dataVersion < 0 ? {} : filtersFromSearchParams(searchParams, companyService.getFilterConfig())),
+    [searchParams, dataVersion],
+  );
   const filtered = useMemo(() => {
     if (dataVersion < 0) return [];
     return propertyService.filter(filters);
@@ -22,14 +28,11 @@ export function MobilePropertiesPage() {
   const properties = filtered.slice(0, displayLimit);
 
   const applyFilters = (next: PropertyFilter) => {
-    setFilters(next);
+    setSearchParams(searchParamsFromFilters(next));
     setDisplayLimit(8);
   };
 
-  const resetFilters = () => {
-    applyFilters({});
-    setFilterResetKey((k) => k + 1);
-  };
+  const resetFilters = () => applyFilters({});
 
   return (
     <MobileLayout>
@@ -79,7 +82,8 @@ export function MobilePropertiesPage() {
       </button>
 
       <MobileSearchFilter
-        key={filterResetKey}
+        key={searchParams.toString()}
+        initialFilters={filters}
         isOpen={showFilter}
         onClose={() => setShowFilter(false)}
         onFilter={applyFilters}

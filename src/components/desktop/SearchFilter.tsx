@@ -6,15 +6,16 @@ import { Button } from '@/components/common/Button';
 
 export interface SearchFilterProps {
   onFilter: (filters: PropertyFilter) => void;
+  initialFilters?: PropertyFilter;
 }
 
-export function SearchFilter({ onFilter }: SearchFilterProps) {
+export function SearchFilter({ onFilter, initialFilters }: SearchFilterProps) {
   const filterConfig = companyService.getFilterConfig();
 
-  const [region, setRegion] = useState('');
-  const [type, setType] = useState<PropertyType | ''>('');
-  const [priceRange, setPriceRange] = useState('');
-  const [keyword, setKeyword] = useState('');
+  const [region, setRegion] = useState(initialFilters?.region ?? '');
+  const [type, setType] = useState<PropertyType | ''>(initialFilters?.type ?? '');
+  const [priceRange, setPriceRange] = useState(initialFilters?.priceRange ?? '');
+  const [keyword, setKeyword] = useState(initialFilters?.keyword ?? '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -84,11 +84,11 @@
         "links": [
           {
             "label": "Căn hộ",
-            "url": "/chuyen-nhuong?type=apartment"
+            "url": "/chuyen-nhuong?type=can-ho"
           },
           {
             "label": "Nhà phố",
-            "url": "/chuyen-nhuong?type=house"
+            "url": "/chuyen-nhuong?type=nha-pho"
           },
           {
             "label": "Shophouse",

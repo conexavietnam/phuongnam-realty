@@ -7,19 +7,21 @@ interface MobileSearchFilterProps {
   isOpen: boolean;
   onClose: () => void;
   onFilter: (filters: PropertyFilter) => void;
+  initialFilters?: PropertyFilter;
 }
 
 export const MobileSearchFilter: React.FC<MobileSearchFilterProps> = ({ 
   isOpen, 
   onClose, 
-  onFilter 
+  onFilter,
+  initialFilters
 }) => {
   const filterConfig = companyService.getFilterConfig();
   
-  const [region, setRegion] = useState('');
-  const [type, setType] = useState<PropertyType | ''>('');
-  const [priceRange, setPriceRange] = useState('');
-  const [keyword, setKeyword] = useState('');
+  const [region, setRegion] = useState(initialFilters?.region ?? '');
+  const [type, setType] = useState<PropertyType | ''>(initialFilters?.type ?? '');
+  const [priceRange, setPriceRange] = useState(initialFilters?.priceRange ?? '');
+  const [keyword, setKeyword] = useState(initialFilters?.keyword ?? '');
 
   useEffect(() => {
     if (isOpen) {

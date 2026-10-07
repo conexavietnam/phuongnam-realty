@@ -34,3 +34,4 @@ Mức giá có thêm hai cận số `min`/`max` (đơn vị tỷ đồng, bao g�
 13. Chân trang: sửa tên/địa chỉ một liên kết, thêm cột (tối đa 4, nút bị khóa), thêm/xóa/đổi thứ tự liên kết; lưu rồi mở trang bất kỳ: chân trang cập nhật. Liên kết https mở tab mới, nội bộ chuyển trang không tải lại.
 14. Nhập `javascript:...`, `data:...`, `http://...` hoặc để trống tên/tiêu đề: báo lỗi, không lưu.
 15. "Khôi phục mặc định" đưa form về nội dung gốc nhưng chưa lưu cho đến khi bấm "Lưu chân trang".
+16. Danh sách BĐS đọc bộ lọc từ địa chỉ: `/chuyen-nhuong?type=can-ho&region=tp-thu-duc&price=5-10-ty&q=từ-khóa` (giá trị là `value` của mục trong tab Form; giá trị lạ bị bỏ qua). Bấm liên kết loại BĐS ở chân trang: danh sách lọc đúng và ô lọc hiển thị đúng lựa chọn; áp dụng/đặt lại bộ lọc cập nhật địa chỉ.

@@ -30,10 +30,10 @@ export function Footer() {
   return (
     <footer className="bg-navy-900 text-slate-300 pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-12">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 mb-12">
           
           {/* Col 1: Company Info */}
-          <div className="md:col-span-4">
+          <div className="xl:col-span-4">
             <div className="mb-6">
               <Logo variant="light" size="lg" showTagline={true} />
             </div>
@@ -77,11 +77,11 @@ export function Footer() {
           </div>
 
           {/* Col 2: Categories */}
-          <div className="md:col-span-5">
+          <div className="xl:col-span-5">
             <h3 className="text-white text-lg font-bold mb-6 uppercase tracking-wider relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-12 after:h-0.5 after:bg-gold-500">
               Danh Mục
             </h3>
-            <div className={`grid gap-6 mt-8 ${footer.columns.length > 3 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+            <div className={`grid gap-6 mt-8 ${footer.columns.length > 3 ? 'grid-cols-2 sm:grid-cols-4 xl:grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'}`}>
               {footer.columns.map((column) => (
                 <div key={column.id}>
                   <h4 className="text-white font-medium mb-4">{column.title}</h4>
@@ -98,7 +98,7 @@ export function Footer() {
           </div>
 
           {/* Col 3: Map */}
-          <div className="md:col-span-3">
+          <div className="xl:col-span-3">
             <h3 className="text-white text-lg font-bold mb-6 uppercase tracking-wider relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-12 after:h-0.5 after:bg-gold-500">
               Bản Đồ Google Maps
             </h3>
