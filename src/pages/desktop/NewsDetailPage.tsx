@@ -7,6 +7,7 @@ import { NewsCard } from '@/components/desktop/NewsCard';
 import { SectionTitle } from '@/components/common/SectionTitle';
 import { Button } from '@/components/common/Button';
 import { newsService } from '@/services/newsService';
+import { renderRichHtml, stripHtml } from '@/utils/richText';
 
 export function NewsDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -86,40 +87,15 @@ export function NewsDetailPage() {
           {/* Excerpt Lead */}
           <div className="p-6 bg-slate-50 border-l-4 border-gold-500 rounded-r-xl mb-8">
             <p className="text-navy-900 font-medium text-base sm:text-lg leading-relaxed italic">
-              &ldquo;{article.excerpt}&rdquo;
+              &ldquo;{stripHtml(article.excerpt)}&rdquo;
             </p>
           </div>
 
           {/* Body Content */}
-          <div className="prose prose-slate lg:prose-lg max-w-none text-slate-700 leading-relaxed space-y-6">
-            {article.content.split('\n\n').map((paragraph, index) => {
-              const imgMatch = paragraph.trim().match(/^!\[(.*?)\]\((.*?)\)$/);
-              if (imgMatch) {
-                const [, altText, imgSrc] = imgMatch;
-                return (
-                  <figure key={index} className="my-8">
-                    <img
-                      src={imgSrc}
-                      alt={altText}
-                      className="rounded-2xl w-full max-h-[520px] object-cover shadow-lg border border-slate-200"
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                    />
-                    {altText && (
-                      <figcaption className="text-center text-xs sm:text-sm text-slate-500 mt-2.5 italic">
-                        {altText}
-                      </figcaption>
-                    )}
-                  </figure>
-                );
-              }
-              return (
-                <p key={index} className="text-base sm:text-lg leading-relaxed">
-                  {paragraph}
-                </p>
-              );
-            })}
-          </div>
+          <div
+            className="rich-content text-base sm:text-lg"
+            dangerouslySetInnerHTML={{ __html: renderRichHtml(article.content) }}
+          />
 
           {/* Bottom Actions */}
           <div className="mt-12 pt-6 border-t border-slate-200 flex items-center justify-between">

@@ -33,9 +33,27 @@ export interface MenuItem {
   exact?: boolean;
 }
 
+export interface FooterLink {
+  label: string;
+  url: string;
+}
+
+export interface FooterColumn {
+  id: string;
+  title: string;
+  links: FooterLink[];
+}
+
+export interface FooterConfig {
+  columns: FooterColumn[];
+  copyright: string;
+}
+
 export interface MenuConfig {
   desktop: MenuItem[];
   mobileBottomNav: MenuItem[];
+  // Missing in data saved before the footer became editable; readers fall back to the seeded default.
+  footer?: FooterConfig;
 }
 
 export interface SocialLinks {
@@ -62,8 +80,14 @@ export interface CompanyInfo {
   googleMapsLink: string;
 }
 
+// Bounds are in billions of VND (inclusive); null/undefined means open-ended.
+export interface PriceRangeOption extends FilterOption {
+  min?: number | null;
+  max?: number | null;
+}
+
 export interface FilterConfig {
   regions: FilterOption[];
   propertyTypes: FilterOption[];
-  priceRanges: FilterOption[];
+  priceRanges: PriceRangeOption[];
 }

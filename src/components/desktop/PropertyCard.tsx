@@ -23,12 +23,6 @@ export function PropertyCard({ property }: PropertyCardProps) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={(e) => {
-            const target = e.currentTarget;
-            if (target.src !== '/images/properties/luxury-apartment.svg') {
-              target.src = '/images/properties/luxury-apartment.svg';
-            }
-          }}
         />
         <Badge variant="navy">
           {property.category}

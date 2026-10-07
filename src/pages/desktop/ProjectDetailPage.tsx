@@ -8,6 +8,7 @@ import { Button } from '@/components/common/Button';
 import { SectionTitle } from '@/components/common/SectionTitle';
 import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
+import { renderRichHtml } from '@/utils/richText';
 
 export function ProjectDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -109,9 +110,10 @@ export function ProjectDetailPage() {
                 <h2 className="text-2xl font-bold text-navy-900 mb-4 pb-2 border-b border-slate-100">
                   Mô Tả Tổng Quan
                 </h2>
-                <p className="text-slate-600 leading-relaxed text-base whitespace-pre-line">
-                  {project.fullDescription}
-                </p>
+                <div
+                  className="rich-content text-base"
+                  dangerouslySetInnerHTML={{ __html: renderRichHtml(project.fullDescription) }}
+                />
               </div>
 
               <div>

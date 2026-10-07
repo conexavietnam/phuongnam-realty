@@ -2,17 +2,38 @@ import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Globe } from 'lucide-react';
 import { companyService } from '@/services/companyService';
 import { Logo } from '@/components/common/Logo';
+import { useDataListener } from '@/hooks';
+import { classifyFooterUrl } from '@/utils/footerLinks';
+import type { FooterLink } from '@/types';
+
+const LINK_CLASS = 'hover:text-gold-500 transition-colors';
+
+function FooterLinkItem({ link }: { link: FooterLink }) {
+  const kind = classifyFooterUrl(link.url);
+  if (kind === 'internal') {
+    return <Link to={link.url} className={LINK_CLASS}>{link.label}</Link>;
+  }
+  if (kind === 'external') {
+    return <a href={link.url} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>{link.label}</a>;
+  }
+  if (kind) {
+    return <a href={link.url} className={LINK_CLASS}>{link.label}</a>;
+  }
+  return null;
+}
 
 export function Footer() {
+  useDataListener();
   const companyInfo = companyService.getCompanyInfo();
+  const footer = companyService.getFooterConfig();
 
   return (
     <footer className="bg-navy-900 text-slate-300 pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-12">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 mb-12">
           
           {/* Col 1: Company Info */}
-          <div className="md:col-span-4">
+          <div className="xl:col-span-4">
             <div className="mb-6">
               <Logo variant="light" size="lg" showTagline={true} />
             </div>
@@ -56,42 +77,28 @@ export function Footer() {
           </div>
 
           {/* Col 2: Categories */}
-          <div className="md:col-span-5">
+          <div className="xl:col-span-5">
             <h3 className="text-white text-lg font-bold mb-6 uppercase tracking-wider relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-12 after:h-0.5 after:bg-gold-500">
               Danh Mục
             </h3>
-            <div className="grid grid-cols-3 gap-6 mt-8">
-              <div>
-                <h4 className="text-white font-medium mb-4">Dự án</h4>
-                <ul className="space-y-3">
-                  <li><Link to="/du-an/palm-river" className="hover:text-gold-500 transition-colors">Palm River</Link></li>
-                  <li><Link to="/du-an/sensa-park" className="hover:text-gold-500 transition-colors">Sensa Park</Link></li>
-                  <li><Link to="/du-an/genera" className="hover:text-gold-500 transition-colors">Genera</Link></li>
-                  <li><Link to="/du-an" className="hover:text-gold-500 transition-colors">Tất cả dự án</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white font-medium mb-4">Bất động sản</h4>
-                <ul className="space-y-3">
-                  <li><Link to="/bat-dong-san?type=apartment" className="hover:text-gold-500 transition-colors">Căn hộ</Link></li>
-                  <li><Link to="/bat-dong-san?type=house" className="hover:text-gold-500 transition-colors">Nhà phố</Link></li>
-                  <li><Link to="/bat-dong-san?type=shophouse" className="hover:text-gold-500 transition-colors">Shophouse</Link></li>
-                  <li><Link to="/bat-dong-san" className="hover:text-gold-500 transition-colors">BĐS chuyển nhượng</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white font-medium mb-4">Khác</h4>
-                <ul className="space-y-3">
-                  <li><Link to="/tin-tuc" className="hover:text-gold-500 transition-colors">Tin tức</Link></li>
-                  <li><Link to="/ky-gui" className="hover:text-gold-500 transition-colors">Ký gửi BĐS</Link></li>
-                  <li><Link to="/lien-he" className="hover:text-gold-500 transition-colors">Liên hệ</Link></li>
-                </ul>
-              </div>
+            <div className={`grid gap-6 mt-8 ${footer.columns.length > 3 ? 'grid-cols-2 sm:grid-cols-4 xl:grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'}`}>
+              {footer.columns.map((column) => (
+                <div key={column.id}>
+                  <h4 className="text-white font-medium mb-4">{column.title}</h4>
+                  <ul className="space-y-3">
+                    {column.links.map((link, index) => (
+                      <li key={`${link.url}-${index}`}>
+                        <FooterLinkItem link={link} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Col 3: Map */}
-          <div className="md:col-span-3">
+          <div className="xl:col-span-3">
             <h3 className="text-white text-lg font-bold mb-6 uppercase tracking-wider relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-12 after:h-0.5 after:bg-gold-500">
               Bản Đồ Google Maps
             </h3>
@@ -120,7 +127,7 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
-          <p>&copy; 2025 Phương Nam Realty. All rights reserved.</p>
+          <p>{footer.copyright}</p>
           <div className="flex items-center gap-4">
             <p>{companyInfo.slogan || "Kiến tạo giá trị – Đồng hành cùng bạn!"}</p>
             <span className="text-white/20">•</span>

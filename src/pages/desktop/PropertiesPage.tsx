@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useDataListener } from '@/hooks';
 import { DesktopLayout } from '@/layouts/DesktopLayout';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
@@ -8,12 +9,24 @@ import { PropertyCard } from '@/components/desktop/PropertyCard';
 import { ConsignmentForm } from '@/components/desktop/ConsignmentForm';
 import { Button } from '@/components/common/Button';
 import { propertyService } from '@/services/propertyService';
+import { companyService } from '@/services/companyService';
+import { filtersFromSearchParams, searchParamsFromFilters } from '@/utils/filterQuery';
 import type { PropertyFilter } from '@/types';
 
 export function PropertiesPage() {
   const dataVersion = useDataListener();
-  const [filters, setFilters] = useState<PropertyFilter>({});
+  const [searchParams, setSearchParams] = useSearchParams();
   const [displayLimit, setDisplayLimit] = useState(8);
+
+  const filters = useMemo(
+    () => (dataVersion < 0 ? {} : filtersFromSearchParams(searchParams, companyService.getFilterConfig())),
+    [searchParams, dataVersion],
+  );
+
+  const applyFilters = (next: PropertyFilter) => {
+    setSearchParams(searchParamsFromFilters(next));
+    setDisplayLimit(8);
+  };
 
   const filteredProperties = useMemo(() => {
     if (dataVersion < 0) return [];
@@ -46,7 +59,7 @@ export function PropertiesPage() {
 
       {/* Floating Filter Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-7 relative z-20">
-        <SearchFilter onFilter={setFilters} />
+        <SearchFilter key={searchParams.toString()} initialFilters={filters} onFilter={applyFilters} />
       </div>
 
       {/* Filtered Properties Grid */}
@@ -65,7 +78,7 @@ export function PropertiesPage() {
               <p className="text-slate-500 text-base mb-4">
                 Không tìm thấy bất động sản nào phù hợp với bộ lọc hiện tại.
               </p>
-              <Button variant="outline" size="sm" onClick={() => setFilters({})}>
+              <Button variant="outline" size="sm" onClick={() => applyFilters({})}>
                 Đặt lại bộ lọc
               </Button>
             </div>

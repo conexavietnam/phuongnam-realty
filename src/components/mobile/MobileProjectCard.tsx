@@ -20,12 +20,6 @@ export const MobileProjectCard: React.FC<MobileProjectCardProps> = ({ project })
           className="w-full h-full object-cover rounded-lg"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={(e) => {
-            const target = e.currentTarget;
-            if (target.src !== '/images/projects/palm-river.svg') {
-              target.src = '/images/projects/palm-river.svg';
-            }
-          }}
         />
         <div className="absolute top-2 left-2 bg-navy-900/80 text-white text-[10px] font-medium px-2 py-1 rounded">
           {project.categoryLabel}

@@ -19,6 +19,7 @@ export function HeroBanner() {
       {/* Background Image with Gradient Overlay */}
       <img
         src={heroImage}
+        data-fallback="hero"
         alt="Phương Nam Realty Luxury Skyline"
         className="absolute inset-0 w-full h-full object-cover object-center transform scale-105 transition-transform duration-1000 ease-out"
         referrerPolicy="no-referrer"

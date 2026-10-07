@@ -1,12 +1,5 @@
 import { dataStorage } from '@/services/dataStorage';
-import menuData from '@/data/menu.json';
-import filtersData from '@/data/filters.json';
-import agentsData from '@/data/agents.json';
-import type { CompanyInfo, MenuConfig, FilterConfig, Agent, ConsignmentProject } from '@/types';
-
-const menuConfig = menuData as MenuConfig;
-const filterConfig = filtersData as FilterConfig;
-const agents = agentsData as Agent[];
+import type { CompanyInfo, MenuConfig, FilterConfig, FooterConfig, Agent, ConsignmentProject } from '@/types';
 
 export const companyService = {
   getCompanyInfo(): CompanyInfo {
@@ -14,19 +7,35 @@ export const companyService = {
   },
 
   getMenuConfig(): MenuConfig {
-    return menuConfig;
+    return dataStorage.getMenu();
+  },
+
+  getFooterConfig(): FooterConfig {
+    return dataStorage.getMenu().footer ?? dataStorage.getDefaultFooter();
+  },
+
+  getDefaultFooterConfig(): FooterConfig {
+    return dataStorage.getDefaultFooter();
+  },
+
+  saveFooterConfig(footer: FooterConfig): Promise<void> {
+    return dataStorage.saveFooter(footer);
   },
 
   getFilterConfig(): FilterConfig {
-    return filterConfig;
+    return dataStorage.getFilters();
+  },
+
+  saveFilterConfig(config: FilterConfig): Promise<void> {
+    return dataStorage.saveFilters(config);
   },
 
   getAgents(): Agent[] {
-    return agents;
+    return dataStorage.getAgents();
   },
 
   getAgentById(id: string): Agent | undefined {
-    return agents.find((agent) => agent.id === id);
+    return dataStorage.getAgents().find((agent) => agent.id === id);
   },
 
   getConsignments(): ConsignmentProject[] {

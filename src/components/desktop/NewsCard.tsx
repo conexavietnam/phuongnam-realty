@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Clock } from 'lucide-react';
 import type { NewsArticle } from '@/types';
 import { Badge } from '@/components/common/Badge';
+import { stripHtml } from '@/utils/richText';
 
 export interface NewsCardProps {
   article: NewsArticle;
@@ -21,12 +22,6 @@ export function NewsCard({ article }: NewsCardProps) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={(e) => {
-            const target = e.currentTarget;
-            if (target.src !== '/images/projects/palm-river.svg') {
-              target.src = '/images/projects/palm-river.svg';
-            }
-          }}
         />
         <Badge variant="navy">
           {article.categoryLabel}
@@ -49,7 +44,7 @@ export function NewsCard({ article }: NewsCardProps) {
           </h3>
 
           <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed mb-4">
-            {article.excerpt}
+            {stripHtml(article.excerpt)}
           </p>
         </div>
 

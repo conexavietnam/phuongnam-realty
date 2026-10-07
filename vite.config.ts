@@ -9,13 +9,20 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    // Local development: run `php -S 127.0.0.1:8080 -t server/api` with a server/config.php.
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8080',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icons/*.png', 'images/**/*'],
+      includeAssets: ['favicon.svg', 'icons/*.png', 'images/**/*'],
       manifest: {
         name: 'Phương Nam Realty',
         short_name: 'PN Realty',
@@ -37,7 +44,7 @@ export default defineConfig({
             type: 'image/png',
           },
           {
-            src: '/icons/icon-512.png',
+            src: '/icons/icon-512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
@@ -45,6 +52,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,woff,woff2}'],
         runtimeCaching: [
           {
@@ -59,6 +67,7 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'images-cache',
+              cacheableResponse: { statuses: [0, 200] },
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Send, User, Phone, Mail, ArrowRight, MessageSquare, MapPin, Building2, CircleDollarSign, CheckCircle2 } from 'lucide-react';
 import type { ContactFormData } from '@/types';
 import { companyService } from '@/services/companyService';
-import { dataStorage } from '@/services/dataStorage';
 import { telegramService } from '@/services/telegramService';
 import { FormInput } from '@/components/common/FormInput';
 import { FormSelect } from '@/components/common/FormSelect';
@@ -39,13 +38,15 @@ export function ContactForm({ onSubmit, className = '' }: ContactFormProps) {
   const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState('');
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ContactFormData, string>> = {};
     if (!formData.fullName.trim()) newErrors.fullName = 'Vui lòng nhập họ và tên';
     if (!formData.phone.trim()) {
       newErrors.phone = 'Vui lòng nhập số điện thoại';
-    } else if (!/^[0-9+\s-]{9,15}$/.test(formData.phone.trim())) {
+    } else if (!/^(\+84|0)[0-9\s.-]{8,13}$/.test(formData.phone.trim())) {
       newErrors.phone = 'Số điện thoại không hợp lệ';
     }
     setErrors(newErrors);
@@ -59,25 +60,17 @@ export function ContactForm({ onSubmit, className = '' }: ContactFormProps) {
     setIsSubmitting(true);
 
     try {
-      // 1. Save customer contact inquiry into storage
-      dataStorage.addCustomerLead({
+      setSubmitError(null);
+      await telegramService.submitContact({
         fullName: formData.fullName,
-        phone: formData.phone,
-        purpose: 'tu-van',
-        region: formData.region,
-        propertyType: formData.propertyType,
-        priceRange: formData.priceRange,
-        note: `[Chủ đề: ${formData.subject || 'Tư vấn'}] [Email: ${formData.email || 'N/A'}] - ${formData.message}`,
-        source: 'contact',
-      });
-
-      // 2. Dispatch real-time Telegram alert
-      await telegramService.notifyNewContact({
-        name: formData.fullName,
         phone: formData.phone,
         email: formData.email,
         subject: formData.subject ? SUBJECT_OPTIONS.find(s => s.value === formData.subject)?.label || formData.subject : 'Tư vấn dự án BĐS',
         message: formData.message,
+        region: formData.region,
+        propertyType: formData.propertyType,
+        priceRange: formData.priceRange,
+        honeypot,
       });
 
       if (onSubmit) {
@@ -96,7 +89,7 @@ export function ContactForm({ onSubmit, className = '' }: ContactFormProps) {
         message: '',
       });
     } catch (err) {
-      console.error('Error submitting contact form:', err);
+      setSubmitError(err instanceof Error ? err.message : 'Gửi yêu cầu thất bại. Vui lòng thử lại.');
     } finally {
       setIsSubmitting(false);
     }
@@ -132,6 +125,16 @@ export function ContactForm({ onSubmit, className = '' }: ContactFormProps) {
       </p>
 
       <form onSubmit={handleSubmit} noValidate>
+        <input
+          type="text"
+          name="website"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="hidden"
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
           <FormInput
             label="Họ và tên *"
@@ -204,6 +207,8 @@ export function ContactForm({ onSubmit, className = '' }: ContactFormProps) {
           value={formData.message}
           onChange={(e) => setFormData({ ...formData, message: e.target.value })}
         />
+
+        {submitError && <p className="text-red-500 text-xs mb-3" role="alert">{submitError}</p>}
 
         <Button
           type="submit"

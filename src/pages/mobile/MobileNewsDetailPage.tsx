@@ -6,6 +6,7 @@ import { MobileNewsCard } from '@/components/mobile/MobileNewsCard';
 import { MobileNotFoundPage } from './MobileNotFoundPage';
 import { newsService } from '@/services/newsService';
 import { Badge } from '@/components/common/Badge';
+import { renderRichHtml } from '@/utils/richText';
 
 export function MobileNewsDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -43,8 +44,8 @@ export function MobileNewsDetailPage() {
         />
 
         <div 
-          className="prose prose-sm prose-slate max-w-none prose-img:rounded-lg mb-10"
-          dangerouslySetInnerHTML={{ __html: newsItem.content }}
+          className="rich-content text-sm mb-10"
+          dangerouslySetInnerHTML={{ __html: renderRichHtml(newsItem.content) }}
         />
 
         <div className="border-t border-slate-100 pt-6">

@@ -5,8 +5,10 @@ import { CompanyInfo } from '@/components/desktop/CompanyInfo';
 import { ContactForm } from '@/components/desktop/ContactForm';
 import { SectionTitle } from '@/components/common/SectionTitle';
 import { companyService } from '@/services/companyService';
+import { useDataListener } from '@/hooks';
 
 export function ContactPage() {
+  useDataListener();
   const company = companyService.getCompanyInfo();
 
   return (

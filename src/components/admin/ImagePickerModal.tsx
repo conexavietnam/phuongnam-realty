@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -14,27 +14,32 @@ import {
 import { mediaService } from '@/services/mediaService';
 import type { MediaItem } from '@/services/mediaService';
 import { Button } from '@/components/common/Button';
+import { useBatchUpload, progressLabel } from './useBatchUpload';
+import { ImageDropZone, UploadResultSummary } from './UploadFeedback';
 
-interface ImagePickerModalProps {
+type ImagePickerModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (url: string, item?: MediaItem) => void;
   currentValue?: string;
   title?: string;
   defaultCategory?: MediaItem['category'];
-}
+} & (
+  | { multiple?: false; onSelect: (url: string, item?: MediaItem) => void }
+  | { multiple: true; onSelect: (urls: string[]) => void }
+);
 
-export function ImagePickerModal({
-  isOpen,
-  onClose,
-  onSelect,
-  currentValue,
-  title = 'Chọn Ảnh Từ Kho Lưu Trữ VPS / Server',
-  defaultCategory = 'general',
-}: ImagePickerModalProps) {
+export function ImagePickerModal(props: ImagePickerModalProps) {
+  const {
+    isOpen,
+    onClose,
+    currentValue,
+    title = 'Chọn Ảnh Từ Kho Lưu Trữ VPS / Server',
+    defaultCategory = 'general',
+  } = props;
+  const isMulti = props.multiple === true;
   const [activeTab, setActiveTab] = useState<'library' | 'upload'>('library');
   const [mediaList, setMediaList] = useState<MediaItem[]>(mediaService.getAll());
-  const [selectedUrl, setSelectedUrl] = useState<string>(currentValue || '');
+  const [selectedUrls, setSelectedUrls] = useState<string[]>(currentValue ? [currentValue] : []);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<MediaItem['category'] | 'all'>('all');
 
@@ -44,9 +49,8 @@ export function ImagePickerModal({
   const [vpsCategory, setVpsCategory] = useState<MediaItem['category']>(defaultCategory);
 
   // File upload state
-  const [isUploading, setIsUploading] = useState(false);
+  const { progress, isUploading, result, upload, clearResult } = useBatchUpload();
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const refreshMedia = () => {
     setMediaList(mediaService.getAll());
@@ -61,65 +65,79 @@ export function ImagePickerModal({
 
   useEffect(() => {
     if (currentValue) {
-      setSelectedUrl(currentValue);
+      setSelectedUrls([currentValue]);
     }
   }, [currentValue]);
 
   if (!isOpen) return null;
 
-  // Handle file upload from disk/device
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    setIsUploading(true);
-    setUploadError(null);
-
-    try {
-      const file = files[0];
-      const uploadedItem = await mediaService.uploadFile(file, vpsCategory);
-      setSelectedUrl(uploadedItem.url);
-      refreshMedia();
-      setActiveTab('library');
-    } catch (err: any) {
-      setUploadError(err.message || 'Lỗi khi tải ảnh lên');
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+  const toggleSelected = (url: string) => {
+    if (!isMulti) {
+      setSelectedUrls([url]);
+      return;
     }
+    setSelectedUrls((prev) => (prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]));
+  };
+
+  // Upload one or many files from disk/device (file input or drag & drop)
+  const uploadFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    setUploadError(null);
+    const batch = await upload(files, vpsCategory);
+    const urls = batch.uploaded.map((item) => item.url);
+    if (urls.length > 0) {
+      setSelectedUrls((prev) => (isMulti ? [...prev, ...urls.filter((u) => !prev.includes(u))] : [urls[0]]));
+    }
+    refreshMedia();
+    if (batch.failed.length === 0 && urls.length > 0) setActiveTab('library');
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    await uploadFiles(files);
   };
 
   // Handle direct VPS URL submission
-  const handleAddVpsUrl = (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+  const handleAddVpsUrl = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
     if (!vpsUrl.trim()) return;
 
-    const item = mediaService.addServerUrl(vpsUrl, vpsName, vpsCategory);
-    setSelectedUrl(item.url);
-    setVpsUrl('');
-    setVpsName('');
-    refreshMedia();
-    setActiveTab('library');
+    try {
+      const item = await mediaService.addServerUrl(vpsUrl, vpsName, vpsCategory);
+      setSelectedUrls((prev) => (isMulti ? [...prev, item.url] : [item.url]));
+      setVpsUrl('');
+      setVpsName('');
+      refreshMedia();
+      setActiveTab('library');
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Không thể liên kết ảnh');
+    }
   };
 
   // Delete media item
-  const handleDeleteMedia = (e: React.MouseEvent, id: string) => {
+  const handleDeleteMedia = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (confirm('Bạn có chắc chắn muốn xóa ảnh này khỏi kho ảnh?')) {
-      mediaService.deleteMedia(id);
+      try {
+        await mediaService.deleteMedia(id);
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : 'Không thể xóa ảnh');
+      }
       refreshMedia();
     }
   };
 
   const handleConfirmSelect = () => {
-    if (!selectedUrl) return;
-    const selectedItem = mediaList.find((m) => m.url === selectedUrl);
-    onSelect(selectedUrl, selectedItem);
+    if (selectedUrls.length === 0) return;
+    if (props.multiple === true) {
+      props.onSelect(selectedUrls);
+    } else {
+      props.onSelect(selectedUrls[0], mediaList.find((m) => m.url === selectedUrls[0]));
+    }
     onClose();
   };
 
@@ -242,11 +260,11 @@ export function ImagePickerModal({
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {filteredList.map((item) => {
-                    const isSelected = selectedUrl === item.url;
+                    const isSelected = selectedUrls.includes(item.url);
                     return (
                       <div
                         key={item.id}
-                        onClick={() => setSelectedUrl(item.url)}
+                        onClick={() => toggleSelected(item.url)}
                         className={`group relative rounded-xl border-2 overflow-hidden cursor-pointer bg-slate-50 transition-all ${
                           isSelected
                             ? 'border-gold-500 ring-2 ring-gold-500/30 shadow-md scale-[1.02]'
@@ -254,19 +272,27 @@ export function ImagePickerModal({
                         }`}
                       >
                         {/* Aspect Ratio Box */}
-                        <div className="aspect-[4/3] w-full bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                        <div className="aspect-[4/3] w-full bg-slate-100 relative overflow-hidden flex items-center justify-center [&:has(img[data-missing])_.missing-badge]:block">
                           <img
                             src={item.url}
                             alt={item.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = 'none';
-                            }}
                           />
 
+                          <span className="missing-badge hidden absolute top-1.5 left-1.5 z-10 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            Mất file
+                          </span>
+
                           {/* Selected Checkmark Badge */}
+                          {isMulti && !isSelected && (
+                            <div className="absolute top-2 right-2 w-6 h-6 rounded-md border-2 border-white/90 bg-black/20" />
+                          )}
                           {isSelected && (
-                            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-gold-500 text-navy-950 flex items-center justify-center shadow-md">
+                            <div
+                              className={`absolute top-2 right-2 w-6 h-6 bg-gold-500 text-navy-950 flex items-center justify-center shadow-md ${
+                                isMulti ? 'rounded-md' : 'rounded-full'
+                              }`}
+                            >
                               <Check className="w-4 h-4 stroke-[3]" />
                             </div>
                           )}
@@ -301,12 +327,16 @@ export function ImagePickerModal({
           ) : (
             /* Tab 2: Upload new or Add VPS Link */
             <div className="space-y-6 max-w-xl mx-auto py-4">
-              {/* Option A: Upload from Computer/Phone */}
-              <div className="p-6 rounded-2xl border-2 border-dashed border-slate-300 hover:border-gold-500 text-center bg-slate-50/50 transition-colors">
+              {/* Option A: Upload from Computer/Phone (many files, click or drag & drop) */}
+              <ImageDropZone
+                onFiles={uploadFiles}
+                disabled={isUploading}
+                className="p-6 rounded-2xl border-2 border-dashed border-slate-300 hover:border-gold-500 text-center bg-slate-50/50 transition-colors"
+              >
                 <input
                   type="file"
-                  ref={fileInputRef}
                   accept="image/*"
+                  multiple
                   onChange={handleFileUpload}
                   className="hidden"
                   id="pickerModalFileUpload"
@@ -319,23 +349,25 @@ export function ImagePickerModal({
                     <Upload className="w-7 h-7" />
                   </div>
                   <h4 className="font-bold text-sm text-navy-900 mb-1">
-                    Tải ảnh từ máy tính hoặc điện thoại
+                    Kéo thả hoặc chọn nhiều ảnh từ máy tính / điện thoại
                   </h4>
                   <p className="text-xs text-slate-500 mb-4 max-w-xs">
-                    Hỗ trợ định dạng PNG, JPG, WEBP, SVG. Hệ thống tự động nén tối ưu hiển thị.
+                    Hỗ trợ JPG, PNG, WebP, GIF, tối đa 5MB mỗi ảnh. Có thể tải nhiều ảnh cùng lúc.
                   </p>
                   <div className="px-5 py-2.5 rounded-xl bg-navy-900 text-white font-semibold text-xs shadow-md hover:bg-navy-800 transition-colors">
                     {isUploading ? (
                       <span className="flex items-center gap-2">
                         <RefreshCw className="w-4 h-4 animate-spin" />
-                        Đang tải ảnh lên...
+                        {progressLabel(progress, '')}
                       </span>
                     ) : (
                       'Chọn file ảnh từ thiết bị'
                     )}
                   </div>
                 </label>
-              </div>
+              </ImageDropZone>
+
+              <UploadResultSummary result={result} onDismiss={clearResult} />
 
               {uploadError && (
                 <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
@@ -435,9 +467,13 @@ export function ImagePickerModal({
         {/* Footer Bar */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="text-xs text-slate-500 truncate max-w-md">
-            {selectedUrl ? (
+            {selectedUrls.length > 0 ? (
               <span>
-                Ảnh đã chọn: <strong className="font-mono text-navy-900">{selectedUrl.slice(0, 50)}...</strong>
+                {isMulti ? (
+                  <>Đã chọn <strong className="text-navy-900">{selectedUrls.length}</strong> ảnh</>
+                ) : (
+                  <>Ảnh đã chọn: <strong className="font-mono text-navy-900">{selectedUrls[0].slice(0, 50)}...</strong></>
+                )}
               </span>
             ) : (
               <span>Chưa chọn ảnh nào</span>
@@ -453,11 +489,11 @@ export function ImagePickerModal({
               variant="primary"
               size="sm"
               onClick={handleConfirmSelect}
-              disabled={!selectedUrl}
+              disabled={selectedUrls.length === 0}
               className="text-xs px-5 shadow-sm"
             >
               <Check className="w-4 h-4 mr-1.5" />
-              Sử Dụng Ảnh Này
+              {isMulti ? `Chọn ${selectedUrls.length} ảnh` : 'Sử Dụng Ảnh Này'}
             </Button>
           </div>
         </div>

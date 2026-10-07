@@ -6,8 +6,10 @@ import { SectionTitle } from '@/components/common/SectionTitle';
 import { ConsignmentForm } from '@/components/desktop/ConsignmentForm';
 import { Badge } from '@/components/common/Badge';
 import { companyService } from '@/services/companyService';
+import { useDataListener } from '@/hooks';
 
 export function ConsignmentPage() {
+  useDataListener();
   const consignments = companyService.getConsignments();
 
   const benefits = [

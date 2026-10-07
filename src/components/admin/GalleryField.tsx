@@ -7,9 +7,10 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { ImagePickerModal } from './ImagePickerModal';
-import { mediaService } from '@/services/mediaService';
 import type { MediaItem } from '@/services/mediaService';
 import { Button } from '@/components/common/Button';
+import { useBatchUpload, progressLabel } from './useBatchUpload';
+import { ImageDropZone, UploadResultSummary } from './UploadFeedback';
 
 interface GalleryFieldProps {
   label: string;
@@ -27,36 +28,28 @@ export function GalleryField({
   helperText,
 }: GalleryFieldProps) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const { progress, isUploading, result, upload, clearResult } = useBatchUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAddImage = (url: string) => {
-    if (!images.includes(url)) {
-      onChange([...images, url]);
-    }
+  const handleAddImages = (urls: string[]) => {
+    const fresh = urls.filter((url, i) => !images.includes(url) && urls.indexOf(url) === i);
+    if (fresh.length > 0) onChange([...images, ...fresh]);
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
     onChange(images.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const uploadAndAppend = async (files: File[]) => {
+    if (files.length === 0) return;
+    const batch = await upload(files, category);
+    handleAddImages(batch.uploaded.map((item) => item.url));
+  };
 
-    setIsUploading(true);
-    try {
-      const file = files[0];
-      const uploaded = await mediaService.uploadFile(file, category);
-      handleAddImage(uploaded.url);
-    } catch (err) {
-      console.error('Error uploading gallery image:', err);
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
+  const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    await uploadAndAppend(files);
   };
 
   return (
@@ -70,6 +63,7 @@ export function GalleryField({
             type="file"
             ref={fileInputRef}
             accept="image/*"
+            multiple
             onChange={handleDirectUpload}
             className="hidden"
           />
@@ -82,7 +76,7 @@ export function GalleryField({
             className="text-xs py-1.5 px-2.5 border-slate-300"
           >
             <Upload className="w-3 h-3 mr-1" />
-            {isUploading ? 'Đang tải...' : 'Tải ảnh từ máy'}
+            {progressLabel(progress, 'Tải nhiều ảnh từ máy')}
           </Button>
 
           <Button
@@ -98,12 +92,16 @@ export function GalleryField({
         </div>
       </div>
 
-      {/* Grid of gallery images */}
-      <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+      {/* Grid of gallery images (also a drop target for many files) */}
+      <ImageDropZone
+        onFiles={uploadAndAppend}
+        disabled={isUploading}
+        className="p-3 bg-slate-50 border border-slate-200 rounded-2xl transition-colors"
+      >
         {images.length === 0 ? (
           <div className="py-8 text-center text-slate-400">
             <ImageIcon className="w-8 h-8 mx-auto mb-1 opacity-50" />
-            <p className="text-xs">Chưa có ảnh nào trong bộ sưu tập.</p>
+            <p className="text-xs">Chưa có ảnh nào. Kéo thả nhiều ảnh vào đây hoặc bấm tải ảnh.</p>
             <Button
               type="button"
               variant="outline"
@@ -125,9 +123,6 @@ export function GalleryField({
                   src={imgUrl}
                   alt={`Gallery ${idx + 1}`}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
                 />
 
                 {/* Remove Button */}
@@ -157,7 +152,9 @@ export function GalleryField({
             </button>
           </div>
         )}
-      </div>
+      </ImageDropZone>
+
+      <UploadResultSummary result={result} onDismiss={clearResult} />
 
       {helperText && <p className="text-[11px] text-slate-400">{helperText}</p>}
 
@@ -165,7 +162,8 @@ export function GalleryField({
       <ImagePickerModal
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
-        onSelect={(url) => handleAddImage(url)}
+        multiple
+        onSelect={handleAddImages}
         title={`Thêm ảnh vào bộ sưu tập ${label}`}
         defaultCategory={category}
       />

@@ -9,6 +9,7 @@ import { SectionTitle } from '@/components/common/SectionTitle';
 import { Button } from '@/components/common/Button';
 import { propertyService } from '@/services/propertyService';
 import { companyService } from '@/services/companyService';
+import { renderRichHtml } from '@/utils/richText';
 
 const BENEFITS = [
   { icon: Shield, title: 'Pháp Lý An Toàn 100%', desc: 'Đội ngũ pháp lý kiểm tra quy hoạch và hồ sơ kỹ lưỡng trước khi bàn giao.' },
@@ -105,7 +106,10 @@ export function PropertyDetailPage() {
           {/* Description */}
           <div className="mb-16">
             <h2 className="text-2xl font-bold text-navy-900 mb-6 pb-2 border-b border-slate-100">MÔ TẢ CHI TIẾT</h2>
-            <p className="text-slate-600 leading-relaxed text-base mb-6 whitespace-pre-line">{property.fullDescription}</p>
+            <div
+              className="rich-content text-base mb-6"
+              dangerouslySetInnerHTML={{ __html: renderRichHtml(property.fullDescription) }}
+            />
             <div className="space-y-3">
               {[
                 'Vị trí đắc địa, thuận tiện kết nối giao thông trung tâm',

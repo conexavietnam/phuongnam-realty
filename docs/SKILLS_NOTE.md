@@ -13,8 +13,8 @@
   - Viết hook phản ứng `useDataListener()` ở `src/hooks/useDataListener.ts`. Khi có bất kỳ thay đổi nào từ Admin, tất cả các trang web lập tức cập nhật dữ liệu mới mà không cần người dùng phải bấm F5 tải lại trang.
 
 ### Lỗi 3: Cú pháp tệp token Telegram (`telegram.tsx`)
-- **Nguyên nhân**: File `telegram.tsx` do quản trị viên cung cấp chứa chuỗi token trần dạng text (`8850370411:...`), khiến trình phân tích cú pháp TypeScript / Oxlint coi là cú pháp không hợp lệ.
-- **Cách khắc phục**: Chuyển đổi thành export module chuẩn `export const TELEGRAM_BOT_TOKEN = '...'; export default TELEGRAM_BOT_TOKEN;`. Đồng thời kết nối trực tiếp biến này vào `src/services/telegramService.ts` để đọc token thật từ file gốc của người dùng.
+- **Nguyên nhân**: File `telegram.tsx` do quản trị viên cung cấp chứa chuỗi token trần dạng text, khiến trình phân tích cú pháp TypeScript / Oxlint coi là cú pháp không hợp lệ.
+- **Cách khắc phục**: File đã bị xóa; token được chuyển vào `server/config.php` (chỉ trên máy chủ), client không còn giữ token.
 
 ### Lỗi 4: Xung đột kiểu dữ liệu TypeScript khi build (`tsc -b`)
 - **Nguyên nhân**:

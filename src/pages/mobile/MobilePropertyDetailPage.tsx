@@ -8,6 +8,7 @@ import { MobileNotFoundPage } from './MobileNotFoundPage';
 import { propertyService } from '@/services/propertyService';
 import { companyService } from '@/services/companyService';
 import { Badge } from '@/components/common/Badge';
+import { renderRichHtml } from '@/utils/richText';
 
 export function MobilePropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -73,9 +74,10 @@ export function MobilePropertyDetailPage() {
         {/* Description */}
         <div className="mb-8">
           <h2 className="font-bold text-navy-900 mb-3 border-l-4 border-gold-500 pl-2">Mô tả</h2>
-          <div className={`text-slate-600 text-sm leading-relaxed whitespace-pre-line ${expanded ? '' : 'line-clamp-5'}`}>
-            {property.fullDescription}
-          </div>
+          <div
+            className={`rich-content text-sm ${expanded ? '' : 'line-clamp-5'}`}
+            dangerouslySetInnerHTML={{ __html: renderRichHtml(property.fullDescription) }}
+          />
           <button onClick={() => setExpanded(!expanded)} className="text-gold-500 font-medium text-sm mt-2">
             {expanded ? 'Thu gọn' : 'Xem thêm'}
           </button>
