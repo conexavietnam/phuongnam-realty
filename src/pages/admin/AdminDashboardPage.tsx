@@ -31,7 +31,10 @@ import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { ImageField } from '@/components/admin/ImageField';
 import { GalleryField } from '@/components/admin/GalleryField';
-import { ImagePickerModal } from '@/components/admin/ImagePickerModal';
+import { LazyRichTextEditor } from '@/components/admin/LazyRichTextEditor';
+import { useBatchUpload, progressLabel } from '@/components/admin/useBatchUpload';
+import { ImageDropZone, UploadResultSummary } from '@/components/admin/UploadFeedback';
+import { renderRichHtml, stripHtml } from '@/utils/richText';
 import { TelegramSettingsCard } from '@/components/admin/TelegramSettingsCard';
 import { dataStorage } from '@/services/dataStorage';
 import type { CustomerLead } from '@/services/dataStorage';
@@ -83,7 +86,6 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
   const [editingNews, setEditingNews] = useState<(NewsArticle & { featured?: boolean }) | null>(null);
-  const [isNewsImagePickerOpen, setIsNewsImagePickerOpen] = useState(false);
 
   // Media Tab direct VPS modal
   const [isMediaUploadModalOpen, setIsMediaUploadModalOpen] = useState(false);
@@ -91,6 +93,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const [directVpsName, setDirectVpsName] = useState('');
   const [directVpsCat, setDirectVpsCat] = useState<MediaItem['category']>('general');
   const mediaTabFileInputRef = useRef<HTMLInputElement>(null);
+  const mediaUpload = useBatchUpload();
 
   // Notification feedback
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -178,6 +181,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
     const projectToSave: Project = {
       ...editingProject,
+      fullDescription: renderRichHtml(editingProject.fullDescription),
       slug:
         editingProject.slug.trim() ||
         editingProject.name
@@ -244,6 +248,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
     const propToSave: Property = {
       ...editingProperty,
+      fullDescription: renderRichHtml(editingProperty.fullDescription),
       slug:
         editingProperty.slug.trim() ||
         editingProperty.title
@@ -295,9 +300,14 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const handleSaveNews = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingNews || !editingNews.title.trim()) return;
+    if (!stripHtml(editingNews.content) && !/<img\b/i.test(editingNews.content)) {
+      alert('Vui lòng nhập nội dung bài viết.');
+      return;
+    }
 
     const newsToSave: NewsArticle = {
       ...editingNews,
+      content: renderRichHtml(editingNews.content),
       slug:
         editingNews.slug.trim() ||
         editingNews.title
@@ -322,17 +332,6 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     }
   };
 
-  // Insert image into news content
-  const handleInsertImageIntoNews = (url: string) => {
-    if (!editingNews) return;
-    const imageTag = `\n\n![Ảnh minh họa](${url})\n\n`;
-    setEditingNews({
-      ...editingNews,
-      content: (editingNews.content || '') + imageTag,
-    });
-    showNotification('Đã chèn ảnh vào nội dung bài viết!');
-  };
-
   // === LEADS MANAGEMENT ===
   const handleUpdateLeadStatus = async (id: string, status: CustomerLead['status']) => {
     if (!(await attempt(() => dataStorage.updateLeadStatus(id, status)))) return;
@@ -349,22 +348,17 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   };
 
   // === MEDIA TAB ACTIONS ===
-  const handleMediaTabFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const uploadToMediaTab = async (files: File[]) => {
+    if (files.length === 0) return;
+    const batch = await mediaUpload.upload(files, directVpsCat);
+    refreshAllData();
+    if (batch.uploaded.length > 0) showNotification(`Đã tải ${batch.uploaded.length} ảnh lên kho thành công!`);
+  };
 
-    try {
-      const file = files[0];
-      await mediaService.uploadFile(file, directVpsCat);
-      refreshAllData();
-      showNotification(`Đã tải ảnh "${file.name}" lên kho thành công!`);
-    } catch (err) {
-      showError(err);
-    } finally {
-      if (mediaTabFileInputRef.current) {
-        mediaTabFileInputRef.current.value = '';
-      }
-    }
+  const handleMediaTabFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    await uploadToMediaTab(files);
   };
 
   const handleAddVpsUrlFromTab = async (e: React.FormEvent) => {
@@ -1224,20 +1218,24 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                   type="file"
                   ref={mediaTabFileInputRef}
                   accept="image/*"
+                  multiple
                   onChange={handleMediaTabFileUpload}
                   className="hidden"
                 />
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
+                  disabled={mediaUpload.isUploading}
                   onClick={() => mediaTabFileInputRef.current?.click()}
                   className="text-xs"
                 >
                   <Upload className="w-4 h-4 mr-1" />
-                  Tải Ảnh Lên
+                  {progressLabel(mediaUpload.progress, 'Tải Nhiều Ảnh Lên')}
                 </Button>
 
                 <Button
+                  type="button"
                   variant="primary"
                   size="sm"
                   onClick={() => setIsMediaUploadModalOpen(true)}
@@ -1248,6 +1246,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                 </Button>
               </div>
             </div>
+
+            <UploadResultSummary result={mediaUpload.result} onDismiss={mediaUpload.clearResult} />
 
             {/* Filter Pills */}
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
@@ -1260,6 +1260,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                 { id: 'logo', label: `Logo (${mediaList.filter((m) => m.category === 'logo').length})` },
               ].map((cat) => (
                 <button
+                  type="button"
                   key={cat.id}
                   onClick={() => setMediaCategoryFilter(cat.id as any)}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
@@ -1273,8 +1274,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
               ))}
             </div>
 
-            {/* Media Grid */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+            {/* Media Grid (drop many images anywhere on it to upload) */}
+            <ImageDropZone
+              onFiles={uploadToMediaTab}
+              disabled={mediaUpload.isUploading}
+              className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-6 transition-colors"
+            >
+              <p className="text-[11px] text-slate-400 mb-3">
+                Mẹo: kéo thả nhiều ảnh (JPG, PNG, WebP, GIF, tối đa 5MB mỗi ảnh) vào khung này để tải lên cùng lúc.
+              </p>
               {filteredMedia.length === 0 ? (
                 <div className="py-16 text-center text-slate-400">
                   <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-40" />
@@ -1347,7 +1355,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                   ))}
                 </div>
               )}
-            </div>
+            </ImageDropZone>
           </div>
         )}
 
@@ -1721,11 +1729,10 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
               <div className="md:col-span-2">
                 <label className="block font-semibold text-slate-700 mb-1">Mô tả chi tiết</label>
-                <textarea
-                  rows={4}
+                <LazyRichTextEditor
                   value={editingProject.fullDescription}
-                  onChange={(e) => setEditingProject({ ...editingProject, fullDescription: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                  onChange={(html) => setEditingProject({ ...editingProject, fullDescription: html })}
+                  category="project"
                 />
               </div>
 
@@ -1910,13 +1917,22 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block font-semibold text-slate-700 mb-1">Mô tả chi tiết (*)</label>
+                <label className="block font-semibold text-slate-700 mb-1">Mô tả ngắn (*)</label>
                 <textarea
                   rows={3}
                   required
                   value={editingProperty.shortDescription}
                   onChange={(e) => setEditingProperty({ ...editingProperty, shortDescription: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block font-semibold text-slate-700 mb-1">Mô tả chi tiết</label>
+                <LazyRichTextEditor
+                  value={editingProperty.fullDescription}
+                  onChange={(html) => setEditingProperty({ ...editingProperty, fullDescription: html })}
+                  category="property"
                 />
               </div>
             </div>
@@ -2012,32 +2028,13 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
               />
             </div>
 
-            {/* News Content with Image Insertion Toolbar */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block font-semibold text-slate-700">Nội dung chi tiết bài viết (*)</label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsNewsImagePickerOpen(true)}
-                  className="text-xs py-1 px-2.5 border-gold-500/50 text-navy-900 hover:bg-gold-50"
-                >
-                  <ImageIcon className="w-3.5 h-3.5 mr-1 text-gold-600" />
-                  + Chèn ảnh từ Kho VPS vào bài viết
-                </Button>
-              </div>
-              <textarea
-                rows={7}
-                required
+              <label className="block font-semibold text-slate-700 mb-1.5">Nội dung chi tiết bài viết (*)</label>
+              <LazyRichTextEditor
                 value={editingNews.content}
-                onChange={(e) => setEditingNews({ ...editingNews, content: e.target.value })}
-                placeholder="Nhập nội dung bài viết. Bạn có thể bấm '+ Chèn ảnh từ Kho VPS' để thêm hình ảnh minh họa..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-sans leading-relaxed"
+                onChange={(html) => setEditingNews({ ...editingNews, content: html })}
+                category="news"
               />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Gợi ý: Ảnh chèn vào bài viết có dạng <code>![Mô tả ảnh](đường-dẫn-ảnh)</code> và sẽ được hiển thị với khung ảnh lớn sắc nét ngoài bài viết.
-              </p>
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
@@ -2051,15 +2048,6 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           </form>
         </Modal>
       )}
-
-      {/* Modal for Inserting Image into News Content */}
-      <ImagePickerModal
-        isOpen={isNewsImagePickerOpen}
-        onClose={() => setIsNewsImagePickerOpen(false)}
-        onSelect={(url) => handleInsertImageIntoNews(url)}
-        title="Chọn ảnh từ Kho VPS để chèn vào nội dung bài viết"
-        defaultCategory="news"
-      />
 
       {/* Modal: Direct VPS Image Link Input */}
       {isMediaUploadModalOpen && (

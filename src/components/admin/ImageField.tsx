@@ -7,9 +7,10 @@ import {
   Edit2,
 } from 'lucide-react';
 import { ImagePickerModal } from './ImagePickerModal';
-import { mediaService } from '@/services/mediaService';
 import type { MediaItem } from '@/services/mediaService';
 import { Button } from '@/components/common/Button';
+import { useBatchUpload, progressLabel } from './useBatchUpload';
+import { UploadResultSummary } from './UploadFeedback';
 
 interface ImageFieldProps {
   label: string;
@@ -31,27 +32,21 @@ export function ImageField({
   aspectRatio = 'video',
 }: ImageFieldProps) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [singleNotice, setSingleNotice] = useState<string | null>(null);
+  const { progress, isUploading, result, upload, clearResult } = useBatchUpload();
   const [showUrlEdit, setShowUrlEdit] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (files.length === 0) return;
 
-    setIsUploading(true);
-    try {
-      const file = files[0];
-      const uploaded = await mediaService.uploadFile(file, category);
-      onChange(uploaded.url);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Tải ảnh lên thất bại.');
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
+    setSingleNotice(
+      files.length > 1 ? 'Ô này chỉ nhận 1 ảnh nên hệ thống dùng ảnh đầu tiên. Cần nhiều ảnh hãy dùng Bộ sưu tập.' : null,
+    );
+    const batch = await upload([files[0]], category);
+    if (batch.uploaded[0]) onChange(batch.uploaded[0].url);
   };
 
   const getAspectClass = () => {
@@ -131,6 +126,7 @@ export function ImageField({
               type="file"
               ref={fileInputRef}
               accept="image/*"
+              multiple
               onChange={handleDirectUpload}
               className="hidden"
             />
@@ -143,7 +139,7 @@ export function ImageField({
               className="text-xs py-2 px-3 border-slate-300 hover:bg-slate-100"
             >
               <Upload className="w-3.5 h-3.5 mr-1.5" />
-              {isUploading ? 'Đang tải lên...' : 'Tải ảnh từ máy'}
+              {progressLabel(progress, 'Tải ảnh từ máy')}
             </Button>
 
             {/* Remove Button */}
@@ -175,6 +171,9 @@ export function ImageField({
               {value ? value : 'Chưa thiết lập ảnh'}
             </div>
           )}
+
+          {singleNotice && <p className="text-[11px] text-amber-700">{singleNotice}</p>}
+          <UploadResultSummary result={result} onDismiss={clearResult} />
 
           {helperText && (
             <p className="text-[11px] text-slate-400">{helperText}</p>

@@ -11,9 +11,30 @@ export interface MediaItem {
   isCustomUpload?: boolean;
 }
 
+export interface UploadFailure {
+  name: string;
+  reason: string;
+}
+
+export interface UploadBatchResult {
+  uploaded: MediaItem[];
+  failed: UploadFailure[];
+}
+
 export const MEDIA_CHANGED_EVENT = 'pn_media_changed';
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+// The server pool has only 4 PHP workers: keep one free for other requests.
+const UPLOAD_CONCURRENCY = 3;
+
 let items: MediaItem[] = [];
+
+function validateImage(file: File): string | null {
+  if (!ALLOWED_TYPES.includes(file.type)) return 'Chỉ hỗ trợ ảnh JPG, PNG, WebP hoặc GIF.';
+  if (file.size > MAX_FILE_BYTES) return 'Ảnh vượt quá dung lượng tối đa 5MB.';
+  return null;
+}
 
 function emitChange(): void {
   window.dispatchEvent(new CustomEvent(MEDIA_CHANGED_EVENT));
@@ -58,6 +79,41 @@ export const mediaService = {
     items = [item, ...items];
     emitChange();
     return item;
+  },
+
+  // Uploads many images (max 3 in flight). A failing file never aborts the others.
+  async uploadFiles(
+    files: File[],
+    category: MediaItem['category'] = 'general',
+    onProgress?: (done: number, total: number) => void,
+  ): Promise<UploadBatchResult> {
+    // Results keep the selection order, whatever order the uploads finish in.
+    const slots: (MediaItem | undefined)[] = [];
+    const failed: UploadFailure[] = [];
+    const queue: { file: File; index: number }[] = [];
+    files.forEach((file, index) => {
+      const problem = validateImage(file);
+      if (problem) failed.push({ name: file.name, reason: problem });
+      else queue.push({ file, index });
+    });
+
+    const total = files.length;
+    let done = failed.length;
+    onProgress?.(done, total);
+
+    const worker = async () => {
+      for (let job = queue.shift(); job; job = queue.shift()) {
+        try {
+          slots[job.index] = await this.uploadFile(job.file, category);
+        } catch (err) {
+          failed.push({ name: job.file.name, reason: err instanceof Error ? err.message : 'Tải lên thất bại.' });
+        }
+        done += 1;
+        onProgress?.(done, total);
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(UPLOAD_CONCURRENCY, queue.length) }, worker));
+    return { uploaded: slots.filter((item): item is MediaItem => !!item), failed };
   },
 
   // Link an externally hosted image (http/https or site-relative path only).

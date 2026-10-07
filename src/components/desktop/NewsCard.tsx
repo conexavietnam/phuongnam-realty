@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Clock } from 'lucide-react';
 import type { NewsArticle } from '@/types';
 import { Badge } from '@/components/common/Badge';
+import { stripHtml } from '@/utils/richText';
 
 export interface NewsCardProps {
   article: NewsArticle;
@@ -49,7 +50,7 @@ export function NewsCard({ article }: NewsCardProps) {
           </h3>
 
           <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed mb-4">
-            {article.excerpt}
+            {stripHtml(article.excerpt)}
           </p>
         </div>
 
