@@ -6,8 +6,10 @@ import { MobileSearchFilter } from '@/components/mobile/MobileSearchFilter';
 import { Button } from '@/components/common/Button';
 import { propertyService } from '@/services/propertyService';
 import type { PropertyFilter } from '@/types';
+import { useDataListener } from '@/hooks';
 
 export function MobilePropertiesPage() {
+  useDataListener();
   const [showFilter, setShowFilter] = useState(false);
   const properties = propertyService.getAll(); // in real app, apply filters
 

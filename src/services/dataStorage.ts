@@ -199,6 +199,10 @@ export const dataStorage = {
     return cache.filters;
   },
 
+  saveFilters(config: FilterConfig): Promise<void> {
+    return commit('filters', config);
+  },
+
   getAgents(): Agent[] {
     return cache.agents;
   },

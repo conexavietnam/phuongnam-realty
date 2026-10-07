@@ -14,6 +14,10 @@ export const companyService = {
     return dataStorage.getFilters();
   },
 
+  saveFilterConfig(config: FilterConfig): Promise<void> {
+    return dataStorage.saveFilters(config);
+  },
+
   getAgents(): Agent[] {
     return dataStorage.getAgents();
   },
