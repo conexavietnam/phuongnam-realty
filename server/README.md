@@ -26,17 +26,13 @@ Suggested php.ini for the pool: `upload_max_filesize = 6M`, `post_max_size = 8M`
 
 ## Deploy
 
+> **NEVER run `rm -rf public_html/*` (or any glob delete) on the server.** `public_html/` also holds
+> `api/` and `uploads/` (the admin's images). A manual wipe once deleted both and ~80 uploaded images
+> were lost. Deploy only with `server/deploy/deploy.sh`.
+
+### One-time server setup
+
 ```bash
-# 1. build the SPA locally
-npm ci && npm run build
-
-# 2. upload (never --delete the api/ or uploads/ directories)
-rsync -a --delete --exclude 'api/' --exclude 'uploads/' dist/ user@host:/var/www/phuongnam/public_html/
-rsync -a server/api/  user@host:/var/www/phuongnam/public_html/api/
-rsync -a --delete server/src/  user@host:/var/www/phuongnam/server/src/
-rsync -a --delete server/seed/ user@host:/var/www/phuongnam/server/seed/
-
-# 3. one-time on the server
 cd /var/www/phuongnam
 cp server/config.sample.php server/config.php && $EDITOR server/config.php
 mkdir -p data public_html/uploads
@@ -46,6 +42,46 @@ chmod 640 server/config.php server/src/*.php
 chmod 770 data public_html/uploads         # php-fpm (group www-data) must write here
 chmod 755 public_html/uploads              # if you prefer: 750 + nginx in the same group
 ```
+
+### Every release
+
+```bash
+export DEPLOY_HOST=my-ssh-alias            # alias from ~/.ssh/config
+export APP_ROOT=/var/www/phuongnam         # contains data/, server/, public_html/
+export SITE_USER=deploy SITE_GROUP=www-data
+export SITE_URL=https://example.com        # used for the post-deploy checks
+# optional: PHP_FPM_SERVICE=php8.3-fpm  REMOTE_SUDO="sudo -n" (empty if the ssh user owns everything)
+bash server/deploy/deploy.sh
+```
+
+The script, in order:
+
+1. runs `npm run build`, requires `dist/index.html`, refuses `dist/` containing `api/`, `uploads/` or
+   `config.php`, and aborts if anything shaped like a Telegram bot token is in `dist/`;
+2. uploads tarballs of `dist`, `server/api`, `server/src` and `server/seed` to a staging dir
+   (`$APP_ROOT/.deploy-incoming/<timestamp>`);
+3. on the server: `php -l` on every PHP file, then a timestamped backup
+   `$APP_ROOT/backups/pre-deploy-<timestamp>.tgz` of `public_html/uploads` and `data` (dir mode 700,
+   newest 14 kept);
+4. replaces only the built files in `public_html/` (everything except `uploads/` and `api/`), then
+   `api/`, `server/src`, `server/seed`. It never touches `uploads/`, `data/` or `server/config.php`;
+5. fixes permissions (public files 755/644, `server/src` and `server/seed` 750/640), reloads php-fpm;
+6. checks from your machine: home page 200, `api/index.php?r=auth/me` 200, `/server/config.php` not 200.
+
+### Backups and restore
+
+Each deploy leaves `$APP_ROOT/backups/pre-deploy-<timestamp>.tgz` (paths inside are relative to
+`$APP_ROOT`). To restore, inspect first, then extract only what you need:
+
+```bash
+cd "$APP_ROOT"
+tar -tzf backups/pre-deploy-<timestamp>.tgz | head
+tar -xzf backups/pre-deploy-<timestamp>.tgz public_html/uploads     # images only
+tar -xzf backups/pre-deploy-<timestamp>.tgz data                    # JSON data only
+```
+
+This overwrites files with the same name and does not delete anything else. Copy the archive off the
+server from time to time: backups on the same disk do not protect against losing the server.
 
 Collections are seeded from `server/seed/*.json` into `data/` on first access (only when the file is
 missing). Data files are written with `flock` + temp file + `rename`; the last 10 versions of each

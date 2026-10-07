@@ -40,17 +40,22 @@ function emitChange(): void {
   window.dispatchEvent(new CustomEvent(MEDIA_CHANGED_EVENT));
 }
 
-async function persist(next: MediaItem[]): Promise<void> {
-  const previous = items;
-  items = next;
-  emitChange();
-  try {
+// Writes that replace the whole list run one at a time, each on a freshly read server list,
+// so they never drop entries added meanwhile (other tab, concurrent uploads).
+let writeQueue: Promise<unknown> = Promise.resolve();
+
+function mutateServerList(change: (list: MediaItem[]) => MediaItem[]): Promise<void> {
+  // The local cache changes only after the server accepted the write, so a failure needs no rollback.
+  const run = async () => {
+    const fresh = await api.getData<unknown>('media');
+    const next = change(Array.isArray(fresh) ? (fresh as MediaItem[]) : items);
     await api.putData('media', next);
-  } catch (err) {
-    items = previous;
+    items = next;
     emitChange();
-    throw err;
-  }
+  };
+  const result = writeQueue.then(run, run);
+  writeQueue = result.catch(() => undefined);
+  return result;
 }
 
 export const mediaService = {
@@ -131,10 +136,10 @@ export const mediaService = {
       uploadedAt: new Date().toISOString(),
       isCustomUpload: true,
     };
-    return persist([item, ...items]).then(() => item);
+    return mutateServerList((list) => [item, ...list]).then(() => item);
   },
 
   deleteMedia(id: string): Promise<void> {
-    return persist(items.filter((item) => item.id !== id));
+    return mutateServerList((list) => list.filter((item) => item.id !== id));
   },
 };

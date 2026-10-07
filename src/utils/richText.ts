@@ -92,3 +92,17 @@ export function stripHtml(value: string | undefined | null): string {
   const doc = new DOMParser().parseFromString(spaced, 'text/html');
   return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
+
+const EMPTY_P = /<p(?:\s[^>]*)?>(?:\s|<br\s*\/?>|&nbsp;)*<\/p>/.source;
+const LEADING_EMPTY = new RegExp('^(?:\\s*' + EMPTY_P + ')+', 'i');
+const TRAILING_EMPTY = new RegExp('(?:' + EMPTY_P + '\\s*)+$', 'i');
+
+// Drops empty paragraphs at the start/end of editor output (TipTap keeps a trailing one).
+export function trimEmptyParagraphs(html: string): string {
+  return html.replace(LEADING_EMPTY, '').replace(TRAILING_EMPTY, '').trim();
+}
+
+// Value to store on save: legacy text converted, sanitized, empty edges removed.
+export function normalizeEditorHtml(value: string | undefined | null): string {
+  return trimEmptyParagraphs(renderRichHtml(value));
+}

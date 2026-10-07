@@ -34,7 +34,7 @@ import { GalleryField } from '@/components/admin/GalleryField';
 import { LazyRichTextEditor } from '@/components/admin/LazyRichTextEditor';
 import { useBatchUpload, progressLabel } from '@/components/admin/useBatchUpload';
 import { ImageDropZone, UploadResultSummary } from '@/components/admin/UploadFeedback';
-import { renderRichHtml, stripHtml } from '@/utils/richText';
+import { normalizeEditorHtml, stripHtml } from '@/utils/richText';
 import { TelegramSettingsCard } from '@/components/admin/TelegramSettingsCard';
 import { dataStorage } from '@/services/dataStorage';
 import type { CustomerLead } from '@/services/dataStorage';
@@ -181,7 +181,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
     const projectToSave: Project = {
       ...editingProject,
-      fullDescription: renderRichHtml(editingProject.fullDescription),
+      fullDescription: normalizeEditorHtml(editingProject.fullDescription),
       slug:
         editingProject.slug.trim() ||
         editingProject.name
@@ -248,7 +248,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
     const propToSave: Property = {
       ...editingProperty,
-      fullDescription: renderRichHtml(editingProperty.fullDescription),
+      fullDescription: normalizeEditorHtml(editingProperty.fullDescription),
       slug:
         editingProperty.slug.trim() ||
         editingProperty.title
@@ -300,14 +300,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const handleSaveNews = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingNews || !editingNews.title.trim()) return;
-    if (!stripHtml(editingNews.content) && !/<img\b/i.test(editingNews.content)) {
+    const normalizedContent = normalizeEditorHtml(editingNews.content);
+    if (!stripHtml(normalizedContent) && !/<img\b/i.test(normalizedContent)) {
       alert('Vui lòng nhập nội dung bài viết.');
       return;
     }
 
     const newsToSave: NewsArticle = {
       ...editingNews,
-      content: renderRichHtml(editingNews.content),
+      content: normalizedContent,
       slug:
         editingNews.slug.trim() ||
         editingNews.title
