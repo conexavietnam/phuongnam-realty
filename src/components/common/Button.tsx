@@ -33,7 +33,7 @@ export function Button({
   const classes = `${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`;
 
   return (
-    <button className={classes} {...props}>
+    <button type="button" className={classes} {...props}>
       {icon && <span className="mr-2">{icon}</span>}
       {children}
     </button>

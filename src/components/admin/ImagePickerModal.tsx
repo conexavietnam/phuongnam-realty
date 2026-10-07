@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Upload,
@@ -91,8 +92,11 @@ export function ImagePickerModal({
   };
 
   // Handle direct VPS URL submission
-  const handleAddVpsUrl = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddVpsUrl = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!vpsUrl.trim()) return;
 
     try {
@@ -136,7 +140,7 @@ export function ImagePickerModal({
     return matchCat && matchSearch;
   });
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
@@ -150,6 +154,7 @@ export function ImagePickerModal({
             <h3 className="font-bold text-base">{title}</h3>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
           >
@@ -160,6 +165,7 @@ export function ImagePickerModal({
         {/* Tab Buttons */}
         <div className="flex border-b border-slate-200 bg-slate-50 px-6">
           <button
+            type="button"
             onClick={() => setActiveTab('library')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'library'
@@ -172,6 +178,7 @@ export function ImagePickerModal({
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('upload')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'upload'
@@ -199,6 +206,7 @@ export function ImagePickerModal({
                     { id: 'banner', label: 'Banner & Logo' },
                   ].map((cat) => (
                     <button
+                      type="button"
                       key={cat.id}
                       onClick={() => setCategoryFilter(cat.id as any)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
@@ -230,6 +238,7 @@ export function ImagePickerModal({
                   <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-40" />
                   <p className="text-sm">Không tìm thấy ảnh nào phù hợp.</p>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => setActiveTab('upload')}
@@ -272,6 +281,7 @@ export function ImagePickerModal({
 
                           {/* Delete Button on Hover */}
                           <button
+                            type="button"
                             onClick={(e) => handleDeleteMedia(e, item.id)}
                             className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-rose-600 transition-all"
                             title="Xóa ảnh khỏi kho"
@@ -349,7 +359,7 @@ export function ImagePickerModal({
               </div>
 
               {/* Option B: Enter VPS URL */}
-              <form onSubmit={handleAddVpsUrl} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
                 <h4 className="font-bold text-xs text-navy-900 uppercase tracking-wider">
                   Thêm Đường Dẫn Trực Tiếp Từ VPS / Server / CDN
                 </h4>
@@ -362,6 +372,13 @@ export function ImagePickerModal({
                     required
                     value={vpsUrl}
                     onChange={(e) => setVpsUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddVpsUrl(e);
+                      }
+                    }}
                     placeholder="https://vps.domain.com/uploads/can-ho-palm-river.jpg"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono"
                   />
@@ -376,6 +393,13 @@ export function ImagePickerModal({
                       type="text"
                       value={vpsName}
                       onChange={(e) => setVpsName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddVpsUrl(e);
+                        }
+                      }}
                       placeholder="Ảnh flycam dự án"
                       className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                     />
@@ -400,12 +424,18 @@ export function ImagePickerModal({
                 </div>
 
                 <div className="pt-2">
-                  <Button type="submit" variant="primary" size="sm" className="w-full text-xs font-semibold py-2.5">
+                  <Button
+                    type="button"
+                    onClick={handleAddVpsUrl}
+                    variant="primary"
+                    size="sm"
+                    className="w-full text-xs font-semibold py-2.5"
+                  >
                     <Plus className="w-4 h-4 mr-1.5" />
                     Thêm Ảnh Này Vào Kho Lưu Trữ VPS
                   </Button>
                 </div>
-              </form>
+              </div>
             </div>
           )}
         </div>
@@ -423,10 +453,11 @@ export function ImagePickerModal({
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={onClose} className="text-xs">
+            <Button type="button" variant="outline" size="sm" onClick={onClose} className="text-xs">
               Hủy
             </Button>
             <Button
+              type="button"
               variant="primary"
               size="sm"
               onClick={handleConfirmSelect}
@@ -439,6 +470,7 @@ export function ImagePickerModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
