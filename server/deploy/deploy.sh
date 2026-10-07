@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Safe deploy: build locally, back up user data on the server, swap ONLY the app files.
-# It never touches public_html/uploads, data/ or server/config.php, and never deletes a glob of public_html.
+# Layout: public_html/ holds ONLY the built SPA. The PHP entry point (server/api/) and the uploaded images
+# (uploads/) live OUTSIDE public_html (nginx maps /api/index.php and /uploads/ to them), so even a stray
+# "rm -rf public_html/*" cannot delete the backend or user images. It never touches uploads/, data/ or server/config.php.
 #
 # Required env:  DEPLOY_HOST (ssh alias)  APP_ROOT (e.g. /home/site)  SITE_USER  SITE_GROUP
 #                SITE_URL (public base URL used for the post-deploy checks, no trailing slash)
@@ -67,6 +69,7 @@ PUBLIC="$APP_ROOT/public_html"
 BACKUPS="$APP_ROOT/backups"
 
 [ -d "$PUBLIC" ] || { echo "$PUBLIC does not exist" >&2; exit 1; }
+UPLOADS="$APP_ROOT/uploads"
 [ -f "$APP_ROOT/server/config.php" ] || { echo "server/config.php is missing: not a configured app root" >&2; exit 1; }
 
 mkdir -p "$STAGE/dist" "$STAGE/api" "$STAGE/src" "$STAGE/seed"
@@ -82,6 +85,7 @@ echo "-- backup of uploads + data"
 mkdir -p "$BACKUPS"
 chmod 700 "$BACKUPS"
 BACKUP_ITEMS=()
+[ -d "$UPLOADS" ] && BACKUP_ITEMS+=("uploads")
 [ -d "$PUBLIC/uploads" ] && BACKUP_ITEMS+=("public_html/uploads")
 [ -d "$APP_ROOT/data" ] && BACKUP_ITEMS+=("data")
 if [ "${#BACKUP_ITEMS[@]}" -gt 0 ]; then
@@ -95,8 +99,10 @@ ls -1t "$BACKUPS"/pre-deploy-*.tgz 2>/dev/null | tail -n +15 | while IFS= read -
 echo "-- replacing dist files (uploads/ and api/ are never touched)"
 find "$PUBLIC" -mindepth 1 -maxdepth 1 ! -name uploads ! -name api -exec rm -r -- {} +
 cp -a "$STAGE/dist/." "$PUBLIC/"
-mkdir -p "$PUBLIC/api"
-cp -a "$STAGE/api/." "$PUBLIC/api/"
+
+echo "-- installing server/api (outside the webroot) and uploads/"
+mkdir -p "$APP_ROOT/server/api" "$UPLOADS"
+cp -a "$STAGE/api/." "$APP_ROOT/server/api/"
 
 echo "-- replacing server/src and server/seed (config.php untouched)"
 for part in src seed; do
@@ -107,7 +113,10 @@ for part in src seed; do
 done
 
 echo "-- permissions"
-$REMOTE_SUDO chown -R "$SITE_USER:$SITE_GROUP" "$APP_ROOT/server/src" "$APP_ROOT/server/seed"
+$REMOTE_SUDO chown -R "$SITE_USER:$SITE_GROUP" "$APP_ROOT/server/src" "$APP_ROOT/server/seed" "$APP_ROOT/server/api"
+$REMOTE_SUDO chown "$SITE_USER:$SITE_GROUP" "$UPLOADS"
+chmod 755 "$UPLOADS"
+find "$APP_ROOT/server/api" -type d -exec chmod 750 {} + ; find "$APP_ROOT/server/api" -type f -exec chmod 640 {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -exec $REMOTE_SUDO chown -h "$SITE_USER:$SITE_GROUP" {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -type d -exec chmod 755 {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -type f -exec chmod 644 {} +

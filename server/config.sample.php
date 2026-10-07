@@ -13,8 +13,8 @@ return [
     'data_dir' => dirname(__DIR__) . '/data',
     'session_dir' => dirname(__DIR__) . '/data/sessions',
 
-    // Public upload directory (inside the webroot) and its URL prefix.
-    'uploads_dir' => dirname(__DIR__) . '/public_html/uploads',
+    // Upload directory (OUTSIDE the webroot; nginx serves it at /uploads/) and its URL prefix.
+    'uploads_dir' => dirname(__DIR__) . '/uploads',
     'uploads_url' => '/uploads/',
 
     // Keep true in production (HTTPS). Only set false for plain-HTTP local testing.

@@ -8,16 +8,17 @@ Small same-origin API for the SPA. No database, no Node on the server. Secrets l
 ```
 /var/www/phuongnam/              <- app root (NOT served by nginx)
   data/                          <- JSON collections, backups, OTP, rate limits, sessions (created on first use)
+  uploads/                       <- admin image uploads (written by PHP, served by nginx at /uploads/)
   server/
     config.php                   <- real secrets, never committed
+    api/index.php                <- PHP entry point (nginx maps /api/index.php to this file)
     src/  seed/                  <- from this repo's server/src and server/seed
-  public_html/                   <- nginx root (contents of `dist/`)
-    api/index.php                <- from this repo's server/api/index.php
-    uploads/                     <- admin image uploads (written by PHP)
+  public_html/                   <- nginx root: ONLY the built SPA (contents of `dist/`)
 ```
 
-`api/index.php` finds the shared code at `<app root>/server/` (two levels above `api/`). The same
-relative layout works in this repo for local runs (`server/api` -> repo root -> `server/`).
+`public_html/` contains nothing but the built site, so wiping it can never remove the backend or the
+uploaded images. `api/index.php` finds the shared code at `<app root>/server/` (two levels above its
+own directory). The same relative layout works in this repo for local runs (`server/api` -> repo root -> `server/`).
 
 ## Requirements
 
@@ -26,21 +27,23 @@ Suggested php.ini for the pool: `upload_max_filesize = 6M`, `post_max_size = 8M`
 
 ## Deploy
 
-> **NEVER run `rm -rf public_html/*` (or any glob delete) on the server.** `public_html/` also holds
-> `api/` and `uploads/` (the admin's images). A manual wipe once deleted both and ~80 uploaded images
-> were lost. Deploy only with `server/deploy/deploy.sh`.
+> **Deploy only with `server/deploy/deploy.sh`.** A manual `rm -rf public_html/*` once deleted the
+> backend and ~80 uploaded images (they used to live inside `public_html/`). They now live outside it,
+> but the script also takes a backup first, so keep using it.
 
 ### One-time server setup
 
 ```bash
 cd /var/www/phuongnam
 cp server/config.sample.php server/config.php && $EDITOR server/config.php
-mkdir -p data public_html/uploads
-chown -R deploy:www-data data server public_html/uploads
-chmod 750 server server/src server/seed data
+mkdir -p data uploads server/api
+# in config.php set 'uploads_dir' => '<app root>/uploads' and 'data_dir' => '<app root>/data'
+chown -R deploy:www-data data uploads server
+chmod 750 server server/api server/src server/seed data
 chmod 640 server/config.php server/src/*.php
-chmod 770 data public_html/uploads         # php-fpm (group www-data) must write here
-chmod 755 public_html/uploads              # if you prefer: 750 + nginx in the same group
+chmod 770 data                              # php-fpm (group www-data) must write here
+chmod 755 uploads                           # php-fpm user owns it; nginx reads it
+# php-fpm pool: add <app root>/server, <app root>/data and <app root>/uploads to open_basedir
 ```
 
 ### Every release
@@ -61,10 +64,10 @@ The script, in order:
 2. uploads tarballs of `dist`, `server/api`, `server/src` and `server/seed` to a staging dir
    (`$APP_ROOT/.deploy-incoming/<timestamp>`);
 3. on the server: `php -l` on every PHP file, then a timestamped backup
-   `$APP_ROOT/backups/pre-deploy-<timestamp>.tgz` of `public_html/uploads` and `data` (dir mode 700,
+   `$APP_ROOT/backups/pre-deploy-<timestamp>.tgz` of `uploads` and `data` (dir mode 700,
    newest 14 kept);
-4. replaces only the built files in `public_html/` (everything except `uploads/` and `api/`), then
-   `api/`, `server/src`, `server/seed`. It never touches `uploads/`, `data/` or `server/config.php`;
+4. replaces the built files in `public_html/`, then installs `server/api`, `server/src` and
+   `server/seed`. It never touches `uploads/`, `data/` or `server/config.php`;
 5. fixes permissions (public files 755/644, `server/src` and `server/seed` 750/640), reloads php-fpm;
 6. checks from your machine: home page 200, `api/index.php?r=auth/me` 200, `/server/config.php` not 200.
 
@@ -76,7 +79,7 @@ Each deploy leaves `$APP_ROOT/backups/pre-deploy-<timestamp>.tgz` (paths inside 
 ```bash
 cd "$APP_ROOT"
 tar -tzf backups/pre-deploy-<timestamp>.tgz | head
-tar -xzf backups/pre-deploy-<timestamp>.tgz public_html/uploads     # images only
+tar -xzf backups/pre-deploy-<timestamp>.tgz uploads                # images only
 tar -xzf backups/pre-deploy-<timestamp>.tgz data                    # JSON data only
 ```
 
@@ -89,19 +92,30 @@ collection are kept in `data/backups/`.
 
 ## nginx
 
-The router is `index.php?r=<route>` so the existing `location ~ \.php$` FastCGI block works unchanged.
-Only add these (inside the `server { }` of the site):
+The PHP entry point and the uploads live outside the webroot, so nginx maps them explicitly
+(inside the `server { }` of the site; replace `<app root>` and the FPM socket path):
 
 ```nginx
 client_max_body_size 6m;                 # uploads are capped at 5MB by PHP
 
-# uploaded files: serve static images only, never execute anything
+# API entry point (outside the webroot)
+location = /api/index.php {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME <app root>/server/api/index.php;
+    fastcgi_pass unix:/run/php/<pool>.sock;
+}
+location ^~ /api/ { return 404; }        # nothing else under /api/
+
+# uploaded images: serve static images only, never execute anything
 location ^~ /uploads/ {
+    alias <app root>/uploads/;
     location ~ \.php$ { deny all; }
     add_header X-Content-Type-Options nosniff always;
     try_files $uri =404;
 }
 ```
+
+The pool's `open_basedir` must include `<app root>/server`, `<app root>/data` and `<app root>/uploads`.
 
 Serve the site over HTTPS only: the session cookie is `Secure`, `HttpOnly`, `SameSite=Strict`
 (path `/api/`). Keep `server/` and `data/` outside the nginx root.
