@@ -6,9 +6,13 @@ Mã nguồn nằm trong `src/components/admin/settings/`:
 |---|---|---|
 | Thông tin Website | `WebsiteInfoTab.tsx` | Thông tin công ty, banner, logo (`dataStorage.saveCompany`) |
 | Form | `FormSettingsTab.tsx` | Danh sách Khu vực, Loại BĐS, Mức giá (`companyService.saveFilterConfig`, collection `filters`) |
+| Chân trang | `FooterSettingsTab.tsx` | Các cột liên kết và dòng bản quyền ở chân trang (`menu.footer`, `companyService.saveFooterConfig`) |
 | Bảo mật | `SecurityTab.tsx` | Đổi số điện thoại / Telegram ID (`TelegramSettingsCard`) |
 
 `SettingsTabBar.tsx` là thanh tab (`role="tablist"`, phím mũi tên trái/phải). Tab con đang chọn chỉ lưu trong state của `AdminDashboardPage`.
+
+## Dữ liệu `footer`
+Nằm trong collection `menu`: `footer: { columns: [{ id, title, links: [{ label, url }] }], copyright }` (tối đa 4 cột, 12 liên kết mỗi cột). Thiếu `footer` (dữ liệu cũ) thì dùng mặc định trong `src/data/menu.json` (giữ giống hệt `server/seed/menu.json`). Địa chỉ hợp lệ: `/đường-dẫn` nội bộ, `https://`, `mailto:`, `tel:`; mọi dạng khác (javascript:, data:, http://, //host) bị từ chối khi lưu và không hiển thị (`src/utils/footerLinks.ts`).
 
 ## Dữ liệu `filters`
 `{ regions, propertyTypes, priceRanges }`, mỗi phần tử `{ value, label }`. `value` là mã lưu trong đơn ký gửi/liên hệ và dùng để lọc, `label` là chữ hiển thị. Đổi tên chỉ sửa `label`; mục mới tự sinh `value` từ tên (bỏ dấu, gạch nối).
@@ -27,3 +31,6 @@ Mức giá có thêm hai cận số `min`/`max` (đơn vị tỷ đồng, bao g�
 10. Tải lại trang: thay đổi vẫn còn (đã ghi vào máy chủ).
 11. Mức giá: sửa ô Từ/Đến của một dòng, lưu; chọn mức giá đó ở bộ lọc /chuyen-nhuong, kết quả theo đúng cận mới. Nhập từ >= đến hoặc để trống cả hai ô: báo lỗi.
 12. Thêm mức giá mới chỉ bằng cận (tên để trống): tên được tự đặt (ví dụ "2.5–4 tỷ") và có thể sửa.
+13. Chân trang: sửa tên/địa chỉ một liên kết, thêm cột (tối đa 4, nút bị khóa), thêm/xóa/đổi thứ tự liên kết; lưu rồi mở trang bất kỳ: chân trang cập nhật. Liên kết https mở tab mới, nội bộ chuyển trang không tải lại.
+14. Nhập `javascript:...`, `data:...`, `http://...` hoặc để trống tên/tiêu đề: báo lỗi, không lưu.
+15. "Khôi phục mặc định" đưa form về nội dung gốc nhưng chưa lưu cho đến khi bấm "Lưu chân trang".

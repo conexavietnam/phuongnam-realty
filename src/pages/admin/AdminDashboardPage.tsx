@@ -39,6 +39,7 @@ import { SettingsTabBar } from '@/components/admin/settings/SettingsTabBar';
 import type { SettingsTab } from '@/components/admin/settings/SettingsTabBar';
 import { WebsiteInfoTab } from '@/components/admin/settings/WebsiteInfoTab';
 import { FormSettingsTab } from '@/components/admin/settings/FormSettingsTab';
+import { FooterSettingsTab } from '@/components/admin/settings/FooterSettingsTab';
 import { SecurityTab } from '@/components/admin/settings/SecurityTab';
 import { dataStorage } from '@/services/dataStorage';
 import type { CustomerLead } from '@/services/dataStorage';
@@ -1374,6 +1375,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                 <WebsiteInfoTab company={company} onChange={setCompany} onSubmit={handleSaveCompany} />
               )}
               {settingsTab === 'form' && <FormSettingsTab />}
+              {settingsTab === 'footer' && <FooterSettingsTab />}
               {settingsTab === 'security' && <SecurityTab />}
             </div>
           </div>

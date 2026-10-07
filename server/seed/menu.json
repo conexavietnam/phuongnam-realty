@@ -53,5 +53,72 @@
       "path": "/lien-he",
       "icon": "Phone"
     }
-  ]
+  ],
+  "footer": {
+    "columns": [
+      {
+        "id": "projects",
+        "title": "Dự án",
+        "links": [
+          {
+            "label": "Palm River",
+            "url": "/du-an/palm-river"
+          },
+          {
+            "label": "Sensa Park",
+            "url": "/du-an/sensa-park"
+          },
+          {
+            "label": "Genera",
+            "url": "/du-an/genera"
+          },
+          {
+            "label": "Tất cả dự án",
+            "url": "/du-an"
+          }
+        ]
+      },
+      {
+        "id": "properties",
+        "title": "Bất động sản",
+        "links": [
+          {
+            "label": "Căn hộ",
+            "url": "/chuyen-nhuong?type=apartment"
+          },
+          {
+            "label": "Nhà phố",
+            "url": "/chuyen-nhuong?type=house"
+          },
+          {
+            "label": "Shophouse",
+            "url": "/chuyen-nhuong?type=shophouse"
+          },
+          {
+            "label": "BĐS chuyển nhượng",
+            "url": "/chuyen-nhuong"
+          }
+        ]
+      },
+      {
+        "id": "other",
+        "title": "Khác",
+        "links": [
+          {
+            "label": "Tin tức",
+            "url": "/tin-tuc"
+          },
+          {
+            "label": "Ký gửi BĐS",
+            "url": "/ky-gui"
+          },
+          {
+            "label": "Liên hệ",
+            "url": "/lien-he"
+          }
+        ]
+      }
+    ],
+    "copyright": "© 2025 Phương Nam Realty. All rights reserved."
+  }
 }

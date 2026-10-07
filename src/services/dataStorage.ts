@@ -6,7 +6,7 @@ import type { Project } from '@/types/project';
 import type { Property } from '@/types/property';
 import type { NewsArticle } from '@/types/news';
 import type { Agent, ConsignmentProject } from '@/types/contact';
-import type { FilterConfig, MenuConfig } from '@/types/common';
+import type { FilterConfig, FooterConfig, MenuConfig } from '@/types/common';
 
 import initialProjects from '@/data/projects.json';
 import initialProperties from '@/data/properties.json';
@@ -193,6 +193,14 @@ export const dataStorage = {
 
   getMenu(): MenuConfig {
     return cache.menu;
+  },
+
+  getDefaultFooter(): FooterConfig {
+    return (BUNDLED.menu.footer as FooterConfig);
+  },
+
+  saveFooter(footer: FooterConfig): Promise<void> {
+    return commit('menu', { ...cache.menu, footer });
   },
 
   getFilters(): FilterConfig {

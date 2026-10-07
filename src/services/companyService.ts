@@ -1,5 +1,5 @@
 import { dataStorage } from '@/services/dataStorage';
-import type { CompanyInfo, MenuConfig, FilterConfig, Agent, ConsignmentProject } from '@/types';
+import type { CompanyInfo, MenuConfig, FilterConfig, FooterConfig, Agent, ConsignmentProject } from '@/types';
 
 export const companyService = {
   getCompanyInfo(): CompanyInfo {
@@ -8,6 +8,18 @@ export const companyService = {
 
   getMenuConfig(): MenuConfig {
     return dataStorage.getMenu();
+  },
+
+  getFooterConfig(): FooterConfig {
+    return dataStorage.getMenu().footer ?? dataStorage.getDefaultFooter();
+  },
+
+  getDefaultFooterConfig(): FooterConfig {
+    return dataStorage.getDefaultFooter();
+  },
+
+  saveFooterConfig(footer: FooterConfig): Promise<void> {
+    return dataStorage.saveFooter(footer);
   },
 
   getFilterConfig(): FilterConfig {
