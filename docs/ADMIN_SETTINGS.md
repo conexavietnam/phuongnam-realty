@@ -12,7 +12,7 @@ Mã nguồn nằm trong `src/components/admin/settings/`:
 
 ## Dữ liệu `filters`
 `{ regions, propertyTypes, priceRanges }`, mỗi phần tử `{ value, label }`. `value` là mã lưu trong đơn ký gửi/liên hệ và dùng để lọc, `label` là chữ hiển thị. Đổi tên chỉ sửa `label`; mục mới tự sinh `value` từ tên (bỏ dấu, gạch nối).
-Lưu ý: bộ lọc BĐS (`propertyService.matchesPriceRange`) chỉ hiểu mã mức giá dạng `duoi-3-ty`, `3-5-ty`, `tren-20-ty` (số-số-ty). Mức giá mới có mã khác vẫn hiện trong form nhưng không lọc được BĐS.
+Mức giá có thêm hai cận số `min`/`max` (đơn vị tỷ đồng, bao gồm hai đầu, null = không giới hạn); `propertyService.matchesPriceRange` lọc theo đúng các cận này. Mục cũ chưa có cận được suy ra từ mã cũ (`duoi-3-ty`, `3-5-ty`, `5-10-ty`, `10-20-ty`, `tren-20-ty`) trong `src/utils/priceRange.ts`.
 
 ## Checklist kiểm thử thủ công
 1. Vào Cài đặt: có 3 tab con, mặc định "Thông tin Website"; phím mũi tên chuyển tab và giữ focus.
@@ -25,3 +25,5 @@ Lưu ý: bộ lọc BĐS (`propertyService.matchesPriceRange`) chỉ hiểu mã 
 8. Lưu: banner xanh thành công. Mở `/ky-gui`, `/lien-he`, `/chuyen-nhuong` (và bản mobile): danh sách mới hiển thị, thứ tự đúng.
 9. Lưu khi máy chủ lỗi (hoặc phiên hết hạn): banner đỏ, danh sách quay lại giá trị đã lưu trước đó.
 10. Tải lại trang: thay đổi vẫn còn (đã ghi vào máy chủ).
+11. Mức giá: sửa ô Từ/Đến của một dòng, lưu; chọn mức giá đó ở bộ lọc /chuyen-nhuong, kết quả theo đúng cận mới. Nhập từ >= đến hoặc để trống cả hai ô: báo lỗi.
+12. Thêm mức giá mới chỉ bằng cận (tên để trống): tên được tự đặt (ví dụ "2.5–4 tỷ") và có thể sửa.

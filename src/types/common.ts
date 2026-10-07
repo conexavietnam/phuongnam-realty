@@ -62,8 +62,14 @@ export interface CompanyInfo {
   googleMapsLink: string;
 }
 
+// Bounds are in billions of VND (inclusive); null/undefined means open-ended.
+export interface PriceRangeOption extends FilterOption {
+  min?: number | null;
+  max?: number | null;
+}
+
 export interface FilterConfig {
   regions: FilterOption[];
   propertyTypes: FilterOption[];
-  priceRanges: FilterOption[];
+  priceRanges: PriceRangeOption[];
 }

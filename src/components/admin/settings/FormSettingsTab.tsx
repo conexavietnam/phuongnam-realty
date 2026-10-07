@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { ArrowDown, ArrowUp, Plus, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { companyService } from '@/services/companyService';
+import { getPriceBounds } from '@/utils/priceRange';
 import type { FilterConfig, FilterOption } from '@/types/common';
 
 type GroupKey = keyof FilterConfig;
@@ -13,7 +14,7 @@ const GROUPS: Array<{ key: GroupKey; title: string; hint?: string }> = [
   {
     key: 'priceRanges',
     title: 'Mức giá',
-    hint: 'Bộ lọc tìm kiếm BĐS chỉ nhận diện mã dạng "duoi-3-ty", "3-5-ty" (số-số-ty) hoặc "tren-20-ty". Mức giá có mã khác vẫn hiện trong form nhưng không lọc được BĐS.',
+    hint: 'Nhập cận dưới (từ) và cận trên (đến) theo đơn vị tỷ đồng, bao gồm cả hai đầu. Để trống một ô nghĩa là không giới hạn. Bộ lọc tìm kiếm BĐS dùng đúng các cận này.',
   },
 ];
 
@@ -31,6 +32,44 @@ function toValue(label: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+type BoundsDraft = Record<string, { min: string; max: string }>;
+
+const fmt = (n: number | null | undefined): string => (n == null ? '' : String(n));
+
+function toNumber(text: string): number | null {
+  const trimmed = text.trim().replace(',', '.');
+  return trimmed === '' ? null : Number(trimmed);
+}
+
+function suggestLabel(min: number | null, max: number | null): string {
+  if (min === null && max !== null) return `Dưới ${max} tỷ`;
+  if (min !== null && max === null) return `Trên ${min} tỷ`;
+  return `${min}–${max} tỷ`;
+}
+
+function suggestValue(min: number | null, max: number | null): string {
+  const part = (n: number) => String(n).replace('.', 'p');
+  if (min === null && max !== null) return `duoi-${part(max)}-ty`;
+  if (min !== null && max === null) return `tren-${part(min)}-ty`;
+  return `${part(min ?? 0)}-${part(max ?? 0)}-ty`;
+}
+
+function boundsProblem(min: number | null, max: number | null): string | null {
+  if (min === null && max === null) return 'cần nhập ít nhất một cận (từ hoặc đến)';
+  if ((min !== null && !(min >= 0)) || (max !== null && !(max >= 0))) return 'cận giá phải là số không âm';
+  if (min !== null && max !== null && min >= max) return 'cận dưới phải nhỏ hơn cận trên';
+  return null;
+}
+
+function initialBounds(config: FilterConfig): BoundsDraft {
+  const draft: BoundsDraft = {};
+  for (const option of config.priceRanges) {
+    const [min, max] = getPriceBounds(option) ?? [null, null];
+    draft[option.value] = { min: fmt(min), max: fmt(max) };
+  }
+  return draft;
+}
+
 function mapOptions(config: FilterConfig, fn: (o: FilterOption) => FilterOption): FilterConfig {
   return {
     regions: config.regions.map(fn),
@@ -39,7 +78,7 @@ function mapOptions(config: FilterConfig, fn: (o: FilterOption) => FilterOption)
   };
 }
 
-function validate(config: FilterConfig): string | null {
+function validate(config: FilterConfig, bounds: BoundsDraft): string | null {
   for (const { key, title } of GROUPS) {
     const seen = new Set<string>();
     for (const option of config[key]) {
@@ -48,11 +87,18 @@ function validate(config: FilterConfig): string | null {
       seen.add(option.value);
     }
   }
+  for (const option of config.priceRanges) {
+    const b = bounds[option.value] ?? { min: '', max: '' };
+    const problem = boundsProblem(toNumber(b.min), toNumber(b.max));
+    if (problem) return `Mức giá "${option.label}": ${problem}.`;
+  }
   return null;
 }
 
 export function FormSettingsTab() {
   const [draft, setDraft] = useState<FilterConfig>(() => mapOptions(companyService.getFilterConfig(), (o) => ({ ...o })));
+  const [bounds, setBounds] = useState<BoundsDraft>(() => initialBounds(companyService.getFilterConfig()));
+  const [newBounds, setNewBounds] = useState({ min: '', max: '' });
   const [newLabels, setNewLabels] = useState<Record<GroupKey, string>>({ regions: '', propertyTypes: '', priceRanges: '' });
   const [saving, setSaving] = useState(false);
   const [banner, setBanner] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
@@ -65,6 +111,11 @@ export function FormSettingsTab() {
   const rename = (key: GroupKey, index: number, label: string) =>
     updateGroup(key, draft[key].map((o, i) => (i === index ? { ...o, label } : o)));
 
+  const setBound = (value: string, side: 'min' | 'max', text: string) => {
+    setBounds((prev) => ({ ...prev, [value]: { ...prev[value], [side]: text } }));
+    setBanner(null);
+  };
+
   const remove = (key: GroupKey, index: number) => updateGroup(key, draft[key].filter((_, i) => i !== index));
 
   const move = (key: GroupKey, index: number, delta: -1 | 1) => {
@@ -76,35 +127,56 @@ export function FormSettingsTab() {
   };
 
   const add = (key: GroupKey) => {
-    const label = newLabels[key].trim();
+    const newMin = toNumber(newBounds.min);
+    const newMax = toNumber(newBounds.max);
+    if (key === 'priceRanges') {
+      const problem = boundsProblem(newMin, newMax);
+      if (problem) {
+        setBanner({ kind: 'error', text: `Mức giá mới: ${problem}.` });
+        return;
+      }
+    }
+    const label = newLabels[key].trim() || (key === 'priceRanges' ? suggestLabel(newMin, newMax) : '');
     if (!label) {
       setBanner({ kind: 'error', text: 'Vui lòng nhập tên hiển thị trước khi thêm.' });
       return;
     }
-    const value = toValue(label);
+    const value = key === 'priceRanges' ? suggestValue(newMin, newMax) : toValue(label);
     if (!value || draft[key].some((o) => o.value === value)) {
       setBanner({ kind: 'error', text: `"${label}" bị trùng hoặc không tạo được mã hợp lệ (cần có chữ hoặc số).` });
       return;
     }
     updateGroup(key, [...draft[key], { value, label }]);
+    if (key === 'priceRanges') {
+      setBounds((prev) => ({ ...prev, [value]: { min: newBounds.min, max: newBounds.max } }));
+      setNewBounds({ min: '', max: '' });
+    }
     setNewLabels((prev) => ({ ...prev, [key]: '' }));
   };
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
-    const problem = validate(draft);
+    const problem = validate(draft, bounds);
     if (problem) {
       setBanner({ kind: 'error', text: problem });
       return;
     }
     const trimmed = mapOptions(draft, (o) => ({ ...o, label: o.label.trim() }));
+    trimmed.priceRanges = trimmed.priceRanges.map((o) => ({
+      ...o,
+      min: toNumber(bounds[o.value].min),
+      max: toNumber(bounds[o.value].max),
+    }));
     setSaving(true);
     try {
       await companyService.saveFilterConfig(trimmed);
       setDraft(trimmed);
+      setBounds(initialBounds(trimmed));
       setBanner({ kind: 'success', text: 'Đã lưu danh sách lựa chọn của form thành công!' });
     } catch (err) {
-      setDraft(mapOptions(companyService.getFilterConfig(), (o) => ({ ...o })));
+      const stored = companyService.getFilterConfig();
+      setDraft(mapOptions(stored, (o) => ({ ...o })));
+      setBounds(initialBounds(stored));
       setBanner({ kind: 'error', text: err instanceof Error ? err.message : 'Lưu thất bại. Vui lòng thử lại.' });
     } finally {
       setSaving(false);
@@ -154,6 +226,28 @@ export function FormSettingsTab() {
                       aria-label={`${title}: tên hiển thị của ${option.value}`}
                       className={INPUT_CLASS}
                     />
+                    {key === 'priceRanges' && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={bounds[option.value]?.min ?? ''}
+                          onChange={(e) => setBound(option.value, 'min', e.target.value)}
+                          placeholder="Từ (tỷ)"
+                          aria-label={`${option.label}: giá từ (tỷ)`}
+                          className={INPUT_CLASS}
+                        />
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={bounds[option.value]?.max ?? ''}
+                          onChange={(e) => setBound(option.value, 'max', e.target.value)}
+                          placeholder="Đến (tỷ)"
+                          aria-label={`${option.label}: giá đến (tỷ)`}
+                          className={INPUT_CLASS}
+                        />
+                      </div>
+                    )}
                     <span className="block text-[10px] font-mono text-slate-400 mt-0.5 truncate">{option.value}</span>
                   </div>
                   <button type="button" onClick={() => move(key, index, -1)} disabled={index === 0} aria-label="Chuyển lên" className={ICON_BTN}>
@@ -176,6 +270,28 @@ export function FormSettingsTab() {
               {draft[key].length === 0 && <li className="text-xs text-slate-400">Chưa có lựa chọn nào.</li>}
             </ul>
 
+            {key === 'priceRanges' && (
+              <div className="flex items-center gap-1.5 pt-1">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={newBounds.min}
+                  onChange={(e) => setNewBounds((prev) => ({ ...prev, min: e.target.value }))}
+                  placeholder="Từ (tỷ)"
+                  aria-label="Mức giá mới: từ (tỷ)"
+                  className={INPUT_CLASS}
+                />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={newBounds.max}
+                  onChange={(e) => setNewBounds((prev) => ({ ...prev, max: e.target.value }))}
+                  placeholder="Đến (tỷ)"
+                  aria-label="Mức giá mới: đến (tỷ)"
+                  className={INPUT_CLASS}
+                />
+              </div>
+            )}
             <div className="flex items-center gap-1.5 pt-1">
               <input
                 type="text"
@@ -187,7 +303,7 @@ export function FormSettingsTab() {
                     add(key);
                   }
                 }}
-                placeholder="Thêm lựa chọn mới..."
+                placeholder={key === 'priceRanges' ? 'Tên hiển thị (để trống = tự đặt)' : 'Thêm lựa chọn mới...'}
                 aria-label={`Thêm ${title}`}
                 className={INPUT_CLASS}
               />

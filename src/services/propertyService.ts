@@ -1,4 +1,5 @@
 import { dataStorage } from '@/services/dataStorage';
+import { getPriceBounds } from '@/utils/priceRange';
 import type { Property, PropertyFilter, PaginatedResult, PaginationParams } from '@/types';
 
 function normalizeForSearch(text: string): string {
@@ -14,40 +15,13 @@ function matchesPriceRange(price: number, range: string): boolean {
   if (!range) return true;
   if (price <= 0) return false;
 
+  const option = dataStorage.getFilters().priceRanges.find((o) => o.value === range);
+  const bounds = option ? getPriceBounds(option) : null;
+  if (!bounds) return true;
+
   const priceInBillion = price >= 1_000_000 ? price / 1_000_000_000 : price;
-  const normalized = range.toLowerCase().trim();
-
-  if (['duoi-3-ty', 'duoi-3', '0-3', '<3'].includes(normalized)) {
-    return priceInBillion <= 3;
-  }
-  if (['3-5-ty', '3-5'].includes(normalized)) {
-    return priceInBillion >= 3 && priceInBillion <= 5;
-  }
-  if (['5-10-ty', '5-10'].includes(normalized)) {
-    return priceInBillion >= 5 && priceInBillion <= 10;
-  }
-  if (['10-20-ty', '10-20'].includes(normalized)) {
-    return priceInBillion >= 10 && priceInBillion <= 20;
-  }
-  if (['tren-20-ty', 'tren-20', '20+', '>20'].includes(normalized)) {
-    return priceInBillion >= 20;
-  }
-
-  if (normalized.endsWith('+')) {
-    const min = parseFloat(normalized.slice(0, -1));
-    return !isNaN(min) ? priceInBillion >= min : true;
-  }
-
-  const parts = normalized.split('-');
-  if (parts.length === 2) {
-    const min = parseFloat(parts[0]);
-    const max = parseFloat(parts[1]);
-    if (!isNaN(min) && !isNaN(max)) {
-      return priceInBillion >= min && priceInBillion <= max;
-    }
-  }
-
-  return true;
+  const [min, max] = bounds;
+  return (min === null || priceInBillion >= min) && (max === null || priceInBillion <= max);
 }
 
 function matchesRegion(property: Property, region: string): boolean {

@@ -70,23 +70,33 @@
   "priceRanges": [
     {
       "value": "duoi-3-ty",
-      "label": "Dưới 3 tỷ"
+      "label": "Dưới 3 tỷ",
+      "min": null,
+      "max": 3
     },
     {
       "value": "3-5-ty",
-      "label": "3–5 tỷ"
+      "label": "3–5 tỷ",
+      "min": 3,
+      "max": 5
     },
     {
       "value": "5-10-ty",
-      "label": "5–10 tỷ"
+      "label": "5–10 tỷ",
+      "min": 5,
+      "max": 10
     },
     {
       "value": "10-20-ty",
-      "label": "10–20 tỷ"
+      "label": "10–20 tỷ",
+      "min": 10,
+      "max": 20
     },
     {
       "value": "tren-20-ty",
-      "label": "Trên 20 tỷ"
+      "label": "Trên 20 tỷ",
+      "min": 20,
+      "max": null
     }
   ]
 }

@@ -22,7 +22,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icons/*.png', 'images/**/*'],
+      includeAssets: ['favicon.svg', 'icons/*.png', 'images/**/*'],
       manifest: {
         name: 'Phương Nam Realty',
         short_name: 'PN Realty',
@@ -44,7 +44,7 @@ export default defineConfig({
             type: 'image/png',
           },
           {
-            src: '/icons/icon-512.png',
+            src: '/icons/icon-512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
