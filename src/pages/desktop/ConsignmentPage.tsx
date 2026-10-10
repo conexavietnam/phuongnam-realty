@@ -1,16 +1,40 @@
-import { Link } from 'react-router-dom';
-import { MapPin, ArrowRight, CheckCircle2, ShieldCheck, Sparkles, Handshake } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { CheckCircle2, ShieldCheck, Sparkles, Handshake } from 'lucide-react';
 import { DesktopLayout } from '@/layouts/DesktopLayout';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { SectionTitle } from '@/components/common/SectionTitle';
 import { ConsignmentForm } from '@/components/desktop/ConsignmentForm';
-import { Badge } from '@/components/common/Badge';
+import { Button } from '@/components/common/Button';
+import { SearchFilter } from '@/components/desktop/SearchFilter';
+import { ConsignmentCard } from '@/components/desktop/ConsignmentCard';
 import { companyService } from '@/services/companyService';
+import { consignmentService } from '@/services/consignmentService';
+import { filtersFromSearchParams, searchParamsFromFilters } from '@/utils/filterQuery';
+import type { PropertyFilter } from '@/types';
 import { useDataListener } from '@/hooks';
 
+const PAGE_SIZE = 9;
+
 export function ConsignmentPage() {
-  useDataListener();
-  const consignments = companyService.getConsignments();
+  const dataVersion = useDataListener();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [displayLimit, setDisplayLimit] = useState(PAGE_SIZE);
+
+  const filters = useMemo(
+    () => (dataVersion < 0 ? {} : filtersFromSearchParams(searchParams, companyService.getFilterConfig())),
+    [searchParams, dataVersion],
+  );
+  const filtered = useMemo(
+    () => (dataVersion < 0 ? [] : consignmentService.filter(filters)),
+    [filters, dataVersion],
+  );
+  const hasFilters = Object.values(filters).some(Boolean);
+
+  const applyFilters = (next: PropertyFilter) => {
+    setSearchParams(searchParamsFromFilters(next));
+    setDisplayLimit(PAGE_SIZE);
+  };
 
   const benefits = [
     {
@@ -34,10 +58,10 @@ export function ConsignmentPage() {
     <DesktopLayout>
       {/* Sub-banner Hero */}
       <section className="bg-navy-900 text-white min-h-[200px] flex flex-col justify-center border-b border-navy-800">
-        <Breadcrumb items={[{ label: 'Ký gửi bất động sản' }]} />
+        <Breadcrumb items={[{ label: 'Ký gửi' }]} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
           <h1 className="text-3xl lg:text-4xl font-bold text-white mb-3">
-            DỰ ÁN KÝ GỬI
+            KÝ GỬI BẤT ĐỘNG SẢN
           </h1>
           <p className="text-slate-300 text-base max-w-3xl">
             Dịch vụ ký gửi mua bán, cho thuê bất động sản nhanh chóng, bảo mật thông tin và tối ưu hóa lợi nhuận cho quý khách hàng.
@@ -45,59 +69,48 @@ export function ConsignmentPage() {
         </div>
       </section>
 
-      {/* Consignment Projects Grid */}
+      {/* Floating Filter Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-7 relative z-20">
+        <SearchFilter key={searchParams.toString()} initialFilters={filters} onFilter={applyFilters} />
+      </div>
+
+      {/* Published consignment listings */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionTitle
-            subtitle="DANH SÁCH DỰ ÁN"
-            title="DỰ ÁN KÝ GỬI TIÊU BIỂU"
-            description="Các dự án trọng điểm đang được Phương Nam Realty hỗ trợ ký gửi và chuyển nhượng sôi động."
+            subtitle="TIN KÝ GỬI"
+            title="BẤT ĐỘNG SẢN KÝ GỬI"
+            description={`Hiển thị ${filtered.length} tin ký gửi đã được Phương Nam Realty thẩm định và đăng tải.`}
             centered
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {consignments.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100 flex flex-col group"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                  <img
-                    src={item.thumbnail}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  <Badge variant="navy">
-                    {item.category === 'can-ho' ? 'Căn hộ' : item.category === 'biet-thu' ? 'Biệt thự' : 'Đất nền'}
-                  </Badge>
-                </div>
-
-                <div className="p-6 flex flex-col flex-1 justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-navy-900 group-hover:text-gold-500 transition-colors mb-2 line-clamp-1">
-                      {item.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
-                      <MapPin className="w-4 h-4 text-gold-500 shrink-0" />
-                      <span className="truncate">{item.location}</span>
-                    </div>
-                    <p className="text-slate-600 text-sm line-clamp-3 leading-relaxed mb-6">
-                      {item.shortDescription}
-                    </p>
-                  </div>
-
-                  <Link
-                    to="/chuyen-nhuong"
-                    className="inline-flex items-center justify-between text-sm font-semibold text-gold-500 hover:text-gold-600 pt-3 border-t border-slate-100 transition-colors"
-                  >
-                    <span>Xem sản phẩm chuyển nhượng</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
+          {filtered.length === 0 ? (
+            <div className="py-16 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <p className="text-slate-500 text-base mb-4">
+                {hasFilters ? 'Không có tin ký gửi nào phù hợp với bộ lọc hiện tại.' : 'Hiện chưa có tin ký gửi nào được đăng.'}
+              </p>
+              {hasFilters && (
+                <Button variant="outline" size="sm" onClick={() => applyFilters({})}>
+                  Đặt lại bộ lọc
+                </Button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filtered.slice(0, displayLimit).map((item) => (
+                  <ConsignmentCard key={item.id} item={item} />
+                ))}
               </div>
-            ))}
-          </div>
+              {displayLimit < filtered.length && (
+                <div className="mt-12 text-center">
+                  <Button variant="outline" size="md" className="font-semibold px-8" onClick={() => setDisplayLimit((prev) => prev + PAGE_SIZE)}>
+                    Xem thêm ({filtered.length - displayLimit}) →
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
 

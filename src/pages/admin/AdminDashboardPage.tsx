@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   LayoutDashboard,
   Building2,
@@ -24,6 +24,7 @@ import {
   FolderOpen,
   Image as ImageIcon,
   Copy,
+  Handshake,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Logo } from '@/components/common/Logo';
@@ -41,14 +42,18 @@ import { WebsiteInfoTab } from '@/components/admin/settings/WebsiteInfoTab';
 import { FormSettingsTab } from '@/components/admin/settings/FormSettingsTab';
 import { FooterSettingsTab } from '@/components/admin/settings/FooterSettingsTab';
 import { SecurityTab } from '@/components/admin/settings/SecurityTab';
+import { ConsignmentTab } from '@/components/admin/consignment/ConsignmentTab';
+import { LeadStatusControl } from '@/components/admin/consignment/LeadStatusControl';
+import type { AdminActions } from '@/components/admin/consignment/types';
 import { dataStorage } from '@/services/dataStorage';
-import type { CustomerLead } from '@/services/dataStorage';
+import { applicationStage } from '@/utils/consignment';
 import { mediaService } from '@/services/mediaService';
 import type { MediaItem } from '@/services/mediaService';
 import type { Project, ProjectCategory } from '@/types/project';
 import type { Property, PropertyType } from '@/types/property';
 import type { NewsArticle, NewsCategory } from '@/types/news';
 import type { CompanyInfo } from '@/types/common';
+import type { ConsignmentListing, CustomerLead, LeadStatus } from '@/types/consignment';
 
 interface AdminDashboardPageProps {
   onLogout: () => void;
@@ -58,6 +63,7 @@ type TabType =
   | 'overview'
   | 'projects'
   | 'properties'
+  | 'consignment'
   | 'leads'
   | 'news'
   | 'media'
@@ -73,6 +79,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const [properties, setProperties] = useState<Property[]>(dataStorage.getProperties());
   const [news, setNews] = useState<NewsArticle[]>(dataStorage.getNews());
   const [leads, setLeads] = useState<CustomerLead[]>(dataStorage.getCustomerLeads());
+  const [listings, setListings] = useState<ConsignmentListing[]>(dataStorage.getConsignments());
+  const [requestedListingId, setRequestedListingId] = useState<string | null>(null);
   const [company, setCompany] = useState<CompanyInfo>(dataStorage.getCompany());
   const [mediaList, setMediaList] = useState<MediaItem[]>(mediaService.getAll());
 
@@ -81,7 +89,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const [propertySearch, setPropertySearch] = useState('');
   const [mediaSearch, setMediaSearch] = useState('');
   const [mediaCategoryFilter, setMediaCategoryFilter] = useState<MediaItem['category'] | 'all'>('all');
-  const [leadStatusFilter, setLeadStatusFilter] = useState<'all' | CustomerLead['status']>('all');
+  const [leadStatusFilter, setLeadStatusFilter] = useState<'all' | LeadStatus>('all');
 
   // Modals
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -128,6 +136,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     setProperties(dataStorage.getProperties());
     setNews(dataStorage.getNews());
     setLeads(dataStorage.getCustomerLeads());
+    setListings(dataStorage.getConsignments());
     setCompany(dataStorage.getCompany());
     setMediaList(mediaService.getAll());
   };
@@ -340,8 +349,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   };
 
   // === LEADS MANAGEMENT ===
-  const handleUpdateLeadStatus = async (id: string, status: CustomerLead['status']) => {
-    if (!(await attempt(() => dataStorage.updateLeadStatus(id, status)))) return;
+  const handleUpdateLeadStatus = async (id: string, status: LeadStatus) => {
+    if (!(await attempt(() => dataStorage.updateLead(id, { status })))) return;
     refreshAllData();
     showNotification(`Đã cập nhật trạng thái đơn.`);
   };
@@ -353,6 +362,23 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
       showNotification(`Đã xóa đơn.`);
     }
   };
+
+  const handleOpenListingFromLead = useCallback((listingId: string) => {
+    setActiveTab('consignment');
+    setRequestedListingId(listingId);
+  }, []);
+
+  const handleRequestHandled = useCallback(() => setRequestedListingId(null), []);
+
+  const consignmentActions: AdminActions = { attempt, notify: showNotification, refresh: refreshAllData };
+
+  const listingOf = (lead: CustomerLead) => listings.find((i) => i.id === lead.consignmentId);
+  const pendingApplications = leads.filter((l) => {
+    if (l.source !== 'consignment') return false;
+    const stage = applicationStage(l);
+    return stage === 'new' || stage === 'processing';
+  }).length;
+  const publishedListings = listings.filter((i) => i.status === 'published').length;
 
   // === MEDIA TAB ACTIONS ===
   const uploadToMediaTab = async (files: File[]) => {
@@ -505,6 +531,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
         {/* Tab Navigation Bar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto scrollbar-hide border-t border-navy-800/80">
           <button
+            type="button"
             onClick={() => setActiveTab('overview')}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'overview'
@@ -515,8 +542,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             <LayoutDashboard className="w-4 h-4" />
             Tổng quan
           </button>
-
           <button
+            type="button"
             onClick={() => setActiveTab('projects')}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'projects'
@@ -527,8 +554,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             <Building2 className="w-4 h-4" />
             Dự án ({projects.length})
           </button>
-
           <button
+            type="button"
             onClick={() => setActiveTab('properties')}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'properties'
@@ -537,25 +564,27 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             }`}
           >
             <Home className="w-4 h-4" />
-            Bất động sản ({properties.length})
+            BĐS chuyển nhượng ({properties.length})
           </button>
-
           <button
-            onClick={() => setActiveTab('leads')}
+            type="button"
+            onClick={() => setActiveTab('consignment')}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'leads'
+              activeTab === 'consignment'
                 ? 'border-gold-500 text-gold-400 bg-navy-800/50'
                 : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
-            <Inbox className="w-4 h-4" />
-            Đơn ký gửi ({leads.length})
-            {leads.some((l) => l.status === 'new') && (
-              <span className="w-2 h-2 rounded-full bg-rose-500" />
+            <Handshake className="w-4 h-4" />
+            Ký gửi ({listings.length})
+            {pendingApplications > 0 && (
+              <span className="min-w-5 px-1.5 rounded-full bg-rose-500 text-white text-[10px] leading-5 text-center">
+                {pendingApplications}
+              </span>
             )}
           </button>
-
           <button
+            type="button"
             onClick={() => setActiveTab('news')}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'news'
@@ -566,9 +595,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             <FileText className="w-4 h-4" />
             Tin tức ({news.length})
           </button>
-
-          {/* New Media / VPS Library Tab */}
           <button
+            type="button"
             onClick={() => setActiveTab('media')}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'media'
@@ -577,10 +605,25 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             }`}
           >
             <FolderOpen className="w-4 h-4" />
-            Kho Ảnh Server ({mediaList.length})
+            Media ({mediaList.length})
           </button>
-
           <button
+            type="button"
+            onClick={() => setActiveTab('leads')}
+            className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              activeTab === 'leads'
+                ? 'border-gold-500 text-gold-400 bg-navy-800/50'
+                : 'border-transparent text-slate-400 hover:text-white'
+            }`}
+          >
+            <Inbox className="w-4 h-4" />
+            Khách hàng ({leads.length})
+            {leads.some((l) => l.status === 'new' && l.source === 'contact') && (
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+            )}
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('settings')}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'settings'
@@ -591,8 +634,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             <Settings className="w-4 h-4" />
             Cài đặt
           </button>
-
           <button
+            type="button"
             onClick={() => setActiveTab('backup')}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'backup'
@@ -601,7 +644,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             }`}
           >
             <Database className="w-4 h-4" />
-            Sao lưu dữ liệu
+            Sao lưu
           </button>
         </div>
       </header>
@@ -620,7 +663,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
         {activeTab === 'overview' && (
           <div className="space-y-8 animate-in fade-in duration-200">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng Dự Án</p>
@@ -648,16 +691,48 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Đơn Ký Gửi & Khách</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Khách Hàng & Liên Hệ</p>
                   <p className="text-2xl font-bold text-navy-900 mt-1">{leads.length}</p>
                   <p className="text-xs text-rose-500 mt-1 font-medium">
-                    {leads.filter((l) => l.status === 'new').length} đơn mới cần xử lý
+                    {leads.filter((l) => l.status === 'new').length} yêu cầu mới
                   </p>
                 </div>
                 <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
                   <Inbox className="w-6 h-6" />
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('consignment')}
+                className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between text-left hover:border-gold-500/60 transition-colors"
+              >
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Đơn Ký Gửi Chờ Xử Lý</p>
+                  <p className="text-2xl font-bold text-navy-900 mt-1">{pendingApplications}</p>
+                  <p className="text-xs text-slate-500 mt-1">Mới nhận hoặc đang xử lý</p>
+                </div>
+                <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
+                  <Handshake className="w-6 h-6" />
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('consignment')}
+                className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between text-left hover:border-gold-500/60 transition-colors"
+              >
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tin Ký Gửi Đang Đăng</p>
+                  <p className="text-2xl font-bold text-navy-900 mt-1">{publishedListings}</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {listings.filter((i) => i.status === 'draft').length} tin nháp
+                  </p>
+                </div>
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <FileText className="w-6 h-6" />
+                </div>
+              </button>
 
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
                 <div>
@@ -690,7 +765,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-bold text-navy-900 flex items-center gap-2">
                   <Inbox className="w-4 h-4 text-gold-500" />
-                  Đơn Ký Gửi & Khách Hàng Gần Đây
+                  Khách Hàng & Đơn Ký Gửi Gần Đây
                 </h3>
                 <button
                   onClick={() => setActiveTab('leads')}
@@ -736,16 +811,13 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                         <td className="py-3 px-4 text-slate-600">{lead.region || 'Không có'}</td>
                         <td className="py-3 px-4 text-slate-600">{lead.priceRange || 'Thương lượng'}</td>
                         <td className="py-3 px-4">
-                          <select
-                            value={lead.status}
-                            onChange={(e) => handleUpdateLeadStatus(lead.id, e.target.value as CustomerLead['status'])}
-                            className="text-xs rounded-lg border border-slate-200 px-2 py-1 bg-white font-medium focus:ring-1 focus:ring-gold-500"
-                          >
-                            <option value="new">Mới nhận</option>
-                            <option value="contacted">Đang liên hệ</option>
-                            <option value="completed">Đã hoàn thành</option>
-                            <option value="cancelled">Đã hủy</option>
-                          </select>
+                          <LeadStatusControl
+                            lead={lead}
+                            listing={listingOf(lead)}
+                            onChangeStatus={handleUpdateLeadStatus}
+                            onOpenListing={handleOpenListingFromLead}
+                            onOpenApplications={() => setActiveTab('consignment')}
+                          />
                         </td>
                         <td className="py-3 px-4 text-right">
                           <a
@@ -890,7 +962,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           <div className="space-y-6 animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
               <div>
-                <h2 className="text-xl font-bold text-navy-900">Quản Lý BĐS Chuyển Nhượng & Cho Thuê</h2>
+                <h2 className="text-xl font-bold text-navy-900">Quản Lý BĐS Chuyển Nhượng</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Thêm, sửa, xóa giỏ hàng bất động sản chuyển nhượng kèm chọn ảnh đại diện & gallery từ VPS.
                 </p>
@@ -997,9 +1069,9 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           <div className="space-y-6 animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
               <div>
-                <h2 className="text-xl font-bold text-navy-900">Quản Lý Đơn Ký Gửi & Khách Hàng</h2>
+                <h2 className="text-xl font-bold text-navy-900">Khách Hàng & Yêu Cầu Liên Hệ</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Tất cả yêu cầu gửi từ Form Ký gửi BĐS và Form Liên hệ sẽ được tổng hợp và bắn tin nhắn Telegram tại đây.
+                  Tổng hợp mọi yêu cầu từ Form Ký gửi và Form Liên hệ. Đơn ký gửi được duyệt và xử lý trong tab Ký gửi; yêu cầu liên hệ xử lý ngay tại đây.
                 </p>
               </div>
 
@@ -1008,14 +1080,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                 <span className="text-xs font-semibold text-slate-500">Lọc theo:</span>
                 <select
                   value={leadStatusFilter}
-                  onChange={(e) => setLeadStatusFilter(e.target.value as any)}
+                  onChange={(e) => setLeadStatusFilter(e.target.value as 'all' | LeadStatus)}
                   className="text-xs rounded-xl border border-slate-200 px-3 py-2 bg-white font-medium focus:ring-2 focus:ring-gold-500/50"
                 >
                   <option value="all">Tất cả ({leads.length})</option>
                   <option value="new">Mới nhận ({leads.filter((l) => l.status === 'new').length})</option>
-                  <option value="contacted">Đang liên hệ ({leads.filter((l) => l.status === 'contacted').length})</option>
-                  <option value="completed">Đã hoàn thành ({leads.filter((l) => l.status === 'completed').length})</option>
-                  <option value="cancelled">Đã hủy ({leads.filter((l) => l.status === 'cancelled').length})</option>
+                  <option value="processing">Đang xử lý ({leads.filter((l) => l.status === 'processing').length})</option>
+                  <option value="approved">Đã duyệt ({leads.filter((l) => l.status === 'approved').length})</option>
+                  <option value="closed">Đã hoàn thành / giao dịch ({leads.filter((l) => l.status === 'closed').length})</option>
+                  <option value="rejected">Từ chối / hủy ({leads.filter((l) => l.status === 'rejected').length})</option>
                 </select>
               </div>
             </div>
@@ -1067,16 +1140,13 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                           {lead.note || '-'}
                         </td>
                         <td className="py-3 px-4">
-                          <select
-                            value={lead.status}
-                            onChange={(e) => handleUpdateLeadStatus(lead.id, e.target.value as any)}
-                            className="text-xs rounded-lg border border-slate-200 px-2 py-1 bg-white font-medium focus:ring-1 focus:ring-gold-500"
-                          >
-                            <option value="new">Mới nhận</option>
-                            <option value="contacted">Đang liên hệ</option>
-                            <option value="completed">Đã hoàn thành</option>
-                            <option value="cancelled">Đã hủy</option>
-                          </select>
+                          <LeadStatusControl
+                            lead={lead}
+                            listing={listingOf(lead)}
+                            onChangeStatus={handleUpdateLeadStatus}
+                            onOpenListing={handleOpenListingFromLead}
+                            onOpenApplications={() => setActiveTab('consignment')}
+                          />
                         </td>
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <a
@@ -1101,6 +1171,17 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ===================== TAB: CONSIGNMENT (applications + listings) ===================== */}
+        {activeTab === 'consignment' && (
+          <ConsignmentTab
+            leads={leads}
+            listings={listings}
+            actions={consignmentActions}
+            requestedListingId={requestedListingId}
+            onRequestHandled={handleRequestHandled}
+          />
         )}
 
         {/* ===================== TAB 5: NEWS MANAGEMENT ===================== */}

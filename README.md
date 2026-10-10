@@ -30,3 +30,9 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Phương Nam Realty: project notes
+
+- Backend (PHP + JSON) and deploy: see `server/README.md`. API smoke test: `bash server/tests/smoke.sh`.
+- Admin: `docs/ADMIN_CMS_TELEGRAM_ANALYSIS.md`, `docs/ADMIN_EDITOR.md`, `docs/ADMIN_SETTINGS.md`.
+- Ký gửi (consignment applications -> approval -> published listings with their own pages): `docs/ADMIN_CONSIGNMENT.md`.

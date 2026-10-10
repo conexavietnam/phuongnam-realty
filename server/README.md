@@ -124,8 +124,8 @@ Serve the site over HTTPS only: the session cookie is `Secure`, `HttpOnly`, `Sam
 
 | Route | Method | Auth | Purpose |
 |-|-|-|-|
-| `data&c=<name>` | GET | public for properties, projects, news, agents, consignments, company, filters, menu; admin for customer_leads, media | read a collection |
-| `data&c=<name>` | PUT | admin + `X-CSRF-Token` | replace a collection (JSON, max 2MB, shape-validated) |
+| `data&c=<name>` | GET | public for properties, projects, news, agents, consignments, company, filters, menu; admin for customer_leads, media | read a collection. `consignments` has two views on the same URL: an admin session gets everything (`no-store`); everyone else gets only `published`/`sold` items (missing status = published) without keys starting with `_` or named `internalNote`, `leadId`, `ownerName`, `ownerPhone` (`no-cache`, `Vary: Cookie`) |
+| `data&c=<name>` | PUT | admin + `X-CSRF-Token` | replace a collection (JSON, max 2MB, shape-validated; `consignments` items also need an `id`, a `status` of draft/published/sold when present, bounded text/image sizes and numeric price/area/rooms) |
 | `lead` | POST | public | contact/consignment form: validated, honeypot `website`, 5 per 10 min per IP, saved, Telegram notice |
 | `auth/otp` | POST `{phone}` | public | admin phone only; OTP stored as hash, 3 min TTL, 3 sends per 10 min per IP |
 | `auth/verify` | POST `{otp}` | public | 5 attempts per OTP (then 429), regenerates session, returns CSRF token |
@@ -150,6 +150,16 @@ npm run dev                                      # Vite proxies /api -> 127.0.0.
 
 For tests without real Telegram, set `telegram_api_base` to a local stub and use a token of the form
 `123456:ABCdef...`. Uploaded files are not served by Vite in dev (use a real nginx for that).
+
+## Smoke test
+
+`server/tests/smoke.sh` checks the API end to end on any Linux box with bash, curl and PHP 8.3 (`curl`, `mbstring`, `fileinfo`):
+
+```bash
+bash server/tests/smoke.sh            # optional: PHP_BIN=php8.3 APP_PORT=18080 STUB_PORT=18081
+```
+
+It copies `server/` into a temp app root with its own config, starts `php -S` for the API and for a stub Telegram server (to read the OTP), and prints PASS/FAIL per check. It exits non-zero when anything fails and removes the temp dir. It never uses real data or the real Telegram API. Checks: `php -l` on every file; anonymous 401s (leads, media, consignment PUT, upload); foreign Origin 403; OTP login through the stub; PUT without/with a wrong CSRF token 403; invalid consignment status/price/size/shape 422; public consignments hide drafts and private keys while the admin sees them (plus cache headers); upload of PHP code 415; OTP lockout 429.
 
 ## Rotating the Telegram bot token
 

@@ -7,16 +7,19 @@ import { ProjectCard } from '@/components/desktop/ProjectCard';
 import { PropertyCard } from '@/components/desktop/PropertyCard';
 import { CTABanner } from '@/components/desktop/CTABanner';
 import { NewsCard } from '@/components/desktop/NewsCard';
+import { ConsignmentCard } from '@/components/desktop/ConsignmentCard';
 import { Button } from '@/components/common/Button';
 import { useDataListener } from '@/hooks';
 import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { newsService } from '@/services/newsService';
+import { consignmentService } from '@/services/consignmentService';
 
 export function HomePage() {
   useDataListener();
   const featuredProjects = projectService.getFeatured();
   const featuredProperties = propertyService.getFeatured();
+  const latestConsignments = consignmentService.getLatest(3);
   const featuredNews = newsService.getFeatured(3);
 
   return (
@@ -97,7 +100,7 @@ export function HomePage() {
             <Link to="/chuyen-nhuong">
               <Button variant="outline" size="md" className="font-semibold px-8 hover:shadow-md">
                 <span className="flex items-center gap-2">
-                  XEM TẤT CẢ BẤT ĐỘNG SẢN
+                  XEM TẤT CẢ BĐS CHUYỂN NHƯỢNG
                   <ArrowRight className="w-4 h-4" />
                 </span>
               </Button>
@@ -106,10 +109,41 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* 5. CTABanner (Ký gửi CTA) */}
+      {/* 5. Section: Tin ký gửi mới nhất */}
+      {latestConsignments.length > 0 && (
+        <section className="py-16 bg-slate-50/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <SectionTitle
+              subtitle="KÝ GỬI"
+              title="TIN KÝ GỬI MỚI NHẤT"
+              description="Bất động sản do chủ nhà ký gửi, đã được Phương Nam Realty thẩm định và đăng tải."
+              centered
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {latestConsignments.map((item) => (
+                <ConsignmentCard key={item.id} item={item} />
+              ))}
+            </div>
+
+            <div className="mt-12 text-center">
+              <Link to="/ky-gui">
+                <Button variant="outline" size="md" className="font-semibold px-8 hover:shadow-md">
+                  <span className="flex items-center gap-2">
+                    XEM TẤT CẢ TIN KÝ GỬI
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 6. CTABanner (Ký gửi CTA) */}
       <CTABanner />
 
-      {/* 6. Section: Tin tức & Thị trường */}
+      {/* 7. Section: Tin tức & Thị trường */}
       <section className="py-16 bg-slate-50/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionTitle

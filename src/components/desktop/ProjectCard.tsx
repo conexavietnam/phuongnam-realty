@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Bed, Maximize, ArrowRight } from 'lucide-react';
 import type { Project } from '@/types';
 import { Badge } from '@/components/common/Badge';
+import { SectionBadge } from '@/components/common/SectionBadge';
 
 export interface ProjectCardProps {
   project: Project;
@@ -25,6 +26,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         <Badge variant="navy">
           {project.categoryLabel || project.category}
         </Badge>
+        <SectionBadge kind="project" />
       </div>
 
       {/* Card Content */}

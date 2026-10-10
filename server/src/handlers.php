@@ -30,7 +30,21 @@ function pn_handle_data_read(string $name): never
     if (!$public) {
         pn_require_admin();
     }
+    if ($name === 'consignments') {
+        pn_send_consignments();
+    }
     pn_send_raw(200, pn_read_collection($name), !$public);
+}
+
+/** Same URL, two views: the admin session sees drafts (never cached), everyone else the filtered list. */
+function pn_send_consignments(): never
+{
+    header('Vary: Cookie');
+    $raw = pn_read_collection('consignments');
+    if (pn_is_admin()) {
+        pn_send_raw(200, $raw, true);
+    }
+    pn_send_raw(200, pn_public_consignments_json($raw), false);
 }
 
 function pn_handle_data_write(string $name): never

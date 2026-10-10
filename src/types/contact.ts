@@ -19,17 +19,6 @@ export interface ConsignmentFormData {
   note?: string;
 }
 
-export interface ConsignmentProject {
-  id: string;
-  slug: string;
-  name: string;
-  category: string;
-  location: string;
-  shortDescription: string;
-  thumbnail: string;
-  images: string[];
-}
-
 export interface Agent {
   id: string;
   name: string;

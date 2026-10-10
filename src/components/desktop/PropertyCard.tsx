@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Bed, Maximize, Compass, ArrowRight } from 'lucide-react';
 import type { Property } from '@/types';
 import { Badge } from '@/components/common/Badge';
+import { SectionBadge } from '@/components/common/SectionBadge';
 
 export interface PropertyCardProps {
   property: Property;
@@ -27,6 +28,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         <Badge variant="navy">
           {property.category}
         </Badge>
+        <SectionBadge kind="transfer" />
       </div>
 
       {/* Body */}

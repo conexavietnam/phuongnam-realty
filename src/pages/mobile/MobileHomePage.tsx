@@ -4,12 +4,14 @@ import { MobileLayout } from '@/layouts/MobileLayout';
 import { MobileProjectCard } from '@/components/mobile/MobileProjectCard';
 import { MobilePropertyCard } from '@/components/mobile/MobilePropertyCard';
 import { MobileNewsCard } from '@/components/mobile/MobileNewsCard';
+import { MobileConsignmentCard } from '@/components/mobile/MobileConsignmentCard';
 import { Button } from '@/components/common/Button';
 import { useDataListener } from '@/hooks';
 import { companyService } from '@/services/companyService';
 import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { newsService } from '@/services/newsService';
+import { consignmentService } from '@/services/consignmentService';
 
 export function MobileHomePage() {
   useDataListener();
@@ -17,6 +19,7 @@ export function MobileHomePage() {
   const heroImage = (companyInfo as any).heroBannerImage || '/images/hero-banner.svg';
   const featuredProjects = projectService.getFeatured();
   const featuredProperties = propertyService.getFeatured();
+  const latestConsignments = consignmentService.getLatest(3);
   const featuredNews = newsService.getFeatured(3);
 
   return (
@@ -52,7 +55,7 @@ export function MobileHomePage() {
       <section className="py-6 px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-navy-900 border-l-4 border-gold-500 pl-2">Dự án nổi bật</h2>
-          <Link to="/du-an" className="text-sm text-gold-500 font-medium">Xem tất cả &rarr;</Link>
+          <Link to="/du-an" className="text-sm text-gold-500 font-medium">Xem tất cả dự án &rarr;</Link>
         </div>
         <div className="flex overflow-x-auto gap-4 scrollbar-hide pb-2">
           {featuredProjects.map(project => (
@@ -73,10 +76,27 @@ export function MobileHomePage() {
             <MobilePropertyCard key={property.id} property={property} />
           ))}
         </div>
-        <Link to="/bat-dong-san" className="block text-center">
-          <Button variant="outline" className="w-full">Xem tất cả &rarr;</Button>
+        <Link to="/chuyen-nhuong" className="block text-center">
+          <Button variant="outline" className="w-full">Xem tất cả BĐS chuyển nhượng &rarr;</Button>
         </Link>
       </section>
+
+      {/* Tin ký gửi mới nhất */}
+      {latestConsignments.length > 0 && (
+        <section className="py-6 px-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-navy-900 border-l-4 border-gold-500 pl-2">Tin ký gửi mới</h2>
+          </div>
+          <div className="mb-4">
+            {latestConsignments.map(item => (
+              <MobileConsignmentCard key={item.id} item={item} />
+            ))}
+          </div>
+          <Link to="/ky-gui" className="block text-center">
+            <Button variant="outline" className="w-full">Xem tất cả tin ký gửi &rarr;</Button>
+          </Link>
+        </section>
+      )}
 
       {/* CTA Banner */}
       <section className="py-8 px-4 bg-navy-900 text-center">
