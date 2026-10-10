@@ -1,7 +1,13 @@
 import { dataStorage } from '@/services/dataStorage';
 import { companyService } from '@/services/companyService';
 import { matchesPriceRange, normalizeForSearch } from '@/services/propertyService';
-import { isPubliclyVisible, priceLabel, sortForPublic } from '@/utils/consignment';
+import {
+  DESCRIPTION_REWRITE_MESSAGE,
+  isPubliclyVisible,
+  needsDescriptionRewrite,
+  priceLabel,
+  sortForPublic,
+} from '@/utils/consignment';
 import { slugify, uniqueSlug } from '@/utils/slug';
 import type { ConsignmentListing, ConsignmentStatus, CustomerLead, PropertyFilter } from '@/types';
 
@@ -138,14 +144,24 @@ export const consignmentService = {
     };
   },
 
+  getLeadOf(listingId: string): CustomerLead | undefined {
+    return dataStorage.getCustomerLeads().find((l) => l.consignmentId === listingId);
+  },
+
+  // True when publishing this listing must wait for the admin to rewrite the short description.
+  isPublishBlocked(listing: ConsignmentListing): boolean {
+    return listing.status !== 'draft' && needsDescriptionRewrite(listing, this.getLeadOf(listing.id));
+  },
+
   // Saves a listing and keeps its application in step: sold closes it, leaving sold reopens it as approved.
   async save(listing: ConsignmentListing): Promise<void> {
+    if (this.isPublishBlocked(listing)) throw new Error(DESCRIPTION_REWRITE_MESSAGE);
     const previous = dataStorage.getConsignments().find((i) => i.id === listing.id);
     const publishing = listing.status !== 'draft' && (!previous || previous.status === 'draft');
     const next = { ...listing, publishedAt: publishing ? new Date().toISOString() : listing.publishedAt };
     await dataStorage.saveConsignment(next);
 
-    const lead = dataStorage.getCustomerLeads().find((l) => l.consignmentId === listing.id);
+    const lead = this.getLeadOf(listing.id);
     if (!lead) return;
     if (next.status === 'sold' && lead.status !== 'closed') {
       await dataStorage.updateLead(lead.id, { status: 'closed' });
@@ -160,9 +176,9 @@ export const consignmentService = {
 
   // Approves an application: creates (or reuses) its draft listing and links both ways.
   async approveLead(lead: CustomerLead): Promise<ConsignmentListing> {
-    const existing = lead.consignmentId
-      ? dataStorage.getConsignments().find((i) => i.id === lead.consignmentId)
-      : undefined;
+    // A previous attempt may have saved the draft but failed to link the lead: reuse it, never duplicate.
+    const draftId = lead.consignmentId ?? `consign-${lead.id}`;
+    const existing = dataStorage.getConsignments().find((i) => i.id === draftId);
     const listing = existing ?? this.createDraftFromLead(lead);
     if (!existing) await dataStorage.saveConsignment(listing);
     await dataStorage.updateLead(lead.id, { status: 'approved', consignmentId: listing.id });
@@ -172,7 +188,7 @@ export const consignmentService = {
   // Deleting a listing detaches its application so it can be approved again.
   async remove(id: string): Promise<void> {
     await dataStorage.deleteConsignment(id);
-    const lead = dataStorage.getCustomerLeads().find((l) => l.consignmentId === id);
+    const lead = this.getLeadOf(id);
     if (lead) await dataStorage.updateLead(lead.id, { consignmentId: undefined, status: 'processing' });
   },
 };

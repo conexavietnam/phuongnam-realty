@@ -8,7 +8,7 @@ import type { AdminActions } from '@/components/admin/consignment/types';
 import { consignmentService } from '@/services/consignmentService';
 import { companyService } from '@/services/companyService';
 import { dataStorage } from '@/services/dataStorage';
-import { applicationStage, STAGE_LABELS } from '@/utils/consignment';
+import { applicationStage, purposeLabel, STAGE_LABELS } from '@/utils/consignment';
 import type { ApplicationStage } from '@/utils/consignment';
 import type { ConsignmentListing, CustomerLead } from '@/types';
 
@@ -42,6 +42,7 @@ function ApplicationCard({
   onReject: (lead: CustomerLead) => void;
 }) {
   const [note, setNote] = useState(lead.internalNote ?? '');
+  const [approveError, setApproveError] = useState<string | null>(null);
   const stage = applicationStage(lead, listing);
   const created = new Date(lead.createdAt);
 
@@ -53,11 +54,17 @@ function ApplicationCard({
   };
 
   const handleApprove = async () => {
-    const result: { draft?: ConsignmentListing } = {};
-    const ok = await run(async () => {
-      result.draft = await consignmentService.approveLead(lead);
-    }, 'Đã duyệt đơn và tạo tin nháp.');
-    if (ok && result.draft) onOpenListing(result.draft);
+    setApproveError(null);
+    try {
+      const draft = await consignmentService.approveLead(lead);
+      actions.refresh();
+      actions.notify('Đã duyệt đơn và tạo tin nháp.');
+      onOpenListing(draft);
+    } catch (err) {
+      actions.refresh();
+      const reason = err instanceof Error ? err.message : 'Lỗi không xác định.';
+      setApproveError(`Chưa duyệt xong đơn này (${reason}) Tin nháp có thể đã được tạo nhưng đơn chưa được cập nhật. Bấm "Thử lại": hệ thống dùng lại đúng tin nháp đó, không tạo bản trùng.`);
+    }
   };
 
   return (
@@ -68,7 +75,7 @@ function ApplicationCard({
             <h3 className="font-bold text-navy-900 text-base">{lead.fullName}</h3>
             <StageChip stage={stage} />
             <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-navy-50 text-navy-700">
-              {lead.purpose === 'cho-thue' ? 'Cho thuê' : 'Cần bán'}
+              {purposeLabel(lead.purpose)}
             </span>
           </div>
           <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
@@ -141,6 +148,15 @@ function ApplicationCard({
           </Button>
         </div>
       </div>
+
+      {approveError && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-4 py-2.5 text-xs">
+          <span className="flex-1 min-w-48">{approveError}</span>
+          <Button type="button" variant="primary" size="sm" className="text-xs" onClick={handleApprove}>
+            Thử lại
+          </Button>
+        </div>
+      )}
 
       <footer className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
         {stage === 'new' && (

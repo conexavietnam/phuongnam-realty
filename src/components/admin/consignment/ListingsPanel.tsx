@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button';
 import { ListingStatusChip } from '@/components/admin/consignment/StatusChip';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { consignmentService } from '@/services/consignmentService';
-import { CONSIGNMENT_STATUS_LABELS, priceLabel } from '@/utils/consignment';
+import { CONSIGNMENT_STATUS_LABELS, priceLabel, purposeLabel } from '@/utils/consignment';
 import type { ConsignmentListing, ConsignmentStatus } from '@/types';
 
 type StatusFilter = 'all' | ConsignmentStatus;
@@ -46,7 +46,8 @@ export function ListingsPanel({ listings, actions, onEdit, onCreate }: ListingsP
     actions.notify(`Đã xóa tin "${item.title}".`);
   };
 
-  const canPublish = (item: ConsignmentListing) => item.title.trim() !== '' && item.thumbnail !== '';
+  const canPublish = (item: ConsignmentListing) =>
+    item.title.trim() !== '' && item.thumbnail !== '' && !consignmentService.isPublishBlocked({ ...item, status: 'published' });
 
   return (
     <div className="space-y-5">
@@ -130,7 +131,7 @@ export function ListingsPanel({ listings, actions, onEdit, onCreate }: ListingsP
                   <td className="py-3 px-4"><ListingStatusChip status={item.status} /></td>
                   <td className="py-3 px-4 text-slate-600">
                     {item.propertyType ? consignmentService.propertyTypeLabel(item.propertyType) : '-'}
-                    <span className="text-slate-400"> · {item.purpose === 'cho-thue' ? 'Cho thuê' : 'Bán'}</span>
+                    <span className="text-slate-400"> · {purposeLabel(item.purpose)}</span>
                   </td>
                   <td className="py-3 px-4 font-bold text-gold-600 whitespace-nowrap">{priceLabel(item)}</td>
                   <td className="py-3 px-4 text-slate-600 max-w-xs truncate">{item.location || '-'}</td>
@@ -152,7 +153,7 @@ export function ListingsPanel({ listings, actions, onEdit, onCreate }: ListingsP
                           disabled={!canPublish(item)}
                           onClick={() => changeStatus(item, 'published', `Đã đăng tin "${item.title}".`)}
                           className={`${ICON_BUTTON} text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed`}
-                          title={canPublish(item) ? 'Đăng tin' : 'Cần có tiêu đề và ảnh đại diện trước khi đăng'}
+                          title={canPublish(item) ? 'Đăng tin' : 'Cần có tiêu đề, ảnh đại diện và mô tả ngắn đã viết lại (không phải ghi chú của khách) trước khi đăng'}
                         >
                           <Send className="w-4 h-4" />
                         </button>

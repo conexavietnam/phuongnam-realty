@@ -11,8 +11,8 @@ import { Badge } from '@/components/common/Badge';
 import { renderRichHtml } from '@/utils/richText';
 
 export function MobilePropertyDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const property = propertyService.getById(id || '');
+  const { slug } = useParams<{ slug: string }>();
+  const property = propertyService.getBySlug(slug || '');
   const [showGallery, setShowGallery] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -34,7 +34,7 @@ export function MobilePropertyDetailPage() {
       </div>
 
       <div className="px-4 py-6">
-        <div className="text-2xl font-bold text-gold-500 mb-2">{property.price}</div>
+        <div className="text-2xl font-bold text-gold-500 mb-2">{property.priceDisplay}</div>
         <h1 className="text-lg font-bold text-navy-900 mb-3">{property.title}</h1>
         
         <div className="flex items-start gap-1 text-slate-500 mb-6">

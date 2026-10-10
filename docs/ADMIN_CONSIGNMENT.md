@@ -33,13 +33,13 @@ Dữ liệu cũ được chuyển khi đọc: `contacted` -> `processing`, `comp
 Trạng thái tin (`consignments.status`): `draft` (nháp, chỉ admin thấy), `published` (đang đăng), `sold` (đã giao dịch). Tin cũ không có `status` được coi là `published`; tin cũ dùng `name`/`category` được đọc thành `title`/`propertyType`.
 
 ## Quyền riêng tư
-Họ tên và số điện thoại chủ nhà chỉ nằm trong `customer_leads`. Tin ký gửi không bao giờ sao chép chúng. Máy chủ còn lọc lớp thứ hai: người chưa đăng nhập gọi `data&c=consignments` chỉ nhận tin `published`/`sold` và đã bị bỏ mọi khóa bắt đầu bằng `_` hoặc tên `internalNote`, `leadId`, `ownerName`, `ownerPhone`. Trang công khai chỉ hiển thị hotline/Zalo của công ty và form "Liên hệ về tin này" (tạo lead nguồn `contact`).
+Họ tên và số điện thoại chủ nhà chỉ nằm trong `customer_leads`. Tin ký gửi không bao giờ sao chép chúng. Máy chủ còn lọc lớp thứ hai: người chưa đăng nhập gọi `data&c=consignments` chỉ nhận tin `published`/`sold` và đã bị bỏ mọi khóa bắt đầu bằng `_` hoặc tên `internalNote`, `leadId`, `ownerName`, `ownerPhone`. Dữ liệu riêng tư chỉ được đặt trong các khóa riêng tư kể trên ở cấp ngoài cùng của tin; tuyệt đối không đặt trong đối tượng lồng nhau, gallery hay `fullDescription` (máy chủ chỉ lọc khóa cấp ngoài cùng). Trang công khai chỉ hiển thị hotline/Zalo của công ty và form "Liên hệ về tin này" (tạo lead nguồn `contact`).
 
 ## Mã nguồn
 - `src/components/admin/consignment/`: `ConsignmentTab` (hai tab con), `ApplicationsPanel` (đơn), `ListingsPanel` (tin), `ListingEditorModal`, `LeadStatusControl` (tab Khách hàng).
 - `src/services/consignmentService.ts`: lọc công khai, duyệt đơn, lưu tin, đồng bộ trạng thái đơn.
 - `src/utils/consignment.ts`: chuẩn hóa dữ liệu cũ, nhãn trạng thái. `server/src/storage.php`: lọc công khai + kiểm tra khi ghi.
-- Duyệt đơn tạo tin nháp có id cố định `consign-<id đơn>` nên bấm lại không tạo trùng. Bản nháp lấy khu vực, loại BĐS, khoảng giá (vào "Giá hiển thị", không vào giá số) và ghi chú của khách (vào mô tả ngắn: hãy đọc lại trước khi đăng).
+- Duyệt đơn tạo tin nháp có id cố định `consign-<id đơn>` nên bấm lại không tạo trùng. Tin tạo từ đơn bị chặn đăng (nút Đăng, Lưu & Đăng, và cả máy chủ không cần thiết vì chặn ở `consignmentService.save`) khi mô tả ngắn còn trống hoặc vẫn y hệt ghi chú của khách. Bản nháp lấy khu vực, loại BĐS, khoảng giá (vào "Giá hiển thị", không vào giá số) và ghi chú của khách (vào mô tả ngắn: hãy đọc lại trước khi đăng).
 
 ## Checklist kiểm thử thủ công
 1. Trang `/ky-gui` (desktop và mobile 375px): chỉ có tin đã đăng, thẻ có nhãn "Ký gửi", giá thiếu hiển thị "Liên hệ"; bộ lọc khu vực/loại/giá/từ khóa đổi URL (`?region=...&type=...&price=...&q=...`) và tải lại giữ nguyên bộ lọc.
@@ -53,4 +53,7 @@ Họ tên và số điện thoại chủ nhà chỉ nằm trong `customer_leads`
 9. "Gỡ về nháp": tin biến mất khỏi `/ky-gui`, `/ky-gui/<slug>` hiện "Không tìm thấy tin ký gửi"; gọi `GET /api/index.php?r=data&c=consignments` khi chưa đăng nhập không thấy tin nháp. "Đánh dấu đã giao dịch": tin xếp cuối, có nhãn "Đã giao dịch" ở thẻ và chi tiết, đơn thành "Đã giao dịch"; "Mở bán lại" đưa về Đang đăng.
 10. Xóa tin có xác nhận; đơn liên kết quay về Đang xử lý. Mở hồ sơ ẩn danh/mạng khác: không thấy tên, SĐT, ghi chú nội bộ ở bất cứ trang hay phản hồi API công khai nào.
 11. Backup (tab Sao lưu): xuất/nhập vẫn hoạt động, tin nháp và đơn nằm trong file.
-12. Chạy `bash server/tests/smoke.sh` trên máy có PHP 8.3 (xem `server/README.md`): mọi dòng PASS.
+12. Tin tạo từ đơn: trình soạn thảo hiện nhắc "Tên và số điện thoại chủ nhà không bao giờ được đăng công khai" và cảnh báo vàng "Ghi chú của khách đang là mô tả ngắn — hãy viết lại trước khi đăng"; nút "Lưu & Đăng" bị khóa, nút Đăng (mũi tên gửi) ở danh sách tin bị khóa; sửa mô tả ngắn khác ghi chú của khách thì cảnh báo mất và đăng được.
+13. Giả lập lỗi mạng ở lần ghi thứ hai khi "Duyệt & tạo tin nháp": đơn hiện thông báo lỗi và nút "Thử lại"; bấm lại tạo đúng một tin nháp (không trùng) và đơn chuyển "Đã duyệt (nháp)".
+14. Trang chi tiết BĐS chuyển nhượng trên mobile (`/chuyen-nhuong/<slug>`) mở được; cột "Nhu cầu" trong tab Khách hàng, tổng quan và tab Ký gửi hiển thị "Cần bán", "Cho thuê" hoặc "Tư vấn".
+15. Chạy `bash server/tests/smoke.sh` trên máy có PHP 8.3 (xem `server/README.md`): mọi dòng PASS.

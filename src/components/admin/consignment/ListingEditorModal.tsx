@@ -10,7 +10,7 @@ import { LazyRichTextEditor } from '@/components/admin/LazyRichTextEditor';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { consignmentService } from '@/services/consignmentService';
 import { companyService } from '@/services/companyService';
-import { CONSIGNMENT_STATUS_LABELS } from '@/utils/consignment';
+import { CONSIGNMENT_STATUS_LABELS, DESCRIPTION_REWRITE_MESSAGE, needsDescriptionRewrite } from '@/utils/consignment';
 import { normalizeEditorHtml } from '@/utils/richText';
 import { slugify } from '@/utils/slug';
 import type { ConsignmentListing, ConsignmentPurpose, ConsignmentStatus } from '@/types';
@@ -43,6 +43,8 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const filters = companyService.getFilterConfig();
+  const sourceLead = consignmentService.getLeadOf(initial.id);
+  const rewriteNeeded = needsDescriptionRewrite(draft, sourceLead);
 
   const set = <K extends keyof ConsignmentListing>(key: K, value: ConsignmentListing[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -60,6 +62,7 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
     if (!slug) return fail('Đường dẫn (slug) không hợp lệ.');
     if (consignmentService.isSlugTaken(slug, draft.id)) return fail('Đường dẫn này đã được dùng bởi tin khác. Vui lòng đổi sang đường dẫn khác.');
     if (status !== 'draft') {
+      if (rewriteNeeded) return fail(DESCRIPTION_REWRITE_MESSAGE + '.');
       if (!draft.thumbnail) return fail('Cần có ảnh đại diện trước khi đăng tin.');
       if (!draft.region && !draft.location.trim()) return fail('Cần có khu vực hoặc vị trí trước khi đăng tin.');
     }
@@ -224,6 +227,19 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
             />
           </div>
 
+          {sourceLead && (
+            <div className="md:col-span-2 space-y-2">
+              <p className="bg-sky-50 border border-sky-200 text-sky-800 rounded-xl px-4 py-2.5">
+                Tin này tạo từ đơn ký gửi. Tên và số điện thoại chủ nhà không bao giờ được đăng công khai; chỉ hotline công ty được hiển thị.
+              </p>
+              {rewriteNeeded && (
+                <p role="status" className="bg-amber-50 border border-amber-300 text-amber-800 rounded-xl px-4 py-2.5 font-semibold">
+                  {DESCRIPTION_REWRITE_MESSAGE}
+                </p>
+              )}
+            </div>
+          )}
+
           <Field label="Mô tả ngắn" wide>
             <textarea
               rows={3}
@@ -264,11 +280,11 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
             <Button type="button" variant="outline" size="sm" onClick={onClose}>
               Hủy
             </Button>
-            <Button type="submit" variant="secondary" size="sm" disabled={saving}>
+            <Button type="submit" variant="secondary" size="sm" disabled={saving || (draft.status !== 'draft' && rewriteNeeded)}>
               Lưu
             </Button>
             {draft.status === 'draft' && (
-              <Button type="button" variant="primary" size="sm" disabled={saving} onClick={() => save('published')}>
+              <Button type="button" variant="primary" size="sm" disabled={saving || rewriteNeeded} onClick={() => save('published')}>
                 Lưu &amp; Đăng
               </Button>
             )}

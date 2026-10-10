@@ -46,7 +46,7 @@ import { ConsignmentTab } from '@/components/admin/consignment/ConsignmentTab';
 import { LeadStatusControl } from '@/components/admin/consignment/LeadStatusControl';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { dataStorage } from '@/services/dataStorage';
-import { applicationStage } from '@/utils/consignment';
+import { applicationStage, purposeLabel } from '@/utils/consignment';
 import { mediaService } from '@/services/mediaService';
 import type { MediaItem } from '@/services/mediaService';
 import type { Project, ProjectCategory } from '@/types/project';
@@ -805,7 +805,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                               ? 'bg-blue-100 text-blue-700'
                               : 'bg-emerald-100 text-emerald-700'
                           }`}>
-                            {lead.purpose === 'ban' ? 'Cần bán' : lead.purpose === 'cho-thue' ? 'Cho thuê' : 'Tư vấn'}
+                            {purposeLabel(lead.purpose)}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-slate-600">{lead.region || 'Không có'}</td>
@@ -1131,7 +1131,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-slate-700">
-                          <span className="font-semibold capitalize">{lead.purpose}</span>
+                          <span className="font-semibold">{purposeLabel(lead.purpose)}</span>
                           {lead.propertyType && <span className="text-slate-500"> ({lead.propertyType})</span>}
                         </td>
                         <td className="py-3 px-4 text-slate-600">{lead.region || '-'}</td>

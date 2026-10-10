@@ -65,6 +65,22 @@ export function normalizeLead(raw: unknown): CustomerLead {
   return { ...lead, status: LEAD_STATUSES.includes(mapped as LeadStatus) ? (mapped as LeadStatus) : 'new' };
 }
 
+export function purposeLabel(purpose: string): string {
+  if (purpose === 'ban') return 'Cần bán';
+  if (purpose === 'cho-thue') return 'Cho thuê';
+  return 'Tư vấn';
+}
+
+export const DESCRIPTION_REWRITE_MESSAGE = 'Ghi chú của khách đang là mô tả ngắn — hãy viết lại trước khi đăng';
+
+// A draft made from an application starts with the customer's note as its short description.
+// It must be rewritten before publishing because the note may contain personal details.
+export function needsDescriptionRewrite(listing: ConsignmentListing, lead?: CustomerLead): boolean {
+  if (!lead) return false;
+  const description = listing.shortDescription.trim();
+  return description === '' || description === (lead.note ?? '').trim();
+}
+
 export function isPubliclyVisible(item: ConsignmentListing): boolean {
   return item.status === 'published' || item.status === 'sold';
 }
