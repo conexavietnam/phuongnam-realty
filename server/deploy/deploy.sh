@@ -6,7 +6,8 @@
 #
 # Required env:  DEPLOY_HOST (ssh alias)  APP_ROOT (e.g. /home/site)  SITE_USER  SITE_GROUP
 #                SITE_URL (public base URL used for the post-deploy checks, no trailing slash)
-# Optional env:  PHP_FPM_SERVICE (default php8.3-fpm)
+# Optional env:  PRIVATE_GROUP (group of the server/ code, default SITE_GROUP; on the vaway fleet use the site's own group)
+#                PHP_FPM_SERVICE (default php8.3-fpm)
 #                REMOTE_SUDO (default "sudo -n"; set to an empty string if the ssh user owns everything)
 set -euo pipefail
 
@@ -15,6 +16,7 @@ set -euo pipefail
 : "${SITE_USER:?set SITE_USER}"
 : "${SITE_GROUP:?set SITE_GROUP}"
 : "${SITE_URL:?set SITE_URL (e.g. https://example.com)}"
+PRIVATE_GROUP="${PRIVATE_GROUP:-$SITE_GROUP}"
 PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.3-fpm}"
 REMOTE_SUDO="${REMOTE_SUDO-sudo -n}"
 
@@ -61,8 +63,8 @@ scp -q "$WORK"/dist.tgz "$WORK"/api.tgz "$WORK"/src.tgz "$WORK"/seed.tgz "$DEPLO
 
 echo "==> Deploying on the server"
 {
-  printf 'APP_ROOT=%q\nSTAGE=%q\nTS=%q\nSITE_USER=%q\nSITE_GROUP=%q\nPHP_FPM_SERVICE=%q\nREMOTE_SUDO=%q\n' \
-    "$APP_ROOT" "$STAGE" "$TS" "$SITE_USER" "$SITE_GROUP" "$PHP_FPM_SERVICE" "$REMOTE_SUDO"
+  printf 'APP_ROOT=%q\nSTAGE=%q\nTS=%q\nSITE_USER=%q\nSITE_GROUP=%q\nPRIVATE_GROUP=%q\nPHP_FPM_SERVICE=%q\nREMOTE_SUDO=%q\n' \
+    "$APP_ROOT" "$STAGE" "$TS" "$SITE_USER" "$SITE_GROUP" "$PRIVATE_GROUP" "$PHP_FPM_SERVICE" "$REMOTE_SUDO"
   cat <<'REMOTE'
 set -euo pipefail
 PUBLIC="$APP_ROOT/public_html"
@@ -113,7 +115,7 @@ for part in src seed; do
 done
 
 echo "-- permissions"
-$REMOTE_SUDO chown -R "$SITE_USER:$SITE_GROUP" "$APP_ROOT/server/src" "$APP_ROOT/server/seed" "$APP_ROOT/server/api"
+$REMOTE_SUDO chown -R "$SITE_USER:$PRIVATE_GROUP" "$APP_ROOT/server/src" "$APP_ROOT/server/seed" "$APP_ROOT/server/api"
 $REMOTE_SUDO chown "$SITE_USER:$SITE_GROUP" "$UPLOADS"
 chmod 755 "$UPLOADS"
 find "$APP_ROOT/server/api" -type d -exec chmod 750 {} + ; find "$APP_ROOT/server/api" -type f -exec chmod 640 {} +

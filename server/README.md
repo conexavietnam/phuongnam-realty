@@ -71,6 +71,30 @@ The script, in order:
 5. fixes permissions (public files 755/644, `server/src` and `server/seed` 750/640), reloads php-fpm;
 6. checks from your machine: home page 200, `api/index.php?r=auth/me` 200, `/server/config.php` not 200.
 
+### Production values (vaway fleet, https://phuongnamrealty.vn)
+
+Everything is named after the domain, like every other site on the VPS:
+
+| What | Value |
+|-|-|
+| Domain | `phuongnamrealty.vn` (the old `phuongnamrealty.s6.vaway.vn` only 301-redirects to it) |
+| ssh alias | `vps-s6` (103.173.226.134) |
+| App root / home | `/home/phuongnamrealty.vn` (mode 710, owner = site user, group `www-data`) |
+| Site user / group | `site_phuongnamrealty_vn` / `site_phuongnamrealty_vn` |
+| PHP-FPM pool, socket | `/etc/php/8.3/fpm/pool.d/phuongnamrealty.vn.conf`, `/run/php/phuongnamrealty.vn.sock` |
+| nginx vhost | `/etc/nginx/sites-available/vaway-phuongnamrealty.vn.conf` (symlinked in `sites-enabled`, certbot-managed) |
+| Backups | `/home/phuongnamrealty.vn/backups` (root only): `pre-deploy-*` per deploy, `daily-*` from `/etc/cron.d/pn-realty-backup` |
+
+```bash
+export DEPLOY_HOST=vps-s6 APP_ROOT=/home/phuongnamrealty.vn
+export SITE_USER=site_phuongnamrealty_vn SITE_GROUP=www-data PRIVATE_GROUP=site_phuongnamrealty_vn
+export SITE_URL=https://phuongnamrealty.vn REMOTE_SUDO=""     # ssh user is root on this VPS
+bash server/deploy/deploy.sh
+```
+
+`SITE_GROUP` (public files, `uploads/`) stays `www-data` so nginx can read them; `PRIVATE_GROUP` owns the
+`server/` code. The admin session cookie is per host: after a domain change the admin logs in again.
+
 ### Backups and restore
 
 Each deploy leaves `$APP_ROOT/backups/pre-deploy-<timestamp>.tgz` (paths inside are relative to
