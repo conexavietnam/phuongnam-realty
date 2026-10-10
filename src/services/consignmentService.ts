@@ -1,6 +1,6 @@
 import { dataStorage } from '@/services/dataStorage';
 import { companyService } from '@/services/companyService';
-import { matchesPriceRange, normalizeForSearch } from '@/services/propertyService';
+import { matchesPriceRange, normalizeForSearch } from '@/utils/listingFilter';
 import {
   DESCRIPTION_REWRITE_MESSAGE,
   isPubliclyVisible,
@@ -9,7 +9,7 @@ import {
   sortForPublic,
 } from '@/utils/consignment';
 import { slugify, uniqueSlug } from '@/utils/slug';
-import type { ConsignmentListing, ConsignmentStatus, CustomerLead, PropertyFilter } from '@/types';
+import type { ConsignmentListing, ConsignmentSection, ConsignmentStatus, CustomerLead, PropertyFilter } from '@/types';
 
 function matchesRegion(item: ConsignmentListing, region: string): boolean {
   if (item.region === region) return true;
@@ -35,8 +35,13 @@ export const consignmentService = {
     return sortForPublic(dataStorage.getConsignments().filter(isPubliclyVisible));
   },
 
+  // Only listings that belong on /ky-gui; promoted ones appear through propertyService/projectService.
+  getKyGui(): ConsignmentListing[] {
+    return this.getPublic().filter((i) => i.section === 'ky-gui');
+  },
+
   getLatest(limit: number): ConsignmentListing[] {
-    return this.getPublic().filter((i) => i.status === 'published').slice(0, limit);
+    return this.getKyGui().filter((i) => i.status === 'published').slice(0, limit);
   },
 
   getPublicBySlug(slug: string): ConsignmentListing | undefined {
@@ -44,7 +49,7 @@ export const consignmentService = {
   },
 
   filter(filters: PropertyFilter): ConsignmentListing[] {
-    return this.getPublic().filter((item) => {
+    return this.getKyGui().filter((item) => {
       if (filters.type && item.propertyType !== filters.type) return false;
       if (filters.region && !matchesRegion(item, filters.region)) return false;
       if (filters.priceRange && !matchesPriceRange(item.price, filters.priceRange)) return false;
@@ -56,7 +61,7 @@ export const consignmentService = {
   },
 
   getRelated(current: ConsignmentListing, limit: number): ConsignmentListing[] {
-    return this.getPublic().filter((i) => i.id !== current.id).slice(0, limit);
+    return this.getKyGui().filter((i) => i.id !== current.id).slice(0, limit);
   },
 
   propertyTypeLabel(value: string): string {
@@ -84,8 +89,16 @@ export const consignmentService = {
     return rows.filter((row) => row.value !== '');
   },
 
+  // Slugs are unique across properties, projects and consignment listings.
+  findSlugOwner(slug: string, exceptId: string): string | null {
+    if (dataStorage.getProperties().some((p) => p.slug === slug && p.id !== exceptId)) return 'BĐS chuyển nhượng';
+    if (dataStorage.getProjects().some((p) => p.slug === slug && p.id !== exceptId)) return 'Dự án';
+    if (dataStorage.getConsignments().some((i) => i.slug === slug && i.id !== exceptId)) return 'Tin ký gửi';
+    return null;
+  },
+
   isSlugTaken(slug: string, exceptId: string): boolean {
-    return dataStorage.getConsignments().some((i) => i.slug === slug && i.id !== exceptId);
+    return this.findSlugOwner(slug, exceptId) !== null;
   },
 
   makeUniqueSlug(title: string, exceptId: string): string {
@@ -99,6 +112,7 @@ export const consignmentService = {
       id: `consign-${Date.now()}`,
       slug: '',
       status: 'draft',
+      section: 'ky-gui',
       title: '',
       purpose: 'ban',
       propertyType: '',
@@ -112,6 +126,13 @@ export const consignmentService = {
       bathrooms: 0,
       direction: '',
       legal: '',
+      floor: '',
+      view: '',
+      investor: '',
+      projectStatus: '',
+      priceFrom: '',
+      categoryLabel: '',
+      highlights: [],
       shortDescription: '',
       fullDescription: '',
       thumbnail: '',
@@ -124,7 +145,7 @@ export const consignmentService = {
 
   // Draft prefilled from an application. Owner name and phone are deliberately NOT copied.
   // The id derives from the lead id so a retried approval overwrites instead of duplicating.
-  createDraftFromLead(lead: CustomerLead): ConsignmentListing {
+  createDraftFromLead(lead: CustomerLead, section: ConsignmentSection = 'ky-gui'): ConsignmentListing {
     const id = `consign-${lead.id}`;
     const filters = companyService.getFilterConfig();
     const regionLabel = lead.region ? lookupLabel(filters.regions, lead.region) : '';
@@ -133,6 +154,7 @@ export const consignmentService = {
     return {
       ...this.createBlank(),
       id,
+      section,
       slug: this.makeUniqueSlug(title, id),
       title,
       purpose: lead.purpose === 'cho-thue' ? 'cho-thue' : 'ban',
@@ -175,12 +197,13 @@ export const consignmentService = {
   },
 
   // Approves an application: creates (or reuses) its draft listing and links both ways.
-  async approveLead(lead: CustomerLead): Promise<ConsignmentListing> {
+  async approveLead(lead: CustomerLead, section: ConsignmentSection = 'ky-gui'): Promise<ConsignmentListing> {
     // A previous attempt may have saved the draft but failed to link the lead: reuse it, never duplicate.
     const draftId = lead.consignmentId ?? `consign-${lead.id}`;
     const existing = dataStorage.getConsignments().find((i) => i.id === draftId);
-    const listing = existing ?? this.createDraftFromLead(lead);
-    if (!existing) await dataStorage.saveConsignment(listing);
+    const resection = existing?.status === 'draft' && existing.section !== section;
+    const listing = existing ? { ...existing, section: resection ? section : existing.section } : this.createDraftFromLead(lead, section);
+    if (!existing || resection) await dataStorage.saveConsignment(listing);
     await dataStorage.updateLead(lead.id, { status: 'approved', consignmentId: listing.id });
     return listing;
   },

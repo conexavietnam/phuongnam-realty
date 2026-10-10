@@ -32,6 +32,22 @@ Dữ liệu cũ được chuyển khi đọc: `contacted` -> `processing`, `comp
 
 Trạng thái tin (`consignments.status`): `draft` (nháp, chỉ admin thấy), `published` (đang đăng), `sold` (đã giao dịch). Tin cũ không có `status` được coi là `published`; tin cũ dùng `name`/`category` được đọc thành `title`/`propertyType`.
 
+## Chọn mục đăng (`section`)
+
+Khi bấm "Duyệt & tạo tin nháp", admin chọn **Đăng vào mục**: `ky-gui` (mặc định, tin ký gửi của khách), `chuyen-nhuong` (BĐS chuyển nhượng, tin mua bán/cho thuê) hoặc `du-an` (dự án của chủ đầu tư). Tin vẫn nằm trong collection `consignments` (một nguồn dữ liệu duy nhất, nháp vẫn được máy chủ bảo vệ); chỉ trường `section` quyết định nơi hiển thị. Thiếu `section` (dữ liệu cũ) = `ky-gui`. Có thể đổi mục bất cứ lúc nào trong trình soạn thảo (ô "Đăng vào mục" ở đầu form), kể cả sau khi đã đăng; link cũ `/ky-gui/<slug>` tự chuyển hướng sang mục mới.
+
+| section | Hiển thị ở | Trang chi tiết | Trường riêng trong trình soạn thảo |
+|---|---|---|---|
+| `ky-gui` | `/ky-gui` (thẻ nhãn Ký gửi) | `/ky-gui/<slug>` | phòng ngủ, phòng tắm, hướng, pháp lý |
+| `chuyen-nhuong` | `/chuyen-nhuong` cùng các BĐS gốc (nhãn Chuyển nhượng) | `/chuyen-nhuong/<slug>` | như trên + `floor` (tầng), `view` (tầm nhìn) |
+| `du-an` | `/du-an` cùng các dự án gốc (nhãn Dự án) | `/du-an/<slug>` | `investor`, `projectStatus`, `priceFrom`, `categoryLabel`, `highlights` (tối đa 20 dòng) |
+
+- Chuyển đổi chỉ khi đọc: `src/utils/consignmentAdapters.ts` (`consignmentToProperty`, `consignmentToProject`, `mergedProperties`, `mergedProjects`) và `propertyService`/`projectService` (danh sách, bộ lọc URL, `getBySlug`). Tin mới đăng xếp trước các mục gốc, tin "Đã giao dịch" xếp cuối và có nhãn. Khi trùng slug thì mục gốc thắng.
+- Slug phải duy nhất giữa BĐS chuyển nhượng, dự án và tin ký gửi: trình soạn thảo báo "Đường dẫn ... đã được dùng bởi một mục khác (...)".
+- Thiếu trường (ví dụ chưa có diện tích, chủ đầu tư) thì dòng đó bị ẩn trên trang chi tiết.
+- Tab Dự án và BĐS chuyển nhượng hiện banner "N tin từ Ký gửi đang hiển thị ở mục này" kèm nút mở tab Ký gửi đã lọc theo mục; số liệu tổng quan chỉ đếm mục gốc nên không đếm trùng. Bảng "Tin ký gửi" có nhãn mục và bộ lọc mục; thẻ đơn hiển thị mục đã chọn.
+- Máy chủ chấp nhận `section` thuộc ba giá trị trên, `investor`, `projectStatus`, `priceFrom`, `floor`, `view`, `categoryLabel` là chuỗi có giới hạn độ dài, `highlights` là danh sách tối đa 20 chuỗi ngắn; bộ lọc công khai (ẩn nháp, ẩn khóa riêng tư) không đổi.
+
 ## Quyền riêng tư
 Họ tên và số điện thoại chủ nhà chỉ nằm trong `customer_leads`. Tin ký gửi không bao giờ sao chép chúng. Máy chủ còn lọc lớp thứ hai: người chưa đăng nhập gọi `data&c=consignments` chỉ nhận tin `published`/`sold` và đã bị bỏ mọi khóa bắt đầu bằng `_` hoặc tên `internalNote`, `leadId`, `ownerName`, `ownerPhone`. Dữ liệu riêng tư chỉ được đặt trong các khóa riêng tư kể trên ở cấp ngoài cùng của tin; tuyệt đối không đặt trong đối tượng lồng nhau, gallery hay `fullDescription` (máy chủ chỉ lọc khóa cấp ngoài cùng). Trang công khai chỉ hiển thị hotline/Zalo của công ty và form "Liên hệ về tin này" (tạo lead nguồn `contact`).
 
@@ -56,4 +72,8 @@ Họ tên và số điện thoại chủ nhà chỉ nằm trong `customer_leads`
 12. Tin tạo từ đơn: trình soạn thảo hiện nhắc "Tên và số điện thoại chủ nhà không bao giờ được đăng công khai" và cảnh báo vàng "Ghi chú của khách đang là mô tả ngắn — hãy viết lại trước khi đăng"; nút "Lưu & Đăng" bị khóa, nút Đăng (mũi tên gửi) ở danh sách tin bị khóa; sửa mô tả ngắn khác ghi chú của khách thì cảnh báo mất và đăng được.
 13. Giả lập lỗi mạng ở lần ghi thứ hai khi "Duyệt & tạo tin nháp": đơn hiện thông báo lỗi và nút "Thử lại"; bấm lại tạo đúng một tin nháp (không trùng) và đơn chuyển "Đã duyệt (nháp)".
 14. Trang chi tiết BĐS chuyển nhượng trên mobile (`/chuyen-nhuong/<slug>`) mở được; cột "Nhu cầu" trong tab Khách hàng, tổng quan và tab Ký gửi hiển thị "Cần bán", "Cho thuê" hoặc "Tư vấn".
-15. Chạy `bash server/tests/smoke.sh` trên máy có PHP 8.3 (xem `server/README.md`): mọi dòng PASS.
+15. Chọn mục: "Duyệt & tạo tin nháp" mở hộp thoại "Đăng vào mục" có 3 lựa chọn giải thích rõ, mặc định Ký gửi. Chọn BĐS chuyển nhượng: trình soạn thảo mở với mục đó và có ô Tầng/Tầm nhìn; sửa, viết lại mô tả ngắn, thêm ảnh, "Lưu & Đăng": tin xuất hiện đầu `/chuyen-nhuong` (nhãn Chuyển nhượng, lọc theo `?type=`/`?price=` hoạt động) và có `/chuyen-nhuong/<slug>`, KHÔNG có trong `/ky-gui`.
+16. Tương tự với Dự án: ô Chủ đầu tư, Tình trạng, Giá từ, Nhóm loại hình, Điểm nhấn; tin hiện ở `/du-an` và `/du-an/<slug>` (dòng thiếu dữ liệu bị ẩn).
+17. Đổi mục lại thành Ký gửi trong trình soạn thảo, lưu: tin về `/ky-gui`, `/chuyen-nhuong/<slug>` báo không tìm thấy; mở `/ky-gui/<slug>` của tin đang ở mục khác tự chuyển sang địa chỉ đúng. Gỡ về nháp: biến mất ở mọi nơi. Đánh dấu đã giao dịch: xếp cuối mục, có nhãn "Đã giao dịch".
+18. Đặt slug trùng một dự án/BĐS gốc (ví dụ `palm-river`): báo lỗi trùng đường dẫn, không lưu. Trang chủ không hiện một tin hai lần. Banner ở tab Dự án/BĐS chuyển nhượng đếm đúng và nút mở tab Ký gửi đã lọc mục.
+19. Chạy `bash server/tests/smoke.sh` trên máy có PHP 8.3 (xem `server/README.md`): mọi dòng PASS.

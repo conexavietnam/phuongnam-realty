@@ -29,6 +29,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
           {property.category}
         </Badge>
         <SectionBadge kind="transfer" />
+        {property.consignmentStatus === 'sold' && (
+          <span className="absolute bottom-3 left-3 z-10 px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-bold shadow">
+            Đã giao dịch
+          </span>
+        )}
       </div>
 
       {/* Body */}

@@ -1,6 +1,7 @@
 import type {
   ConsignmentListing,
   ConsignmentPurpose,
+  ConsignmentSection,
   ConsignmentStatus,
   CustomerLead,
   LeadStatus,
@@ -19,6 +20,7 @@ const LEGACY_LEAD_STATUS: Record<string, LeadStatus> = {
 };
 
 const LEAD_STATUSES: LeadStatus[] = ['new', 'processing', 'approved', 'rejected', 'closed'];
+const SECTIONS: ConsignmentSection[] = ['ky-gui', 'chuyen-nhuong', 'du-an'];
 const LISTING_STATUSES: ConsignmentStatus[] = ['draft', 'published', 'sold'];
 
 const str = (value: unknown): string => (typeof value === 'string' ? value : '');
@@ -36,6 +38,7 @@ export function normalizeListing(raw: unknown): ConsignmentListing {
     id: str(r.id),
     slug: str(r.slug),
     status,
+    section: SECTIONS.includes(r.section as ConsignmentSection) ? (r.section as ConsignmentSection) : 'ky-gui',
     title: str(r.title) || str(r.name),
     purpose: (r.purpose === 'cho-thue' ? 'cho-thue' : 'ban') as ConsignmentPurpose,
     propertyType: str(r.propertyType) || str(r.category),
@@ -49,6 +52,13 @@ export function normalizeListing(raw: unknown): ConsignmentListing {
     bathrooms: num(r.bathrooms),
     direction: str(r.direction),
     legal: str(r.legal),
+    floor: str(r.floor),
+    view: str(r.view),
+    investor: str(r.investor),
+    projectStatus: str(r.projectStatus),
+    priceFrom: str(r.priceFrom),
+    categoryLabel: str(r.categoryLabel),
+    highlights: Array.isArray(r.highlights) ? r.highlights.filter((h): h is string => typeof h === 'string') : [],
     shortDescription: str(r.shortDescription),
     fullDescription: str(r.fullDescription),
     thumbnail: str(r.thumbnail),
@@ -63,6 +73,32 @@ export function normalizeLead(raw: unknown): CustomerLead {
   const lead = raw as CustomerLead & { status: string };
   const mapped = LEGACY_LEAD_STATUS[lead.status] ?? lead.status;
   return { ...lead, status: LEAD_STATUSES.includes(mapped as LeadStatus) ? (mapped as LeadStatus) : 'new' };
+}
+
+export const SECTION_LABELS: Record<ConsignmentSection, string> = {
+  'ky-gui': 'Ký gửi',
+  'chuyen-nhuong': 'BĐS chuyển nhượng',
+  'du-an': 'Dự án',
+};
+
+export const SECTION_HELP: Record<ConsignmentSection, string> = {
+  'ky-gui': 'Tin ký gửi của khách, hiển thị ở mục Ký gửi (/ky-gui).',
+  'chuyen-nhuong': 'Tin mua bán / cho thuê, hiển thị cùng các BĐS ở mục BĐS chuyển nhượng (/chuyen-nhuong).',
+  'du-an': 'Dự án của chủ đầu tư, hiển thị cùng các dự án ở mục Dự án (/du-an).',
+};
+
+const SECTION_PATHS: Record<ConsignmentSection, string> = {
+  'ky-gui': '/ky-gui',
+  'chuyen-nhuong': '/chuyen-nhuong',
+  'du-an': '/du-an',
+};
+
+export function sectionPath(section: ConsignmentSection): string {
+  return SECTION_PATHS[section];
+}
+
+export function listingUrl(item: ConsignmentListing): string {
+  return `${SECTION_PATHS[item.section]}/${item.slug}`;
 }
 
 export function purposeLabel(purpose: string): string {

@@ -3,16 +3,22 @@ import { Phone, MessageSquare, Check, X, FileEdit, RotateCcw, Play, ExternalLink
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
-import { StageChip } from '@/components/admin/consignment/StatusChip';
+import { SectionChip, StageChip } from '@/components/admin/consignment/StatusChip';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { consignmentService } from '@/services/consignmentService';
 import { companyService } from '@/services/companyService';
 import { dataStorage } from '@/services/dataStorage';
-import { applicationStage, purposeLabel, STAGE_LABELS } from '@/utils/consignment';
+import { applicationStage, listingUrl, purposeLabel, SECTION_HELP, SECTION_LABELS, STAGE_LABELS } from '@/utils/consignment';
 import type { ApplicationStage } from '@/utils/consignment';
-import type { ConsignmentListing, CustomerLead } from '@/types';
+import type { ConsignmentListing, ConsignmentSection, CustomerLead } from '@/types';
 
 type StageFilter = 'all' | ApplicationStage;
+
+const SECTION_OPTIONS: Array<{ value: ConsignmentSection; hint: string }> = [
+  { value: 'ky-gui', hint: 'Tin ký gửi của khách' },
+  { value: 'chuyen-nhuong', hint: 'Tin mua bán / cho thuê' },
+  { value: 'du-an', hint: 'Dự án của chủ đầu tư' },
+];
 
 const FILTERS: StageFilter[] = ['all', 'new', 'processing', 'draft', 'published', 'closed', 'rejected'];
 
@@ -43,6 +49,8 @@ function ApplicationCard({
 }) {
   const [note, setNote] = useState(lead.internalNote ?? '');
   const [approveError, setApproveError] = useState<string | null>(null);
+  const [choosingSection, setChoosingSection] = useState(false);
+  const [section, setSection] = useState<ConsignmentSection>('ky-gui');
   const stage = applicationStage(lead, listing);
   const created = new Date(lead.createdAt);
 
@@ -55,8 +63,9 @@ function ApplicationCard({
 
   const handleApprove = async () => {
     setApproveError(null);
+    setChoosingSection(false);
     try {
-      const draft = await consignmentService.approveLead(lead);
+      const draft = await consignmentService.approveLead(lead, section);
       actions.refresh();
       actions.notify('Đã duyệt đơn và tạo tin nháp.');
       onOpenListing(draft);
@@ -74,6 +83,7 @@ function ApplicationCard({
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-bold text-navy-900 text-base">{lead.fullName}</h3>
             <StageChip stage={stage} />
+            {listing && <SectionChip section={listing.section} />}
             <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-navy-50 text-navy-700">
               {purposeLabel(lead.purpose)}
             </span>
@@ -173,7 +183,7 @@ function ApplicationCard({
         )}
         {(stage === 'new' || stage === 'processing') && (
           <>
-            <Button type="button" variant="primary" size="sm" className="text-xs" onClick={handleApprove}>
+            <Button type="button" variant="primary" size="sm" className="text-xs" onClick={() => setChoosingSection(true)}>
               <Check className="w-3.5 h-3.5 mr-1" />
               Duyệt &amp; tạo tin nháp
             </Button>
@@ -197,7 +207,7 @@ function ApplicationCard({
         )}
         {listing && listing.status !== 'draft' && (
           <Link
-            to={`/ky-gui/${listing.slug}`}
+            to={listingUrl(listing)}
             target="_blank"
             className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-navy-900"
           >
@@ -218,6 +228,47 @@ function ApplicationCard({
           </Button>
         )}
       </footer>
+      {choosingSection && (
+        <Modal isOpen onClose={() => setChoosingSection(false)} title="Duyệt đơn: đăng vào mục nào?" size="lg">
+          <fieldset className="space-y-3 text-xs">
+            <legend className="font-semibold text-slate-700 mb-2">Đăng vào mục:</legend>
+            {SECTION_OPTIONS.map((o) => (
+              <label
+                key={o.value}
+                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer ${
+                  section === o.value ? 'border-gold-500 bg-gold-500/5' : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`section-${lead.id}`}
+                  value={o.value}
+                  checked={section === o.value}
+                  onChange={() => setSection(o.value)}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="block font-bold text-navy-900 text-sm">
+                    {SECTION_LABELS[o.value]} <span className="font-normal text-slate-500">— {o.hint}</span>
+                  </span>
+                  <span className="block text-slate-500 mt-0.5">{SECTION_HELP[o.value]}</span>
+                </span>
+              </label>
+            ))}
+            <p className="text-slate-500">
+              Tin được tạo ở trạng thái nháp. Bạn có thể đổi mục bất cứ lúc nào trong trình soạn thảo, kể cả sau khi đã đăng.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setChoosingSection(false)}>
+                Hủy
+              </Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleApprove}>
+                Duyệt &amp; tạo tin nháp
+              </Button>
+            </div>
+          </fieldset>
+        </Modal>
+      )}
     </article>
   );
 }

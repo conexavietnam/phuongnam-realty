@@ -18,6 +18,7 @@ export function MobilePropertyDetailPage() {
 
   if (!property) return <MobileNotFoundPage />;
 
+  const promoted = property.consignmentStatus !== undefined;
   const agent = companyService.getAgentById(property.agentId);
   const relatedProperties = propertyService.getFeatured().filter(p => p.id !== property.id);
 
@@ -27,6 +28,9 @@ export function MobilePropertyDetailPage() {
       <div className="relative w-full h-64 bg-slate-200" onClick={() => setShowGallery(true)}>
         <img src={property.images[0]} alt={property.title} className="w-full h-full object-cover" />
         <Badge variant="gold">{property.type}</Badge>
+        {property.consignmentStatus === 'sold' && (
+          <span className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-bold">Đã giao dịch</span>
+        )}
         <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
           <Expand className="w-3 h-3" />
           <span>1/{property.images.length}</span>
@@ -45,30 +49,21 @@ export function MobilePropertyDetailPage() {
         {/* Specs Grid */}
         <h2 className="font-bold text-navy-900 mb-3 border-l-4 border-gold-500 pl-2">Thông tin chi tiết</h2>
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="flex flex-col border-b border-slate-100 pb-2">
-            <span className="text-xs text-slate-500">Diện tích</span>
-            <span className="font-medium">{property.area} m²</span>
-          </div>
-          <div className="flex flex-col border-b border-slate-100 pb-2">
-            <span className="text-xs text-slate-500">Phòng ngủ</span>
-            <span className="font-medium">{property.bedrooms}</span>
-          </div>
-          <div className="flex flex-col border-b border-slate-100 pb-2">
-            <span className="text-xs text-slate-500">Phòng tắm</span>
-            <span className="font-medium">{property.bathrooms}</span>
-          </div>
-          <div className="flex flex-col border-b border-slate-100 pb-2">
-            <span className="text-xs text-slate-500">Hướng</span>
-            <span className="font-medium">{property.direction}</span>
-          </div>
-          <div className="flex flex-col border-b border-slate-100 pb-2">
-            <span className="text-xs text-slate-500">Pháp lý</span>
-            <span className="font-medium">{property.legal}</span>
-          </div>
-          <div className="flex flex-col border-b border-slate-100 pb-2">
-            <span className="text-xs text-slate-500">Tầng</span>
-            <span className="font-medium">{property.floor}</span>
-          </div>
+          {[
+            { label: 'Diện tích', value: property.area > 0 ? `${property.area} m²` : '' },
+            { label: 'Phòng ngủ', value: property.bedrooms > 0 || !promoted ? String(property.bedrooms) : '' },
+            { label: 'Phòng tắm', value: property.bathrooms > 0 || !promoted ? String(property.bathrooms) : '' },
+            { label: 'Hướng', value: property.direction },
+            { label: 'Pháp lý', value: property.legal },
+            { label: 'Tầng', value: property.floor },
+          ]
+            .filter((row) => row.value !== '')
+            .map((row) => (
+              <div key={row.label} className="flex flex-col border-b border-slate-100 pb-2">
+                <span className="text-xs text-slate-500">{row.label}</span>
+                <span className="font-medium">{row.value}</span>
+              </div>
+            ))}
         </div>
 
         {/* Description */}

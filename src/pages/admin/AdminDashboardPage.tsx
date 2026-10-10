@@ -44,6 +44,8 @@ import { FooterSettingsTab } from '@/components/admin/settings/FooterSettingsTab
 import { SecurityTab } from '@/components/admin/settings/SecurityTab';
 import { ConsignmentTab } from '@/components/admin/consignment/ConsignmentTab';
 import { LeadStatusControl } from '@/components/admin/consignment/LeadStatusControl';
+import { PromotedBanner } from '@/components/admin/consignment/PromotedBanner';
+import type { SectionFilter } from '@/components/admin/consignment/ListingsPanel';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { dataStorage } from '@/services/dataStorage';
 import { applicationStage, purposeLabel } from '@/utils/consignment';
@@ -81,6 +83,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const [leads, setLeads] = useState<CustomerLead[]>(dataStorage.getCustomerLeads());
   const [listings, setListings] = useState<ConsignmentListing[]>(dataStorage.getConsignments());
   const [requestedListingId, setRequestedListingId] = useState<string | null>(null);
+  const [consignmentSection, setConsignmentSection] = useState<SectionFilter>('all');
   const [company, setCompany] = useState<CompanyInfo>(dataStorage.getCompany());
   const [mediaList, setMediaList] = useState<MediaItem[]>(mediaService.getAll());
 
@@ -363,10 +366,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     }
   };
 
-  const handleOpenListingFromLead = useCallback((listingId: string) => {
+  const openConsignment = useCallback((section: SectionFilter = 'all') => {
+    setConsignmentSection(section);
     setActiveTab('consignment');
-    setRequestedListingId(listingId);
   }, []);
+
+  const handleOpenListingFromLead = useCallback((listingId: string) => {
+    openConsignment();
+    setRequestedListingId(listingId);
+  }, [openConsignment]);
 
   const handleRequestHandled = useCallback(() => setRequestedListingId(null), []);
 
@@ -568,7 +576,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('consignment')}
+            onClick={() => openConsignment()}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'consignment'
                 ? 'border-gold-500 text-gold-400 bg-navy-800/50'
@@ -704,7 +712,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
               <button
                 type="button"
-                onClick={() => setActiveTab('consignment')}
+                onClick={() => openConsignment()}
                 className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between text-left hover:border-gold-500/60 transition-colors"
               >
                 <div>
@@ -719,7 +727,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
               <button
                 type="button"
-                onClick={() => setActiveTab('consignment')}
+                onClick={() => openConsignment()}
                 className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between text-left hover:border-gold-500/60 transition-colors"
               >
                 <div>
@@ -816,7 +824,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             listing={listingOf(lead)}
                             onChangeStatus={handleUpdateLeadStatus}
                             onOpenListing={handleOpenListingFromLead}
-                            onOpenApplications={() => setActiveTab('consignment')}
+                            onOpenApplications={() => openConsignment()}
                           />
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -847,6 +855,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
         {/* ===================== TAB 2: PROJECTS MANAGEMENT ===================== */}
         {activeTab === 'projects' && (
           <div className="space-y-6 animate-in fade-in duration-200">
+            <PromotedBanner section="du-an" listings={listings} onOpen={() => openConsignment('du-an')} />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
               <div>
                 <h2 className="text-xl font-bold text-navy-900">Quản Lý Dự Án Phân Phối</h2>
@@ -960,6 +969,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
         {/* ===================== TAB 3: PROPERTIES MANAGEMENT ===================== */}
         {activeTab === 'properties' && (
           <div className="space-y-6 animate-in fade-in duration-200">
+            <PromotedBanner section="chuyen-nhuong" listings={listings} onOpen={() => openConsignment('chuyen-nhuong')} />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
               <div>
                 <h2 className="text-xl font-bold text-navy-900">Quản Lý BĐS Chuyển Nhượng</h2>
@@ -1145,7 +1155,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             listing={listingOf(lead)}
                             onChangeStatus={handleUpdateLeadStatus}
                             onOpenListing={handleOpenListingFromLead}
-                            onOpenApplications={() => setActiveTab('consignment')}
+                            onOpenApplications={() => openConsignment()}
                           />
                         </td>
                         <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -1180,6 +1190,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             listings={listings}
             actions={consignmentActions}
             requestedListingId={requestedListingId}
+            initialSection={consignmentSection}
             onRequestHandled={handleRequestHandled}
           />
         )}

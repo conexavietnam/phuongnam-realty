@@ -1,5 +1,5 @@
 import { StageChip } from '@/components/admin/consignment/StatusChip';
-import { applicationStage } from '@/utils/consignment';
+import { applicationStage, SECTION_LABELS } from '@/utils/consignment';
 import type { ConsignmentListing, CustomerLead, LeadStatus } from '@/types';
 
 // Contact-form leads keep the simple four-state select (old statuses map: contacted -> processing,
@@ -44,7 +44,7 @@ export function LeadStatusControl({ lead, listing, onChangeStatus, onOpenListing
           onClick={() => onOpenListing(listing.id)}
           className="text-[11px] font-semibold text-gold-600 hover:text-gold-700 underline"
         >
-          Đã tạo tin
+          Đã tạo tin · {SECTION_LABELS[listing.section]}
         </button>
       ) : (
         <button

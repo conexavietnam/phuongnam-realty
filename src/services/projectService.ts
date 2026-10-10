@@ -1,29 +1,29 @@
-import { dataStorage } from '@/services/dataStorage';
+import { mergedProjects } from '@/utils/consignmentAdapters';
 import type { Project, PaginatedResult, PaginationParams } from '@/types';
 
 export const projectService = {
   getAll(): Project[] {
-    return dataStorage.getProjects();
+    return mergedProjects();
   },
 
   getFeatured(): Project[] {
-    return dataStorage.getProjects().filter((p) => p.featured);
+    return mergedProjects().filter((p) => p.featured);
   },
 
   getBySlug(slug: string): Project | undefined {
-    return dataStorage.getProjectBySlug(slug);
+    return mergedProjects().find((p) => p.slug === slug);
   },
 
   getById(id: string): Project | undefined {
-    return dataStorage.getProjects().find((p) => p.id === id);
+    return mergedProjects().find((p) => p.id === id);
   },
 
   getByCategory(category: string): Project[] {
-    return dataStorage.getProjects().filter((p) => p.category === category);
+    return mergedProjects().filter((p) => p.category === category);
   },
 
   getRelated(currentId: string, limit: number = 3): Project[] {
-    const projects = dataStorage.getProjects();
+    const projects = mergedProjects();
     const current = projects.find((p) => p.id === currentId);
     if (current) {
       const sameCategory = projects.filter(
@@ -41,7 +41,7 @@ export const projectService = {
   },
 
   getPaginated(params: PaginationParams): PaginatedResult<Project> {
-    const projects = dataStorage.getProjects();
+    const projects = mergedProjects();
     const { page, pageSize } = params;
     const start = (page - 1) * pageSize;
     const data = projects.slice(start, start + pageSize);

@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
 import { DesktopLayout } from '@/layouts/DesktopLayout';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
@@ -11,7 +11,7 @@ import { ConsignmentInquiryForm } from '@/components/desktop/ConsignmentInquiryF
 import { ListingContactCta } from '@/components/desktop/ListingContactCta';
 import { consignmentService } from '@/services/consignmentService';
 import { renderRichHtml, stripHtml } from '@/utils/richText';
-import { priceLabel } from '@/utils/consignment';
+import { listingUrl, priceLabel } from '@/utils/consignment';
 import { useDataListener } from '@/hooks';
 
 export function ConsignmentDetailPage() {
@@ -32,6 +32,9 @@ export function ConsignmentDetailPage() {
       </DesktopLayout>
     );
   }
+
+  // Old or shared /ky-gui links keep working after a listing moves to another section.
+  if (item.section !== 'ky-gui') return <Navigate to={listingUrl(item)} replace />;
 
   const images = item.images.length > 0 ? item.images : item.thumbnail ? [item.thumbnail] : [];
   const sold = item.status === 'sold';

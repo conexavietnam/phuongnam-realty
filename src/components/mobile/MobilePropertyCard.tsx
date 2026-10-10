@@ -26,6 +26,11 @@ export const MobilePropertyCard: React.FC<MobilePropertyCardProps> = ({ property
           {property.category}
         </div>
         <SectionBadge kind="transfer" className="absolute bottom-2 left-2" />
+        {property.consignmentStatus === 'sold' && (
+          <span className="absolute bottom-2 right-2 bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+            Đã giao dịch
+          </span>
+        )}
       </div>
       
       <div className="ml-3 flex flex-col justify-between flex-1 min-w-0">

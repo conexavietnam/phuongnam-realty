@@ -24,7 +24,10 @@ export function MobileProjectDetailPage() {
       {/* Hero Image */}
       <div className="relative w-full h-64 bg-slate-200" onClick={() => setShowGallery(true)}>
         <img src={project.images[0]} alt={project.name} className="w-full h-full object-cover" />
-        <Badge variant={project.status === 'Đang mở bán' ? 'gold' : 'navy'}>{project.status}</Badge>
+        {project.status && <Badge variant={project.status === 'Đang mở bán' ? 'gold' : 'navy'}>{project.status}</Badge>}
+        {project.consignmentStatus === 'sold' && (
+          <span className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-bold">Đã giao dịch</span>
+        )}
         <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
           <Expand className="w-3 h-3" />
           <span>1/{project.images.length}</span>
@@ -40,22 +43,19 @@ export function MobileProjectDetailPage() {
 
         {/* Specs Grid */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-            <span className="text-xs text-slate-500 block mb-1">Giá từ</span>
-            <span className="font-bold text-gold-500">{project.priceFrom}</span>
-          </div>
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-            <span className="text-xs text-slate-500 block mb-1">Loại hình</span>
-            <span className="font-medium text-navy-900">{project.category}</span>
-          </div>
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-            <span className="text-xs text-slate-500 block mb-1">Quy mô</span>
-            <span className="font-medium text-navy-900">{project.area}</span>
-          </div>
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-            <span className="text-xs text-slate-500 block mb-1">Chủ đầu tư</span>
-            <span className="font-medium text-navy-900">{project.investor}</span>
-          </div>
+          {[
+            { label: 'Giá từ', value: project.priceFrom, accent: true },
+            { label: 'Loại hình', value: project.category, accent: false },
+            { label: 'Quy mô', value: project.area, accent: false },
+            { label: 'Chủ đầu tư', value: project.investor, accent: false },
+          ]
+            .filter((row) => row.value)
+            .map((row) => (
+              <div key={row.label} className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <span className="text-xs text-slate-500 block mb-1">{row.label}</span>
+                <span className={row.accent ? 'font-bold text-gold-500' : 'font-medium text-navy-900'}>{row.value}</span>
+              </div>
+            ))}
         </div>
 
         {/* Description */}

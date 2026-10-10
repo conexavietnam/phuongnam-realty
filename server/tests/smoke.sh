@@ -160,7 +160,10 @@ GOOD='[
  {"id":"c-pub","slug":"tin-dang","status":"published","title":"PUBLISHED-MARKER","price":4.5,"images":["/images/a.svg"],"_hidden":"UNDERSCORE-SECRET","internalNote":"NOTE-SECRET","ownerPhone":"0900111222","leadId":"lead-1"},
  {"id":"c-draft","slug":"tin-nhap","status":"draft","title":"DRAFT-MARKER"},
  {"id":"c-sold","slug":"tin-ban","status":"sold","title":"SOLD-MARKER"},
- {"id":"c-legacy","slug":"tin-cu","name":"LEGACY-MARKER","category":"can-ho"}
+ {"id":"c-legacy","slug":"tin-cu","name":"LEGACY-MARKER","category":"can-ho"},
+ {"id":"c-prop","slug":"tin-chuyen-nhuong","status":"published","section":"chuyen-nhuong","title":"PROMOTED-PROPERTY-MARKER","floor":"Tang 5","view":"Song","internalNote":"PROP-NOTE-SECRET"},
+ {"id":"c-proj","slug":"tin-du-an","status":"sold","section":"du-an","title":"PROMOTED-PROJECT-MARKER","investor":"CDT","projectStatus":"Dang mo ban","priceFrom":"3 Ty","categoryLabel":"Can ho","highlights":["a","b"],"leadId":"lead-2"},
+ {"id":"c-prop-draft","slug":"tin-nhap-2","status":"draft","section":"du-an","title":"PROMOTED-DRAFT-MARKER"}
 ]'
 LONG_TITLE="$(head -c 400 /dev/zero | tr '\0' 'a')"
 put() { # json [extra curl args...]
@@ -176,6 +179,11 @@ check "PUT price as string -> 422" 422 "$(put '[{"id":"x","status":"draft","pric
 check "PUT oversized title -> 422" 422 "$(put "[{\"id\":\"x\",\"title\":\"${LONG_TITLE}\"}]" -H "X-CSRF-Token: $CSRF")"
 check "PUT item without id -> 422" 422 "$(put '[{"title":"no id"}]' -H "X-CSRF-Token: $CSRF")"
 check "PUT non-list -> 422" 422 "$(put '{"a":1}' -H "X-CSRF-Token: $CSRF")"
+check "PUT invalid section -> 422" 422 "$(put '[{"id":"x","section":"hacked","title":"t"}]' -H "X-CSRF-Token: $CSRF")"
+check "PUT section as array -> 422" 422 "$(put '[{"id":"x","section":["ky-gui"]}]' -H "X-CSRF-Token: $CSRF")"
+check "PUT too many highlights -> 422" 422 "$(put "[{\"id\":\"x\",\"highlights\":[$(printf '"a",%.0s' $(seq 1 20))\"b\"]}]" -H "X-CSRF-Token: $CSRF")"
+check "PUT highlights not strings -> 422" 422 "$(put '[{"id":"x","highlights":[1,2]}]' -H "X-CSRF-Token: $CSRF")"
+check "PUT oversized investor -> 422" 422 "$(put "[{\"id\":\"x\",\"investor\":\"$(head -c 300 /dev/zero | tr '\0' 'a')\"}]" -H "X-CSRF-Token: $CSRF")"
 check "PUT valid list -> 200" 200 "$(put "$GOOD" -H "X-CSRF-Token: $CSRF")"
 
 echo "== consignments: public vs admin view"
@@ -183,7 +191,13 @@ check "public GET -> 200" 200 "$(http "$BASE?r=data&c=consignments")"
 body_has "public sees published" 'PUBLISHED-MARKER'
 body_has "public sees sold" 'SOLD-MARKER'
 body_has "public sees legacy item without status" 'LEGACY-MARKER'
-body_lacks "public does not see drafts" 'DRAFT-MARKER'
+body_has "public sees published promoted property" 'PROMOTED-PROPERTY-MARKER'
+body_has "public sees sold promoted project" 'PROMOTED-PROJECT-MARKER'
+body_has "public keeps the section key" '"section":"chuyen-nhuong"'
+body_lacks "public does not see promoted drafts" 'PROMOTED-DRAFT-MARKER'
+body_lacks "public does not see promoted internalNote" 'PROP-NOTE-SECRET'
+body_lacks "public does not see promoted leadId" 'lead-2'
+body_lacks "public does not see drafts" '"DRAFT-MARKER'
 body_lacks "public does not see _ keys" 'UNDERSCORE-SECRET'
 body_lacks "public does not see internalNote" 'NOTE-SECRET'
 body_lacks "public does not see ownerPhone" '0900111222'
@@ -191,7 +205,8 @@ body_lacks "public does not see leadId" 'lead-1'
 header_has "public view is revalidated (no-cache)" '^cache-control:.*no-cache'
 header_has "public view varies on Cookie" '^vary:.*cookie'
 check "admin GET -> 200" 200 "$(http -b "$JAR" "$BASE?r=data&c=consignments")"
-body_has "admin sees drafts" 'DRAFT-MARKER'
+body_has "admin sees drafts" '"DRAFT-MARKER'
+body_has "admin sees promoted drafts" 'PROMOTED-DRAFT-MARKER'
 body_has "admin sees internalNote" 'NOTE-SECRET'
 header_has "admin view is no-store" '^cache-control:.*no-store'
 

@@ -3,6 +3,7 @@ import { ConsignmentSubTabBar } from '@/components/admin/consignment/Consignment
 import type { ConsignmentSubTab } from '@/components/admin/consignment/ConsignmentSubTabBar';
 import { ApplicationsPanel } from '@/components/admin/consignment/ApplicationsPanel';
 import { ListingsPanel } from '@/components/admin/consignment/ListingsPanel';
+import type { SectionFilter } from '@/components/admin/consignment/ListingsPanel';
 import { ListingEditorModal } from '@/components/admin/consignment/ListingEditorModal';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { consignmentService } from '@/services/consignmentService';
@@ -15,6 +16,8 @@ interface ConsignmentTabProps {
   actions: AdminActions;
   // Set by other tabs (e.g. the Leads table) to jump straight into a listing's editor.
   requestedListingId: string | null;
+  // Opens the listings sub-tab pre-filtered (from the info banners on the Dự án / BĐS tabs).
+  initialSection: SectionFilter;
   onRequestHandled: () => void;
 }
 
@@ -23,9 +26,11 @@ interface EditorState {
   isNew: boolean;
 }
 
-export function ConsignmentTab({ leads, listings, actions, requestedListingId, onRequestHandled }: ConsignmentTabProps) {
+export function ConsignmentTab({ leads, listings, actions, requestedListingId, initialSection, onRequestHandled }: ConsignmentTabProps) {
   // The tab only mounts while it is active, so a request from another tab can seed the initial state.
-  const [subTab, setSubTab] = useState<ConsignmentSubTab>(requestedListingId ? 'listings' : 'applications');
+  const [subTab, setSubTab] = useState<ConsignmentSubTab>(
+    requestedListingId || initialSection !== 'all' ? 'listings' : 'applications',
+  );
   const [editor, setEditor] = useState<EditorState | null>(() => {
     const target = listings.find((i) => i.id === requestedListingId);
     return target ? { listing: target, isNew: false } : null;
@@ -72,6 +77,7 @@ export function ConsignmentTab({ leads, listings, actions, requestedListingId, o
           <ListingsPanel
             listings={listings}
             actions={actions}
+            initialSection={initialSection}
             onEdit={(listing) => setEditor({ listing, isNew: false })}
             onCreate={() => setEditor({ listing: consignmentService.createBlank(), isNew: true })}
           />

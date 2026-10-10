@@ -1,5 +1,8 @@
 export type ConsignmentStatus = 'draft' | 'published' | 'sold';
 
+// Where a listing appears on the public site. Missing in old data = 'ky-gui'.
+export type ConsignmentSection = 'ky-gui' | 'chuyen-nhuong' | 'du-an';
+
 export type ConsignmentPurpose = 'ban' | 'cho-thue';
 
 // A public consignment listing. The consignor's name and phone are never stored here:
@@ -8,6 +11,7 @@ export interface ConsignmentListing {
   id: string;
   slug: string;
   status: ConsignmentStatus;
+  section: ConsignmentSection;
   title: string;
   purpose: ConsignmentPurpose;
   propertyType: string;
@@ -22,6 +26,15 @@ export interface ConsignmentListing {
   bathrooms: number;
   direction: string;
   legal: string;
+  // Property-style facts (section chuyen-nhuong)
+  floor: string;
+  view: string;
+  // Project-style facts (section du-an)
+  investor: string;
+  projectStatus: string;
+  priceFrom: string;
+  categoryLabel: string;
+  highlights: string[];
   shortDescription: string;
   fullDescription: string;
   thumbnail: string;

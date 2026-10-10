@@ -26,6 +26,11 @@ export const MobileProjectCard: React.FC<MobileProjectCardProps> = ({ project })
           {project.categoryLabel}
         </div>
         <SectionBadge kind="project" className="absolute bottom-2 left-2" />
+        {project.consignmentStatus === 'sold' && (
+          <span className="absolute bottom-2 right-2 bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+            Đã giao dịch
+          </span>
+        )}
       </div>
       
       <div className="ml-3 flex flex-col justify-between flex-1 min-w-0">

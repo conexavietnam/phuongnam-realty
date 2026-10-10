@@ -38,18 +38,20 @@ export function PropertyDetailPage() {
     );
   }
 
+  // Listings promoted from Ký gửi may lack some facts: empty rows are hidden instead of filled with defaults.
+  const promoted = property.consignmentStatus !== undefined;
   const specsTable = [
     { label: 'Mã BĐS', value: property.id },
     { label: 'Loại hình', value: property.category },
     { label: 'Vị trí', value: property.location },
-    { label: 'Diện tích', value: `${property.area} m²` },
-    { label: 'Phòng ngủ', value: `${property.bedrooms} PN` },
-    { label: 'Phòng tắm', value: `${property.bathrooms} WC` },
-    { label: 'Tầng / Vị trí', value: property.floor || 'Căn tầng đẹp' },
-    { label: 'Hướng nhà', value: property.direction || 'Đông Nam' },
-    { label: 'Tầm nhìn', value: property.view || 'Thoáng đãng' },
+    { label: 'Diện tích', value: property.area > 0 ? `${property.area} m²` : '' },
+    { label: 'Phòng ngủ', value: property.bedrooms > 0 || !promoted ? `${property.bedrooms} PN` : '' },
+    { label: 'Phòng tắm', value: property.bathrooms > 0 || !promoted ? `${property.bathrooms} WC` : '' },
+    { label: 'Tầng / Vị trí', value: property.floor || (promoted ? '' : 'Căn tầng đẹp') },
+    { label: 'Hướng nhà', value: property.direction || (promoted ? '' : 'Đông Nam') },
+    { label: 'Tầm nhìn', value: property.view || (promoted ? '' : 'Thoáng đãng') },
     { label: 'Pháp lý', value: property.legal },
-  ];
+  ].filter((row) => row.value !== '');
 
   return (
     <DesktopLayout>
@@ -57,11 +59,14 @@ export function PropertyDetailPage() {
       <section className="bg-navy-900 text-white min-h-[160px] flex flex-col justify-center border-b border-navy-800">
         <Breadcrumb items={[{ label: 'Chuyển nhượng', path: '/chuyen-nhuong' }, { label: property.title }]} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+          {property.consignmentStatus === 'sold' && (
+            <span className="inline-block mb-2 px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-bold">Đã giao dịch</span>
+          )}
           <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2 leading-tight">{property.title}</h1>
           <div className="flex flex-wrap items-center gap-4 text-slate-300 text-sm">
             <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gold-500" />{property.location}</span>
             <span>•</span><span className="text-gold-400 font-bold">{property.priceDisplay}</span>
-            <span>•</span><span>{property.area} m²</span>
+            {property.area > 0 && (<><span>•</span><span>{property.area} m²</span></>)}
           </div>
         </div>
       </section>
@@ -76,15 +81,17 @@ export function PropertyDetailPage() {
                 <span className="text-xs uppercase tracking-wider text-slate-400 block mb-1">Mức giá chuyển nhượng</span>
                 <div className="text-3xl font-extrabold text-gold-500 mb-4">{property.priceDisplay}</div>
                 <div className="grid grid-cols-2 gap-3 text-sm py-4 border-t border-slate-200">
-                  <div><span className="text-slate-400 block text-xs">Diện tích</span><span className="font-semibold text-navy-900">{property.area} m²</span></div>
-                  <div><span className="text-slate-400 block text-xs">Phòng ngủ</span><span className="font-semibold text-navy-900">{property.bedrooms} PN</span></div>
-                  <div><span className="text-slate-400 block text-xs">Phòng tắm</span><span className="font-semibold text-navy-900">{property.bathrooms} WC</span></div>
-                  <div><span className="text-slate-400 block text-xs">Hướng nhà</span><span className="font-semibold text-navy-900">{property.direction || 'Đông Nam'}</span></div>
+                  {property.area > 0 && <div><span className="text-slate-400 block text-xs">Diện tích</span><span className="font-semibold text-navy-900">{property.area} m²</span></div>}
+                  {(property.bedrooms > 0 || !promoted) && <div><span className="text-slate-400 block text-xs">Phòng ngủ</span><span className="font-semibold text-navy-900">{property.bedrooms} PN</span></div>}
+                  {(property.bathrooms > 0 || !promoted) && <div><span className="text-slate-400 block text-xs">Phòng tắm</span><span className="font-semibold text-navy-900">{property.bathrooms} WC</span></div>}
+                  {(property.direction || !promoted) && <div><span className="text-slate-400 block text-xs">Hướng nhà</span><span className="font-semibold text-navy-900">{property.direction || 'Đông Nam'}</span></div>}
                 </div>
-                <div className="mt-2 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
-                  <span>Pháp lý:</span>
-                  <span className="font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">{property.legal}</span>
-                </div>
+                {property.legal && (
+                  <div className="mt-2 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+                    <span>Pháp lý:</span>
+                    <span className="font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">{property.legal}</span>
+                  </div>
+                )}
               </div>
               {agent && <AgentCard agent={agent} />}
             </div>

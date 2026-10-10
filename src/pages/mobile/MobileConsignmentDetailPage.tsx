@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { MapPin, Expand } from 'lucide-react';
 import { MobileLayout } from '@/layouts/MobileLayout';
 import { MobileImageGallery } from '@/components/mobile/MobileImageGallery';
@@ -9,7 +9,7 @@ import { ConsignmentInquiryForm } from '@/components/desktop/ConsignmentInquiryF
 import { ListingContactCta } from '@/components/desktop/ListingContactCta';
 import { consignmentService } from '@/services/consignmentService';
 import { renderRichHtml, stripHtml } from '@/utils/richText';
-import { priceLabel } from '@/utils/consignment';
+import { listingUrl, priceLabel } from '@/utils/consignment';
 import { useDataListener } from '@/hooks';
 
 export function MobileConsignmentDetailPage() {
@@ -31,6 +31,8 @@ export function MobileConsignmentDetailPage() {
       </MobileLayout>
     );
   }
+
+  if (item.section !== 'ky-gui') return <Navigate to={listingUrl(item)} replace />;
 
   const images = item.images.length > 0 ? item.images : item.thumbnail ? [item.thumbnail] : [];
   const sold = item.status === 'sold';
