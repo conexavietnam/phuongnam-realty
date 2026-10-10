@@ -2,7 +2,7 @@ import { dataStorage } from '@/services/dataStorage';
 import { getPriceBounds } from '@/utils/priceRange';
 import type { Property, PropertyFilter, PaginatedResult, PaginationParams } from '@/types';
 
-function normalizeForSearch(text: string): string {
+export function normalizeForSearch(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
@@ -11,7 +11,7 @@ function normalizeForSearch(text: string): string {
     .replace(/[^a-z0-9]/g, '');
 }
 
-function matchesPriceRange(price: number, range: string): boolean {
+export function matchesPriceRange(price: number, range: string): boolean {
   if (!range) return true;
   if (price <= 0) return false;
 

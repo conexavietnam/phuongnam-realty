@@ -1,5 +1,5 @@
 import { dataStorage } from '@/services/dataStorage';
-import type { CompanyInfo, MenuConfig, FilterConfig, FooterConfig, Agent, ConsignmentProject } from '@/types';
+import type { CompanyInfo, MenuConfig, FilterConfig, FooterConfig, Agent } from '@/types';
 
 export const companyService = {
   getCompanyInfo(): CompanyInfo {
@@ -36,13 +36,5 @@ export const companyService = {
 
   getAgentById(id: string): Agent | undefined {
     return dataStorage.getAgents().find((agent) => agent.id === id);
-  },
-
-  getConsignments(): ConsignmentProject[] {
-    return dataStorage.getConsignmentProjects();
-  },
-
-  getConsignmentBySlug(slug: string): ConsignmentProject | undefined {
-    return dataStorage.getConsignmentProjects().find((item) => item.slug === slug);
   },
 };

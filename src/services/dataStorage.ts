@@ -5,7 +5,8 @@
 import type { Project } from '@/types/project';
 import type { Property } from '@/types/property';
 import type { NewsArticle } from '@/types/news';
-import type { Agent, ConsignmentProject } from '@/types/contact';
+import type { Agent } from '@/types/contact';
+import type { ConsignmentListing, CustomerLead } from '@/types/consignment';
 import type { FilterConfig, FooterConfig, MenuConfig } from '@/types/common';
 
 import initialProjects from '@/data/projects.json';
@@ -17,22 +18,9 @@ import initialAgents from '@/data/agents.json';
 import initialMenu from '@/data/menu.json';
 import initialFilters from '@/data/filters.json';
 import { api } from '@/services/apiClient';
+import { normalizeLead, normalizeListing } from '@/utils/consignment';
 
 export const DATA_CHANGED_EVENT = 'pn_data_changed';
-
-export interface CustomerLead {
-  id: string;
-  fullName: string;
-  phone: string;
-  purpose: 'ban' | 'cho-thue' | 'tu-van';
-  region?: string;
-  propertyType?: string;
-  priceRange?: string;
-  note?: string;
-  createdAt: string;
-  status: 'new' | 'contacted' | 'completed' | 'cancelled';
-  source: 'consignment' | 'contact';
-}
 
 type Company = typeof initialCompany & { heroBannerImage?: string; logoImage?: string };
 
@@ -41,7 +29,7 @@ interface Collections {
   properties: Property[];
   news: NewsArticle[];
   agents: Agent[];
-  consignments: ConsignmentProject[];
+  consignments: ConsignmentListing[];
   company: Company;
   menu: MenuConfig;
   filters: FilterConfig;
@@ -68,7 +56,7 @@ const BUNDLED: Collections = {
   properties: initialProperties as unknown as Property[],
   news: initialNews as unknown as NewsArticle[],
   agents: initialAgents as unknown as Agent[],
-  consignments: initialConsignments as unknown as ConsignmentProject[],
+  consignments: initialConsignments.map(normalizeListing),
   company: initialCompany,
   menu: initialMenu as unknown as MenuConfig,
   filters: initialFilters as unknown as FilterConfig,
@@ -76,6 +64,12 @@ const BUNDLED: Collections = {
 };
 
 const cache: Collections = { ...BUNDLED };
+
+function normalizeCollection<K extends CollectionName>(name: K, value: Collections[K]): Collections[K] {
+  if (name === 'consignments') return (value as unknown[]).map(normalizeListing) as Collections[K];
+  if (name === 'customer_leads') return (value as unknown[]).map(normalizeLead) as Collections[K];
+  return value;
+}
 
 function hasValidShape(name: CollectionName, value: unknown): boolean {
   if (OBJECT_COLLECTIONS.includes(name)) {
@@ -91,7 +85,7 @@ function emitChange(): void {
 async function pull<K extends CollectionName>(name: K): Promise<void> {
   const value = await api.getData<unknown>(name);
   if (hasValidShape(name, value)) {
-    cache[name] = value as Collections[K];
+    cache[name] = normalizeCollection(name, value as Collections[K]);
   }
 }
 
@@ -106,7 +100,7 @@ async function persist(name: CollectionName): Promise<void> {
 }
 
 async function commit<K extends CollectionName>(name: K, value: Collections[K]): Promise<void> {
-  cache[name] = value;
+  cache[name] = normalizeCollection(name, value);
   emitChange();
   await persist(name);
 }
@@ -215,9 +209,17 @@ export const dataStorage = {
     return cache.agents;
   },
 
-  // === CONSIGNMENT PROJECTS ===
-  getConsignmentProjects(): ConsignmentProject[] {
+  // === CONSIGNMENT LISTINGS (drafts are only present in the admin's copy) ===
+  getConsignments(): ConsignmentListing[] {
     return cache.consignments;
+  },
+
+  saveConsignment(listing: ConsignmentListing): Promise<void> {
+    return commit('consignments', upsert(cache.consignments, listing));
+  },
+
+  deleteConsignment(id: string): Promise<void> {
+    return commit('consignments', cache.consignments.filter((c) => c.id !== id));
   },
 
   // === CUSTOMER LEADS (created through POST lead, managed here by admin) ===
@@ -225,10 +227,10 @@ export const dataStorage = {
     return cache.customer_leads;
   },
 
-  updateLeadStatus(id: string, status: CustomerLead['status']): Promise<void> {
+  updateLead(id: string, patch: Partial<CustomerLead>): Promise<void> {
     return commit(
       'customer_leads',
-      cache.customer_leads.map((lead) => (lead.id === id ? { ...lead, status } : lead)),
+      cache.customer_leads.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead)),
     );
   },
 

@@ -3,3 +3,4 @@ export * from './project';
 export * from './property';
 export * from './news';
 export * from './contact';
+export * from './consignment';
