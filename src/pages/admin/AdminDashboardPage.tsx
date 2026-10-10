@@ -49,6 +49,8 @@ import type { SectionFilter } from '@/components/admin/consignment/ListingsPanel
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { dataStorage } from '@/services/dataStorage';
 import { applicationStage, purposeLabel } from '@/utils/consignment';
+import { consignmentService } from '@/services/consignmentService';
+import { humanize, typeLabel } from '@/utils/typeLabel';
 import { mediaService } from '@/services/mediaService';
 import type { MediaItem } from '@/services/mediaService';
 import type { Project, ProjectCategory } from '@/types/project';
@@ -210,6 +212,12 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           .replace(/[^a-z0-9]/g, '-'),
     };
 
+    const projectConflict = consignmentService.slugConflictMessage(projectToSave.slug, projectToSave.id);
+    if (projectConflict) {
+      alert(projectConflict);
+      return;
+    }
+
     if (!(await attempt(() => dataStorage.saveProject(projectToSave)))) return;
     refreshAllData();
     setIsProjectModalOpen(false);
@@ -276,6 +284,12 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           .replace(/đ/g, 'd')
           .replace(/[^a-z0-9]/g, '-'),
     };
+
+    const propertyConflict = consignmentService.slugConflictMessage(propToSave.slug, propToSave.id);
+    if (propertyConflict) {
+      alert(propertyConflict);
+      return;
+    }
 
     if (!(await attempt(() => dataStorage.saveProperty(propToSave)))) return;
     refreshAllData();
@@ -915,7 +929,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-slate-600">{p.categoryLabel || p.category}</td>
+                        <td className="py-3 px-4 text-slate-600">{p.categoryLabel || typeLabel(p.category)}</td>
                         <td className="py-3 px-4 font-bold text-gold-600">{p.priceFrom}</td>
                         <td className="py-3 px-4 text-slate-600 max-w-xs truncate">{p.location}</td>
                         <td className="py-3 px-4 text-slate-600">{p.investor}</td>
@@ -1031,7 +1045,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                         </td>
                         <td className="py-3 px-4">
                           <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 capitalize">
-                            {prop.type}
+                            {typeLabel(prop.type)}
                           </span>
                         </td>
                         <td className="py-3 px-4 font-bold text-gold-600">{prop.priceDisplay}</td>
@@ -1142,7 +1156,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                         </td>
                         <td className="py-3 px-4 text-slate-700">
                           <span className="font-semibold">{purposeLabel(lead.purpose)}</span>
-                          {lead.propertyType && <span className="text-slate-500"> ({lead.propertyType})</span>}
+                          {lead.propertyType && <span className="text-slate-500"> ({typeLabel(lead.propertyType)})</span>}
                         </td>
                         <td className="py-3 px-4 text-slate-600">{lead.region || '-'}</td>
                         <td className="py-3 px-4 text-slate-600">{lead.priceRange || '-'}</td>
@@ -1241,7 +1255,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-slate-600 capitalize">{item.categoryLabel || item.category}</td>
+                        <td className="py-3 px-4 text-slate-600">{item.categoryLabel || humanize(item.category)}</td>
                         <td className="py-3 px-4 text-slate-600">{item.author}</td>
                         <td className="py-3 px-4 text-slate-500">{item.publishedAt}</td>
                         <td className="py-3 px-4 text-right">

@@ -8,6 +8,7 @@ import { MobileNotFoundPage } from './MobileNotFoundPage';
 import { projectService } from '@/services/projectService';
 import { Badge } from '@/components/common/Badge';
 import { renderRichHtml } from '@/utils/richText';
+import { typeLabel } from '@/utils/typeLabel';
 
 export function MobileProjectDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -45,7 +46,7 @@ export function MobileProjectDetailPage() {
         <div className="grid grid-cols-2 gap-4 mb-6">
           {[
             { label: 'Giá từ', value: project.priceFrom, accent: true },
-            { label: 'Loại hình', value: project.category, accent: false },
+            { label: 'Loại hình', value: project.categoryLabel || typeLabel(project.category), accent: false },
             { label: 'Quy mô', value: project.area, accent: false },
             { label: 'Chủ đầu tư', value: project.investor, accent: false },
           ]

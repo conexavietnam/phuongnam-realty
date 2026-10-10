@@ -7,6 +7,7 @@ import { MobileNotFoundPage } from './MobileNotFoundPage';
 import { newsService } from '@/services/newsService';
 import { Badge } from '@/components/common/Badge';
 import { renderRichHtml } from '@/utils/richText';
+import { typeLabel } from '@/utils/typeLabel';
 
 export function MobileNewsDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -19,7 +20,7 @@ export function MobileNewsDetailPage() {
   return (
     <MobileLayout>
       <div className="px-4 py-6">
-        <Badge variant="navy" className="mb-4 relative top-0 left-0">{newsItem.category}</Badge>
+        <Badge variant="navy" className="mb-4 relative top-0 left-0">{newsItem.categoryLabel || typeLabel(newsItem.category)}</Badge>
         <h1 className="text-xl font-bold text-navy-900 mb-4 leading-tight">{newsItem.title}</h1>
         
         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mb-6 border-b border-slate-100 pb-4">

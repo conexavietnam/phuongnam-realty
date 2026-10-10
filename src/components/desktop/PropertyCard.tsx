@@ -3,6 +3,7 @@ import { MapPin, Bed, Maximize, Compass, ArrowRight } from 'lucide-react';
 import type { Property } from '@/types';
 import { Badge } from '@/components/common/Badge';
 import { SectionBadge } from '@/components/common/SectionBadge';
+import { typeLabel } from '@/utils/typeLabel';
 
 export interface PropertyCardProps {
   property: Property;
@@ -26,7 +27,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
           referrerPolicy="no-referrer"
         />
         <Badge variant="navy">
-          {property.category}
+          {typeLabel(property.category)}
         </Badge>
         <SectionBadge kind="transfer" />
         {property.consignmentStatus === 'sold' && (

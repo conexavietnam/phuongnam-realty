@@ -1,5 +1,6 @@
 import { dataStorage } from '@/services/dataStorage';
 import { isPubliclyVisible, priceLabel, sortForPublic } from '@/utils/consignment';
+import { typeLabel } from '@/utils/typeLabel';
 import type {
   ConsignmentListing,
   ConsignmentSection,
@@ -12,10 +13,6 @@ import type {
 // Listings whose section is BĐS chuyển nhượng / Dự án are shown through the same cards and detail
 // pages as native properties/projects. The listing stays the single source of truth; these adapters
 // only reshape it at read time.
-
-function typeLabel(value: string): string {
-  return dataStorage.getFilters().propertyTypes.find((o) => o.value === value)?.label ?? value;
-}
 
 const soldStatus = (item: ConsignmentListing): 'published' | 'sold' => (item.status === 'sold' ? 'sold' : 'published');
 

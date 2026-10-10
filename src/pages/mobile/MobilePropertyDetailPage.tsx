@@ -3,12 +3,14 @@ import { useParams } from 'react-router-dom';
 import { MapPin, Expand, Phone, MessageSquare } from 'lucide-react';
 import { MobileLayout } from '@/layouts/MobileLayout';
 import { MobilePropertyCard } from '@/components/mobile/MobilePropertyCard';
+import { CompanyContactCard } from '@/components/desktop/CompanyContactCard';
 import { MobileImageGallery } from '@/components/mobile/MobileImageGallery';
 import { MobileNotFoundPage } from './MobileNotFoundPage';
 import { propertyService } from '@/services/propertyService';
 import { companyService } from '@/services/companyService';
 import { Badge } from '@/components/common/Badge';
 import { renderRichHtml } from '@/utils/richText';
+import { typeLabel } from '@/utils/typeLabel';
 
 export function MobilePropertyDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -19,7 +21,7 @@ export function MobilePropertyDetailPage() {
   if (!property) return <MobileNotFoundPage />;
 
   const promoted = property.consignmentStatus !== undefined;
-  const agent = companyService.getAgentById(property.agentId);
+  const agent = property.agentId ? companyService.getAgentById(property.agentId) : undefined;
   const relatedProperties = propertyService.getFeatured().filter(p => p.id !== property.id);
 
   return (
@@ -27,7 +29,7 @@ export function MobilePropertyDetailPage() {
       {/* Hero Image */}
       <div className="relative w-full h-64 bg-slate-200" onClick={() => setShowGallery(true)}>
         <img src={property.images[0]} alt={property.title} className="w-full h-full object-cover" />
-        <Badge variant="gold">{property.type}</Badge>
+        <Badge variant="gold">{typeLabel(property.type || property.category)}</Badge>
         {property.consignmentStatus === 'sold' && (
           <span className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-bold">Đã giao dịch</span>
         )}
@@ -79,6 +81,11 @@ export function MobilePropertyDetailPage() {
         </div>
 
         {/* Agent Card */}
+        {!agent && (
+          <div className="mb-8">
+            <CompanyContactCard />
+          </div>
+        )}
         {agent && (
           <div className="bg-slate-50 p-4 rounded-xl mb-8 border border-slate-100">
             <div className="flex items-center gap-4 mb-4">

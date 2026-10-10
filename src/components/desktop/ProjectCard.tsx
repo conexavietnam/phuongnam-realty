@@ -3,6 +3,7 @@ import { MapPin, Bed, Maximize, ArrowRight } from 'lucide-react';
 import type { Project } from '@/types';
 import { Badge } from '@/components/common/Badge';
 import { SectionBadge } from '@/components/common/SectionBadge';
+import { typeLabel } from '@/utils/typeLabel';
 
 export interface ProjectCardProps {
   project: Project;
@@ -24,7 +25,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
           referrerPolicy="no-referrer"
         />
         <Badge variant="navy">
-          {project.categoryLabel || project.category}
+          {project.categoryLabel || typeLabel(project.category)}
         </Badge>
         <SectionBadge kind="project" />
         {project.consignmentStatus === 'sold' && (

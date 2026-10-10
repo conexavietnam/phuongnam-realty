@@ -4,12 +4,14 @@ import { DesktopLayout } from '@/layouts/DesktopLayout';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { ImageGallery } from '@/components/desktop/ImageGallery';
 import { AgentCard } from '@/components/desktop/AgentCard';
+import { CompanyContactCard } from '@/components/desktop/CompanyContactCard';
 import { PropertyCard } from '@/components/desktop/PropertyCard';
 import { SectionTitle } from '@/components/common/SectionTitle';
 import { Button } from '@/components/common/Button';
 import { propertyService } from '@/services/propertyService';
 import { companyService } from '@/services/companyService';
 import { renderRichHtml } from '@/utils/richText';
+import { typeLabel } from '@/utils/typeLabel';
 
 const BENEFITS = [
   { icon: Shield, title: 'Pháp Lý An Toàn 100%', desc: 'Đội ngũ pháp lý kiểm tra quy hoạch và hồ sơ kỹ lưỡng trước khi bàn giao.' },
@@ -21,7 +23,8 @@ const BENEFITS = [
 export function PropertyDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const property = slug ? propertyService.getBySlug(slug) : undefined;
-  const agent = property?.agentId ? companyService.getAgentById(property.agentId) : companyService.getAgents()[0];
+  // No valid agent (e.g. a listing promoted from Ký gửi): show the company contact card, never another agent.
+  const agent = property?.agentId ? companyService.getAgentById(property.agentId) : undefined;
   const relatedProperties = property ? propertyService.getRelated(property.id, 3) : [];
 
   if (!property) {
@@ -42,7 +45,7 @@ export function PropertyDetailPage() {
   const promoted = property.consignmentStatus !== undefined;
   const specsTable = [
     { label: 'Mã BĐS', value: property.id },
-    { label: 'Loại hình', value: property.category },
+    { label: 'Loại hình', value: typeLabel(property.category) },
     { label: 'Vị trí', value: property.location },
     { label: 'Diện tích', value: property.area > 0 ? `${property.area} m²` : '' },
     { label: 'Phòng ngủ', value: property.bedrooms > 0 || !promoted ? `${property.bedrooms} PN` : '' },
@@ -93,7 +96,7 @@ export function PropertyDetailPage() {
                   </div>
                 )}
               </div>
-              {agent && <AgentCard agent={agent} />}
+              {agent ? <AgentCard agent={agent} /> : <CompanyContactCard />}
             </div>
           </div>
 

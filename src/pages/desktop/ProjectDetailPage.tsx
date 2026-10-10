@@ -9,6 +9,7 @@ import { SectionTitle } from '@/components/common/SectionTitle';
 import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { renderRichHtml } from '@/utils/richText';
+import { typeLabel } from '@/utils/typeLabel';
 
 export function ProjectDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -74,7 +75,7 @@ export function ProjectDetailPage() {
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 lg:p-8 mb-12 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
             {[
               { label: 'MỨC GIÁ', value: project.priceFrom, icon: null, accent: true },
-              { label: 'LOẠI HÌNH', value: project.categoryLabel, icon: null, accent: false },
+              { label: 'LOẠI HÌNH', value: project.categoryLabel || typeLabel(project.category), icon: null, accent: false },
               { label: 'PHÒNG NGỦ', value: project.bedrooms, icon: <Bed className="w-4 h-4 text-slate-400" />, accent: false },
               { label: 'DIỆN TÍCH', value: project.area, icon: <Maximize className="w-4 h-4 text-slate-400" />, accent: false },
               { label: 'CHỦ ĐẦU TƯ', value: project.investor, icon: null, accent: false },

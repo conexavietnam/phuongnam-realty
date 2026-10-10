@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Maximize, Layers } from 'lucide-react';
 import type { Property } from '@/types';
 import { SectionBadge } from '@/components/common/SectionBadge';
+import { typeLabel } from '@/utils/typeLabel';
 
 interface MobilePropertyCardProps {
   property: Property;
@@ -23,7 +24,7 @@ export const MobilePropertyCard: React.FC<MobilePropertyCardProps> = ({ property
           referrerPolicy="no-referrer"
         />
         <div className="absolute top-2 left-2 bg-gold-500/90 text-white text-[10px] font-medium px-2 py-1 rounded">
-          {property.category}
+          {typeLabel(property.category)}
         </div>
         <SectionBadge kind="transfer" className="absolute bottom-2 left-2" />
         {property.consignmentStatus === 'sold' && (

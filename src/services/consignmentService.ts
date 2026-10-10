@@ -9,6 +9,7 @@ import {
   sortForPublic,
 } from '@/utils/consignment';
 import { slugify, uniqueSlug } from '@/utils/slug';
+import { typeLabel } from '@/utils/typeLabel';
 import type { ConsignmentListing, ConsignmentSection, ConsignmentStatus, CustomerLead, PropertyFilter } from '@/types';
 
 function matchesRegion(item: ConsignmentListing, region: string): boolean {
@@ -65,7 +66,7 @@ export const consignmentService = {
   },
 
   propertyTypeLabel(value: string): string {
-    return lookupLabel(companyService.getFilterConfig().propertyTypes, value) || 'Bất động sản';
+    return typeLabel(value) || 'Bất động sản';
   },
 
   regionLabel(value: string): string {
@@ -95,6 +96,12 @@ export const consignmentService = {
     if (dataStorage.getProjects().some((p) => p.slug === slug && p.id !== exceptId)) return 'Dự án';
     if (dataStorage.getConsignments().some((i) => i.slug === slug && i.id !== exceptId)) return 'Tin ký gửi';
     return null;
+  },
+
+  // Same Vietnamese message in every editor (consignment, project, property).
+  slugConflictMessage(slug: string, exceptId: string): string | null {
+    const owner = this.findSlugOwner(slug, exceptId);
+    return owner ? `Đường dẫn "${slug}" đã được dùng bởi một mục khác (${owner}). Vui lòng đổi sang đường dẫn khác.` : null;
   },
 
   isSlugTaken(slug: string, exceptId: string): boolean {

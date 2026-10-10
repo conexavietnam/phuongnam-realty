@@ -93,8 +93,8 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
     if (!title) return fail('Vui lòng nhập tiêu đề tin.');
     const slug = draft.slug.trim() ? slugify(draft.slug) : consignmentService.makeUniqueSlug(title, draft.id);
     if (!slug) return fail('Đường dẫn (slug) không hợp lệ.');
-    const owner = consignmentService.findSlugOwner(slug, draft.id);
-    if (owner) return fail(`Đường dẫn "${slug}" đã được dùng bởi một mục khác (${owner}). Vui lòng đổi sang đường dẫn khác.`);
+    const conflict = consignmentService.slugConflictMessage(slug, draft.id);
+    if (conflict) return fail(conflict);
     if (status !== 'draft') {
       if (rewriteNeeded) return fail(DESCRIPTION_REWRITE_MESSAGE + '.');
       if (!draft.thumbnail) return fail('Cần có ảnh đại diện trước khi đăng tin.');
