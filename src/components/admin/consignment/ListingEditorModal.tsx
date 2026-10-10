@@ -10,10 +10,17 @@ import { LazyRichTextEditor } from '@/components/admin/LazyRichTextEditor';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { consignmentService } from '@/services/consignmentService';
 import { companyService } from '@/services/companyService';
-import { CONSIGNMENT_STATUS_LABELS, DESCRIPTION_REWRITE_MESSAGE, needsDescriptionRewrite } from '@/utils/consignment';
+import {
+  CONSIGNMENT_STATUS_LABELS,
+  DESCRIPTION_REWRITE_MESSAGE,
+  listingUrl,
+  needsDescriptionRewrite,
+  SECTION_HELP,
+  SECTION_LABELS,
+} from '@/utils/consignment';
 import { normalizeEditorHtml } from '@/utils/richText';
 import { slugify } from '@/utils/slug';
-import type { ConsignmentListing, ConsignmentPurpose, ConsignmentStatus } from '@/types';
+import type { ConsignmentListing, ConsignmentPurpose, ConsignmentSection, ConsignmentStatus } from '@/types';
 
 interface ListingEditorModalProps {
   initial: ConsignmentListing;
@@ -30,6 +37,32 @@ function Field({ label, children, wide = false }: { label: string; children: Rea
       <span className="block font-semibold text-slate-700 mb-1">{label}</span>
       {children}
     </label>
+  );
+}
+
+const MAX_HIGHLIGHTS = 20;
+
+// One highlight per line; the raw text is kept locally so blank lines survive while typing.
+function HighlightsField({ value, onChange }: { value: string[]; onChange: (items: string[]) => void }) {
+  const [text, setText] = useState(value.join('\n'));
+  return (
+    <Field label={`Điểm nhấn (mỗi dòng một ý, tối đa ${MAX_HIGHLIGHTS})`} wide>
+      <textarea
+        rows={4}
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          onChange(
+            e.target.value
+              .split('\n')
+              .map((line) => line.trim().slice(0, 150))
+              .filter(Boolean)
+              .slice(0, MAX_HIGHLIGHTS),
+          );
+        }}
+        className={INPUT}
+      />
+    </Field>
   );
 }
 
@@ -60,7 +93,8 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
     if (!title) return fail('Vui lòng nhập tiêu đề tin.');
     const slug = draft.slug.trim() ? slugify(draft.slug) : consignmentService.makeUniqueSlug(title, draft.id);
     if (!slug) return fail('Đường dẫn (slug) không hợp lệ.');
-    if (consignmentService.isSlugTaken(slug, draft.id)) return fail('Đường dẫn này đã được dùng bởi tin khác. Vui lòng đổi sang đường dẫn khác.');
+    const conflict = consignmentService.slugConflictMessage(slug, draft.id);
+    if (conflict) return fail(conflict);
     if (status !== 'draft') {
       if (rewriteNeeded) return fail(DESCRIPTION_REWRITE_MESSAGE + '.');
       if (!draft.thumbnail) return fail('Cần có ảnh đại diện trước khi đăng tin.');
@@ -101,6 +135,31 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
     <Modal isOpen onClose={onClose} title={isNew ? 'Tạo tin ký gửi mới' : `Chỉnh sửa tin: ${initial.title || 'Chưa đặt tên'}`} size="4xl">
       <form onSubmit={handleSubmit} className="space-y-5 text-xs">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2 rounded-xl border border-gold-500/40 bg-gold-500/5 p-4">
+            <label className="block">
+              <span className="block font-semibold text-slate-700 mb-1">Đăng vào mục</span>
+              <select
+                value={draft.section}
+                onChange={(e) => set('section', e.target.value as ConsignmentSection)}
+                className={`${INPUT} bg-white font-semibold`}
+              >
+                {(Object.keys(SECTION_LABELS) as ConsignmentSection[]).map((o) => (
+                  <option key={o} value={o}>{SECTION_LABELS[o]}</option>
+                ))}
+              </select>
+            </label>
+            <p className="mt-2 text-slate-600">{SECTION_HELP[draft.section]}</p>
+            {!isNew && initial.status !== 'draft' && (
+              <p className="mt-1">
+                Địa chỉ công khai hiện tại:{' '}
+                <Link to={listingUrl(initial)} target="_blank" className="font-mono font-semibold text-gold-600 underline">
+                  {listingUrl(initial)}
+                </Link>
+                {initial.section !== draft.section && ' (sẽ đổi sau khi lưu; link cũ tự chuyển hướng)'}
+              </p>
+            )}
+          </div>
+
           <Field label="Tiêu đề tin (*)" wide>
             <input
               type="text"
@@ -191,21 +250,61 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
             <input type="number" min={0} value={draft.area || ''} onChange={(e) => set('area', toNumber(e.target.value))} className={INPUT} />
           </Field>
 
-          <Field label="Hướng">
-            <input type="text" value={draft.direction} onChange={(e) => set('direction', e.target.value)} maxLength={100} className={INPUT} />
-          </Field>
+          {draft.section !== 'du-an' && (
+            <Field label="Hướng">
+              <input type="text" value={draft.direction} onChange={(e) => set('direction', e.target.value)} maxLength={100} className={INPUT} />
+            </Field>
+          )}
 
           <Field label="Phòng ngủ">
             <input type="number" min={0} value={draft.bedrooms || ''} onChange={(e) => set('bedrooms', toNumber(e.target.value))} className={INPUT} />
           </Field>
 
-          <Field label="Phòng tắm">
-            <input type="number" min={0} value={draft.bathrooms || ''} onChange={(e) => set('bathrooms', toNumber(e.target.value))} className={INPUT} />
-          </Field>
+          {draft.section !== 'du-an' && (
+            <>
+              <Field label="Phòng tắm">
+                <input type="number" min={0} value={draft.bathrooms || ''} onChange={(e) => set('bathrooms', toNumber(e.target.value))} className={INPUT} />
+              </Field>
 
-          <Field label="Pháp lý">
-            <input type="text" value={draft.legal} onChange={(e) => set('legal', e.target.value)} maxLength={200} placeholder="Sổ hồng riêng" className={INPUT} />
-          </Field>
+              <Field label="Pháp lý">
+                <input type="text" value={draft.legal} onChange={(e) => set('legal', e.target.value)} maxLength={200} placeholder="Sổ hồng riêng" className={INPUT} />
+              </Field>
+            </>
+          )}
+
+          {draft.section === 'chuyen-nhuong' && (
+            <>
+              <Field label="Tầng / vị trí trong tòa">
+                <input type="text" value={draft.floor} onChange={(e) => set('floor', e.target.value)} maxLength={100} placeholder="VD: Tầng 18" className={INPUT} />
+              </Field>
+
+              <Field label="Tầm nhìn">
+                <input type="text" value={draft.view} onChange={(e) => set('view', e.target.value)} maxLength={150} placeholder="VD: View sông Sài Gòn" className={INPUT} />
+              </Field>
+            </>
+          )}
+
+          {draft.section === 'du-an' && (
+            <>
+              <Field label="Chủ đầu tư">
+                <input type="text" value={draft.investor} onChange={(e) => set('investor', e.target.value)} maxLength={200} className={INPUT} />
+              </Field>
+
+              <Field label="Tình trạng dự án">
+                <input type="text" value={draft.projectStatus} onChange={(e) => set('projectStatus', e.target.value)} maxLength={100} placeholder="VD: Đang mở bán" className={INPUT} />
+              </Field>
+
+              <Field label="Giá từ (hiển thị)">
+                <input type="text" value={draft.priceFrom} onChange={(e) => set('priceFrom', e.target.value)} maxLength={100} placeholder="VD: 3.5 Tỷ" className={INPUT} />
+              </Field>
+
+              <Field label="Nhóm loại hình (hiển thị)">
+                <input type="text" value={draft.categoryLabel} onChange={(e) => set('categoryLabel', e.target.value)} maxLength={100} placeholder="VD: Căn hộ cao cấp" className={INPUT} />
+              </Field>
+
+              <HighlightsField value={draft.highlights} onChange={(items) => set('highlights', items)} />
+            </>
+          )}
 
           <div className="md:col-span-2">
             <ImageField
@@ -270,7 +369,7 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
         <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-200">
           <div>
             {!isNew && initial.status !== 'draft' && (
-              <Link to={`/ky-gui/${initial.slug}`} target="_blank" className="inline-flex items-center gap-1 font-semibold text-slate-500 hover:text-navy-900">
+              <Link to={listingUrl(initial)} target="_blank" className="inline-flex items-center gap-1 font-semibold text-slate-500 hover:text-navy-900">
                 <ExternalLink className="w-3.5 h-3.5" />
                 Xem trên website
               </Link>

@@ -44,9 +44,13 @@ import { FooterSettingsTab } from '@/components/admin/settings/FooterSettingsTab
 import { SecurityTab } from '@/components/admin/settings/SecurityTab';
 import { ConsignmentTab } from '@/components/admin/consignment/ConsignmentTab';
 import { LeadStatusControl } from '@/components/admin/consignment/LeadStatusControl';
+import { PromotedBanner } from '@/components/admin/consignment/PromotedBanner';
+import type { SectionFilter } from '@/components/admin/consignment/ListingsPanel';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { dataStorage } from '@/services/dataStorage';
 import { applicationStage, purposeLabel } from '@/utils/consignment';
+import { consignmentService } from '@/services/consignmentService';
+import { humanize, typeLabel } from '@/utils/typeLabel';
 import { mediaService } from '@/services/mediaService';
 import type { MediaItem } from '@/services/mediaService';
 import type { Project, ProjectCategory } from '@/types/project';
@@ -81,6 +85,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const [leads, setLeads] = useState<CustomerLead[]>(dataStorage.getCustomerLeads());
   const [listings, setListings] = useState<ConsignmentListing[]>(dataStorage.getConsignments());
   const [requestedListingId, setRequestedListingId] = useState<string | null>(null);
+  const [consignmentSection, setConsignmentSection] = useState<SectionFilter>('all');
   const [company, setCompany] = useState<CompanyInfo>(dataStorage.getCompany());
   const [mediaList, setMediaList] = useState<MediaItem[]>(mediaService.getAll());
 
@@ -207,6 +212,12 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           .replace(/[^a-z0-9]/g, '-'),
     };
 
+    const projectConflict = consignmentService.slugConflictMessage(projectToSave.slug, projectToSave.id);
+    if (projectConflict) {
+      alert(projectConflict);
+      return;
+    }
+
     if (!(await attempt(() => dataStorage.saveProject(projectToSave)))) return;
     refreshAllData();
     setIsProjectModalOpen(false);
@@ -273,6 +284,12 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           .replace(/đ/g, 'd')
           .replace(/[^a-z0-9]/g, '-'),
     };
+
+    const propertyConflict = consignmentService.slugConflictMessage(propToSave.slug, propToSave.id);
+    if (propertyConflict) {
+      alert(propertyConflict);
+      return;
+    }
 
     if (!(await attempt(() => dataStorage.saveProperty(propToSave)))) return;
     refreshAllData();
@@ -363,10 +380,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     }
   };
 
-  const handleOpenListingFromLead = useCallback((listingId: string) => {
+  const openConsignment = useCallback((section: SectionFilter = 'all') => {
+    setConsignmentSection(section);
     setActiveTab('consignment');
-    setRequestedListingId(listingId);
   }, []);
+
+  const handleOpenListingFromLead = useCallback((listingId: string) => {
+    openConsignment();
+    setRequestedListingId(listingId);
+  }, [openConsignment]);
 
   const handleRequestHandled = useCallback(() => setRequestedListingId(null), []);
 
@@ -568,7 +590,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('consignment')}
+            onClick={() => openConsignment()}
             className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'consignment'
                 ? 'border-gold-500 text-gold-400 bg-navy-800/50'
@@ -704,7 +726,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
               <button
                 type="button"
-                onClick={() => setActiveTab('consignment')}
+                onClick={() => openConsignment()}
                 className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between text-left hover:border-gold-500/60 transition-colors"
               >
                 <div>
@@ -719,7 +741,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
 
               <button
                 type="button"
-                onClick={() => setActiveTab('consignment')}
+                onClick={() => openConsignment()}
                 className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between text-left hover:border-gold-500/60 transition-colors"
               >
                 <div>
@@ -816,7 +838,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             listing={listingOf(lead)}
                             onChangeStatus={handleUpdateLeadStatus}
                             onOpenListing={handleOpenListingFromLead}
-                            onOpenApplications={() => setActiveTab('consignment')}
+                            onOpenApplications={() => openConsignment()}
                           />
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -847,6 +869,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
         {/* ===================== TAB 2: PROJECTS MANAGEMENT ===================== */}
         {activeTab === 'projects' && (
           <div className="space-y-6 animate-in fade-in duration-200">
+            <PromotedBanner section="du-an" listings={listings} onOpen={() => openConsignment('du-an')} />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
               <div>
                 <h2 className="text-xl font-bold text-navy-900">Quản Lý Dự Án Phân Phối</h2>
@@ -906,7 +929,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-slate-600">{p.categoryLabel || p.category}</td>
+                        <td className="py-3 px-4 text-slate-600">{p.categoryLabel || typeLabel(p.category)}</td>
                         <td className="py-3 px-4 font-bold text-gold-600">{p.priceFrom}</td>
                         <td className="py-3 px-4 text-slate-600 max-w-xs truncate">{p.location}</td>
                         <td className="py-3 px-4 text-slate-600">{p.investor}</td>
@@ -960,6 +983,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
         {/* ===================== TAB 3: PROPERTIES MANAGEMENT ===================== */}
         {activeTab === 'properties' && (
           <div className="space-y-6 animate-in fade-in duration-200">
+            <PromotedBanner section="chuyen-nhuong" listings={listings} onOpen={() => openConsignment('chuyen-nhuong')} />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
               <div>
                 <h2 className="text-xl font-bold text-navy-900">Quản Lý BĐS Chuyển Nhượng</h2>
@@ -1021,7 +1045,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                         </td>
                         <td className="py-3 px-4">
                           <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 capitalize">
-                            {prop.type}
+                            {typeLabel(prop.type)}
                           </span>
                         </td>
                         <td className="py-3 px-4 font-bold text-gold-600">{prop.priceDisplay}</td>
@@ -1132,7 +1156,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                         </td>
                         <td className="py-3 px-4 text-slate-700">
                           <span className="font-semibold">{purposeLabel(lead.purpose)}</span>
-                          {lead.propertyType && <span className="text-slate-500"> ({lead.propertyType})</span>}
+                          {lead.propertyType && <span className="text-slate-500"> ({typeLabel(lead.propertyType)})</span>}
                         </td>
                         <td className="py-3 px-4 text-slate-600">{lead.region || '-'}</td>
                         <td className="py-3 px-4 text-slate-600">{lead.priceRange || '-'}</td>
@@ -1145,7 +1169,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             listing={listingOf(lead)}
                             onChangeStatus={handleUpdateLeadStatus}
                             onOpenListing={handleOpenListingFromLead}
-                            onOpenApplications={() => setActiveTab('consignment')}
+                            onOpenApplications={() => openConsignment()}
                           />
                         </td>
                         <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -1180,6 +1204,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
             listings={listings}
             actions={consignmentActions}
             requestedListingId={requestedListingId}
+            initialSection={consignmentSection}
             onRequestHandled={handleRequestHandled}
           />
         )}
@@ -1230,7 +1255,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-slate-600 capitalize">{item.categoryLabel || item.category}</td>
+                        <td className="py-3 px-4 text-slate-600">{item.categoryLabel || humanize(item.category)}</td>
                         <td className="py-3 px-4 text-slate-600">{item.author}</td>
                         <td className="py-3 px-4 text-slate-500">{item.publishedAt}</td>
                         <td className="py-3 px-4 text-right">

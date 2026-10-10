@@ -19,6 +19,10 @@ const PN_ADMIN_COLLECTIONS = [
 
 const PN_BACKUPS_KEPT = 10;
 const PN_CONSIGNMENT_STATUSES = ['draft', 'published', 'sold'];
+/** Where a listing is shown on the public site; a missing section means 'ky-gui'. */
+const PN_CONSIGNMENT_SECTIONS = ['ky-gui', 'chuyen-nhuong', 'du-an'];
+const PN_CONSIGNMENT_MAX_HIGHLIGHTS = 20;
+const PN_CONSIGNMENT_MAX_HIGHLIGHT_LENGTH = 200;
 const PN_CONSIGNMENT_PUBLIC_STATUSES = ['published', 'sold'];
 const PN_CONSIGNMENT_PRIVATE_KEYS = ['internalNote', 'leadId', 'ownerName', 'ownerPhone'];
 const PN_CONSIGNMENT_MAX_ITEMS = 2000;
@@ -40,6 +44,12 @@ const PN_CONSIGNMENT_TEXT_LIMITS = [
     'legal' => 200,
     'shortDescription' => 3000,
     'fullDescription' => 200000,
+    'floor' => 100,
+    'view' => 150,
+    'investor' => 200,
+    'projectStatus' => 100,
+    'priceFrom' => 100,
+    'categoryLabel' => 100,
     'thumbnail' => 500,
     'createdAt' => 40,
     'publishedAt' => 40,
@@ -151,6 +161,12 @@ function pn_valid_consignment_item(mixed $item): bool
             return false;
         }
     }
+    if (isset($item['section']) && !in_array($item['section'], PN_CONSIGNMENT_SECTIONS, true)) {
+        return false;
+    }
+    if (isset($item['highlights']) && !pn_valid_string_list($item['highlights'], PN_CONSIGNMENT_MAX_HIGHLIGHTS, PN_CONSIGNMENT_MAX_HIGHLIGHT_LENGTH)) {
+        return false;
+    }
     foreach (PN_CONSIGNMENT_NUMBER_KEYS as $key) {
         if (isset($item[$key]) && !is_int($item[$key]) && !is_float($item[$key])) {
             return false;
@@ -167,6 +183,19 @@ function pn_valid_consignment_item(mixed $item): bool
             if (!is_string($image) || strlen($image) > 500) {
                 return false;
             }
+        }
+    }
+    return true;
+}
+
+function pn_valid_string_list(mixed $list, int $maxItems, int $maxLength): bool
+{
+    if (!is_array($list) || !array_is_list($list) || count($list) > $maxItems) {
+        return false;
+    }
+    foreach ($list as $entry) {
+        if (!is_string($entry) || mb_strlen($entry) > $maxLength) {
+            return false;
         }
     }
     return true;

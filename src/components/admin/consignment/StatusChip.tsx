@@ -1,6 +1,6 @@
-import { CONSIGNMENT_STATUS_LABELS, STAGE_LABELS } from '@/utils/consignment';
+import { CONSIGNMENT_STATUS_LABELS, SECTION_LABELS, STAGE_LABELS } from '@/utils/consignment';
 import type { ApplicationStage } from '@/utils/consignment';
-import type { ConsignmentStatus } from '@/types';
+import type { ConsignmentSection, ConsignmentStatus } from '@/types';
 
 const STAGE_TONES: Record<ApplicationStage, string> = {
   new: 'bg-rose-100 text-rose-700',
@@ -25,4 +25,14 @@ export function StageChip({ stage }: { stage: ApplicationStage }) {
 
 export function ListingStatusChip({ status }: { status: ConsignmentStatus }) {
   return <span className={`${CHIP} ${LISTING_TONES[status]}`}>{CONSIGNMENT_STATUS_LABELS[status]}</span>;
+}
+
+const SECTION_TONES: Record<ConsignmentSection, string> = {
+  'ky-gui': 'bg-amber-50 text-amber-700 border border-amber-200',
+  'chuyen-nhuong': 'bg-sky-50 text-sky-700 border border-sky-200',
+  'du-an': 'bg-navy-50 text-navy-700 border border-navy-200',
+};
+
+export function SectionChip({ section }: { section: ConsignmentSection }) {
+  return <span className={`${CHIP} ${SECTION_TONES[section]}`}>{SECTION_LABELS[section]}</span>;
 }

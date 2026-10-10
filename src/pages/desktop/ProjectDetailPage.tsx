@@ -9,6 +9,7 @@ import { SectionTitle } from '@/components/common/SectionTitle';
 import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { renderRichHtml } from '@/utils/richText';
+import { typeLabel } from '@/utils/typeLabel';
 
 export function ProjectDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -44,8 +45,13 @@ export function ProjectDetailPage() {
           ]}
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-          <div className="inline-block bg-gold-500/20 text-gold-400 text-xs font-semibold px-3 py-1 rounded-full mb-3 uppercase tracking-wider">
-            {project.categoryLabel}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="inline-block bg-gold-500/20 text-gold-400 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
+              {project.categoryLabel}
+            </div>
+            {project.consignmentStatus === 'sold' && (
+              <span className="px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-bold">Đã giao dịch</span>
+            )}
           </div>
           <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
             {project.name}
@@ -67,40 +73,34 @@ export function ProjectDetailPage() {
 
           {/* Quick Info Bar */}
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 lg:p-8 mb-12 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
-            <div>
-              <span className="text-xs text-slate-400 block mb-1">MỨC GIÁ</span>
-              <span className="text-gold-500 font-bold text-lg">{project.priceFrom}</span>
-            </div>
-            <div>
-              <span className="text-xs text-slate-400 block mb-1">LOẠI HÌNH</span>
-              <span className="text-navy-900 font-semibold text-sm">{project.categoryLabel}</span>
-            </div>
-            <div>
-              <span className="text-xs text-slate-400 block mb-1">PHÒNG NGỦ</span>
-              <div className="flex items-center justify-center gap-1 text-navy-900 font-semibold text-sm">
-                <Bed className="w-4 h-4 text-slate-400" />
-                <span>{project.bedrooms}</span>
+            {[
+              { label: 'MỨC GIÁ', value: project.priceFrom, icon: null, accent: true },
+              { label: 'LOẠI HÌNH', value: project.categoryLabel || typeLabel(project.category), icon: null, accent: false },
+              { label: 'PHÒNG NGỦ', value: project.bedrooms, icon: <Bed className="w-4 h-4 text-slate-400" />, accent: false },
+              { label: 'DIỆN TÍCH', value: project.area, icon: <Maximize className="w-4 h-4 text-slate-400" />, accent: false },
+              { label: 'CHỦ ĐẦU TƯ', value: project.investor, icon: null, accent: false },
+            ]
+              .filter((row) => row.value)
+              .map((row) => (
+                <div key={row.label}>
+                  <span className="text-xs text-slate-400 block mb-1">{row.label}</span>
+                  <div
+                    className={`flex items-center justify-center gap-1 ${row.accent ? 'text-gold-500 font-bold text-lg' : 'text-navy-900 font-semibold text-sm'}`}
+                    title={row.value}
+                  >
+                    {row.icon}
+                    <span className="truncate">{row.value}</span>
+                  </div>
+                </div>
+              ))}
+            {project.status && (
+              <div>
+                <span className="text-xs text-slate-400 block mb-1">TRẠNG THÁI</span>
+                <span className="inline-block bg-emerald-50 text-emerald-600 text-xs font-semibold px-2 py-0.5 rounded-full border border-emerald-200">
+                  {project.status}
+                </span>
               </div>
-            </div>
-            <div>
-              <span className="text-xs text-slate-400 block mb-1">DIỆN TÍCH</span>
-              <div className="flex items-center justify-center gap-1 text-navy-900 font-semibold text-sm">
-                <Maximize className="w-4 h-4 text-slate-400" />
-                <span>{project.area}</span>
-              </div>
-            </div>
-            <div>
-              <span className="text-xs text-slate-400 block mb-1">CHỦ ĐẦU TƯ</span>
-              <span className="text-navy-900 font-semibold text-sm truncate block" title={project.investor}>
-                {project.investor}
-              </span>
-            </div>
-            <div>
-              <span className="text-xs text-slate-400 block mb-1">TRẠNG THÁI</span>
-              <span className="inline-block bg-emerald-50 text-emerald-600 text-xs font-semibold px-2 py-0.5 rounded-full border border-emerald-200">
-                {project.status}
-              </span>
-            </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -116,6 +116,7 @@ export function ProjectDetailPage() {
                 />
               </div>
 
+              {project.highlights.length > 0 && (
               <div>
                 <h2 className="text-2xl font-bold text-navy-900 mb-4 pb-2 border-b border-slate-100">
                   Điểm Nhấn Tiêu Biểu
@@ -129,6 +130,7 @@ export function ProjectDetailPage() {
                   ))}
                 </div>
               </div>
+              )}
             </div>
 
             {/* Sidebar CTA Card */}

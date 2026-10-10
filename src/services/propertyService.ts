@@ -1,30 +1,8 @@
-import { dataStorage } from '@/services/dataStorage';
-import { getPriceBounds } from '@/utils/priceRange';
+import { mergedProperties } from '@/utils/consignmentAdapters';
+import { matchesPriceRange, normalizeForSearch } from '@/utils/listingFilter';
 import type { Property, PropertyFilter, PaginatedResult, PaginationParams } from '@/types';
 
-export function normalizeForSearch(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9]/g, '');
-}
-
-export function matchesPriceRange(price: number, range: string): boolean {
-  if (!range) return true;
-  if (price <= 0) return false;
-
-  const option = dataStorage.getFilters().priceRanges.find((o) => o.value === range);
-  const bounds = option ? getPriceBounds(option) : null;
-  if (!bounds) return true;
-
-  const priceInBillion = price >= 1_000_000 ? price / 1_000_000_000 : price;
-  const [min, max] = bounds;
-  return (min === null || priceInBillion >= min) && (max === null || priceInBillion <= max);
-}
-
-function matchesRegion(property: Property, region: string): boolean {
+export function matchesRegion(property: Property, region: string): boolean {
   if (!region) return true;
   const search = normalizeForSearch(region);
   const district = normalizeForSearch(property.district || '');
@@ -34,27 +12,27 @@ function matchesRegion(property: Property, region: string): boolean {
 
 export const propertyService = {
   getAll(): Property[] {
-    return dataStorage.getProperties();
+    return mergedProperties();
   },
 
   getFeatured(): Property[] {
-    return dataStorage.getProperties().filter((p) => p.featured);
+    return mergedProperties().filter((p) => p.featured);
   },
 
   getBySlug(slug: string): Property | undefined {
-    return dataStorage.getPropertyBySlug(slug);
+    return mergedProperties().find((p) => p.slug === slug);
   },
 
   getById(id: string): Property | undefined {
-    return dataStorage.getProperties().find((p) => p.id === id);
+    return mergedProperties().find((p) => p.id === id);
   },
 
   getByProjectId(projectId: string): Property[] {
-    return dataStorage.getProperties().filter((p) => p.projectId === projectId);
+    return mergedProperties().filter((p) => p.projectId === projectId);
   },
 
   getRelated(currentId: string, limit: number = 3): Property[] {
-    const properties = dataStorage.getProperties();
+    const properties = mergedProperties();
     const current = properties.find((p) => p.id === currentId);
     if (!current) {
       return properties.filter((p) => p.id !== currentId).slice(0, limit);
@@ -72,7 +50,7 @@ export const propertyService = {
   },
 
   filter(filters: PropertyFilter): Property[] {
-    const properties = dataStorage.getProperties();
+    const properties = mergedProperties();
     return properties.filter((item) => {
       if (filters.type && item.type !== filters.type) {
         return false;
@@ -95,7 +73,7 @@ export const propertyService = {
   },
 
   getPaginated(params: PaginationParams, filters?: PropertyFilter): PaginatedResult<Property> {
-    const items = filters ? this.filter(filters) : dataStorage.getProperties();
+    const items = filters ? this.filter(filters) : mergedProperties();
     const { page, pageSize } = params;
     const start = (page - 1) * pageSize;
     const data = items.slice(start, start + pageSize);

@@ -18,4 +18,6 @@ export interface Project {
   highlights: string[];
   investor: string;
   status: string;
+  // Set only on listings promoted from Ký gửi; 'sold' shows a "Đã giao dịch" badge.
+  consignmentStatus?: 'published' | 'sold';
 }

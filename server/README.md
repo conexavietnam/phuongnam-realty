@@ -125,7 +125,7 @@ Serve the site over HTTPS only: the session cookie is `Secure`, `HttpOnly`, `Sam
 | Route | Method | Auth | Purpose |
 |-|-|-|-|
 | `data&c=<name>` | GET | public for properties, projects, news, agents, consignments, company, filters, menu; admin for customer_leads, media | read a collection. `consignments` has two views on the same URL: an admin session gets everything (`no-store`); everyone else gets only `published`/`sold` items (missing status = published) without keys starting with `_` or named `internalNote`, `leadId`, `ownerName`, `ownerPhone` (`no-cache`, `Vary: Cookie`) |
-| `data&c=<name>` | PUT | admin + `X-CSRF-Token` | replace a collection (JSON, max 2MB, shape-validated; `consignments` items also need an `id`, a `status` of draft/published/sold when present, bounded text/image sizes and numeric price/area/rooms) |
+| `data&c=<name>` | PUT | admin + `X-CSRF-Token` | replace a collection (JSON, max 2MB, shape-validated; `consignments` items also need an `id`, a `status` of draft/published/sold when present, bounded text/image sizes, numeric price/area/rooms, `section` in ky-gui/chuyen-nhuong/du-an, bounded investor/projectStatus/priceFrom/floor/view/categoryLabel and a highlights list of at most 20 short strings) |
 | `lead` | POST | public | contact/consignment form: validated, honeypot `website`, 5 per 10 min per IP, saved, Telegram notice |
 | `auth/otp` | POST `{phone}` | public | admin phone only; OTP stored as hash, 3 min TTL, 3 sends per 10 min per IP |
 | `auth/verify` | POST `{otp}` | public | 5 attempts per OTP (then 429), regenerates session, returns CSRF token |

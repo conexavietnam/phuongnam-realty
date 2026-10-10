@@ -25,6 +25,8 @@ export interface Property {
   featured: boolean;
   agentId: string;
   createdAt: string;
+  // Set only on listings promoted from Ký gửi; 'sold' shows a "Đã giao dịch" badge.
+  consignmentStatus?: 'published' | 'sold';
 }
 
 export interface PropertyFilter {

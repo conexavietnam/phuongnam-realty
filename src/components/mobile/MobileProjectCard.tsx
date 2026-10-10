@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Bed, Maximize } from 'lucide-react';
 import type { Project } from '@/types';
 import { SectionBadge } from '@/components/common/SectionBadge';
+import { typeLabel } from '@/utils/typeLabel';
 
 interface MobileProjectCardProps {
   project: Project;
@@ -23,9 +24,14 @@ export const MobileProjectCard: React.FC<MobileProjectCardProps> = ({ project })
           referrerPolicy="no-referrer"
         />
         <div className="absolute top-2 left-2 bg-navy-900/80 text-white text-[10px] font-medium px-2 py-1 rounded">
-          {project.categoryLabel}
+          {project.categoryLabel || typeLabel(project.category)}
         </div>
         <SectionBadge kind="project" className="absolute bottom-2 left-2" />
+        {project.consignmentStatus === 'sold' && (
+          <span className="absolute bottom-2 right-2 bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+            Đã giao dịch
+          </span>
+        )}
       </div>
       
       <div className="ml-3 flex flex-col justify-between flex-1 min-w-0">

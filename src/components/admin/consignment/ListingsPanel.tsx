@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Pencil, Trash2, ExternalLink, Send, Undo2, BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/common/Button';
-import { ListingStatusChip } from '@/components/admin/consignment/StatusChip';
+import { ListingStatusChip, SectionChip } from '@/components/admin/consignment/StatusChip';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { consignmentService } from '@/services/consignmentService';
-import { CONSIGNMENT_STATUS_LABELS, priceLabel, purposeLabel } from '@/utils/consignment';
-import type { ConsignmentListing, ConsignmentStatus } from '@/types';
+import { CONSIGNMENT_STATUS_LABELS, listingUrl, priceLabel, purposeLabel, SECTION_LABELS } from '@/utils/consignment';
+import type { ConsignmentListing, ConsignmentSection, ConsignmentStatus } from '@/types';
+
+export type SectionFilter = 'all' | ConsignmentSection;
+
+const SECTION_FILTERS: SectionFilter[] = ['all', 'ky-gui', 'chuyen-nhuong', 'du-an'];
 
 type StatusFilter = 'all' | ConsignmentStatus;
 
@@ -15,13 +19,15 @@ const FILTERS: StatusFilter[] = ['all', 'draft', 'published', 'sold'];
 interface ListingsPanelProps {
   listings: ConsignmentListing[];
   actions: AdminActions;
+  initialSection: SectionFilter;
   onEdit: (listing: ConsignmentListing) => void;
   onCreate: () => void;
 }
 
 const ICON_BUTTON = 'p-1.5 rounded-lg';
 
-export function ListingsPanel({ listings, actions, onEdit, onCreate }: ListingsPanelProps) {
+export function ListingsPanel({ listings, actions, initialSection, onEdit, onCreate }: ListingsPanelProps) {
+  const [sectionFilter, setSectionFilter] = useState<SectionFilter>(initialSection);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
 
@@ -29,6 +35,7 @@ export function ListingsPanel({ listings, actions, onEdit, onCreate }: ListingsP
   const visible = listings.filter(
     (i) =>
       (filter === 'all' || i.status === filter) &&
+      (sectionFilter === 'all' || i.section === sectionFilter) &&
       (keyword === '' || i.title.toLowerCase().includes(keyword) || i.location.toLowerCase().includes(keyword)),
   );
   const countOf = (f: StatusFilter) => (f === 'all' ? listings.length : listings.filter((i) => i.status === f).length);
@@ -88,6 +95,24 @@ export function ListingsPanel({ listings, actions, onEdit, onCreate }: ListingsP
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Lọc tin theo mục hiển thị">
+        {SECTION_FILTERS.map((f) => (
+          <button
+            key={f}
+            type="button"
+            aria-pressed={sectionFilter === f}
+            onClick={() => setSectionFilter(f)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              sectionFilter === f
+                ? 'bg-gold-500 text-white border-gold-500'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-gold-300'
+            }`}
+          >
+            {f === 'all' ? 'Mọi mục' : SECTION_LABELS[f]} ({f === 'all' ? listings.length : listings.filter((i) => i.section === f).length})
+          </button>
+        ))}
+      </div>
+
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -124,11 +149,16 @@ export function ListingsPanel({ listings, actions, onEdit, onCreate }: ListingsP
                       )}
                       <div className="min-w-0">
                         <div className="font-bold text-navy-900 text-sm max-w-xs truncate">{item.title || '(chưa có tiêu đề)'}</div>
-                        <div className="text-[11px] text-slate-400 font-mono truncate">/ky-gui/{item.slug}</div>
+                        <div className="text-[11px] text-slate-400 font-mono truncate">{listingUrl(item)}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4"><ListingStatusChip status={item.status} /></td>
+                  <td className="py-3 px-4">
+                    <div className="flex flex-col items-start gap-1">
+                      <ListingStatusChip status={item.status} />
+                      <SectionChip section={item.section} />
+                    </div>
+                  </td>
                   <td className="py-3 px-4 text-slate-600">
                     {item.propertyType ? consignmentService.propertyTypeLabel(item.propertyType) : '-'}
                     <span className="text-slate-400"> · {purposeLabel(item.purpose)}</span>
@@ -139,7 +169,7 @@ export function ListingsPanel({ listings, actions, onEdit, onCreate }: ListingsP
                     <div className="flex items-center justify-end gap-1 flex-wrap">
                       {item.status !== 'draft' && (
                         <Link
-                          to={`/ky-gui/${item.slug}`}
+                          to={listingUrl(item)}
                           target="_blank"
                           className={`${ICON_BUTTON} text-slate-400 hover:text-navy-900 hover:bg-slate-100`}
                           title="Xem ngoài web"
