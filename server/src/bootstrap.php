@@ -4,6 +4,7 @@ declare(strict_types=1);
 const PN_MAX_JSON_BYTES = 2097152;
 const PN_MAX_UPLOAD_BYTES = 5242880;
 const PN_SESSION_LIFETIME = 28800;
+const PN_SESSION_IDLE_SECONDS = 7200;
 const PN_SESSION_COOKIE = 'pn_sid';
 
 function pn_config(): array
@@ -29,6 +30,7 @@ function pn_config(): array
         'uploads_dir' => rtrim((string) ($loaded['uploads_dir'] ?? dirname($scriptDir) . '/uploads'), '/\\'),
         'uploads_url' => '/' . trim((string) ($loaded['uploads_url'] ?? '/uploads/'), '/') . '/',
         'cookie_secure' => (bool) ($loaded['cookie_secure'] ?? true),
+        'auth_key' => (string) ($loaded['auth_key'] ?? ''),
     ];
     return $cfg;
 }
@@ -185,24 +187,30 @@ function pn_normalize_phone(string $phone): string
 
 function pn_rate_ok(string $bucket, string $id, int $max, int $windowSeconds): bool
 {
+    return pn_rate_check($bucket, $id, $max, $windowSeconds) === 0;
+}
+
+/** Records one hit. Returns 0 when allowed, otherwise the seconds until a slot frees up. */
+function pn_rate_check(string $bucket, string $id, int $max, int $windowSeconds): int
+{
     $dir = pn_config()['data_dir'] . '/ratelimit';
     pn_ensure_dir($dir);
     if (random_int(1, 100) === 1) {
         pn_prune_dir($dir, 86400);
     }
     $path = $dir . '/' . $bucket . '-' . hash('sha256', $id) . '.json';
-    return (bool) pn_with_lock($path, function () use ($path, $max, $windowSeconds): bool {
+    return (int) pn_with_lock($path, function () use ($path, $max, $windowSeconds): int {
         $cutoff = time() - $windowSeconds;
         $hits = array_values(array_filter(
             pn_read_json_file($path) ?? [],
             static fn($t): bool => is_int($t) && $t > $cutoff
         ));
         if (count($hits) >= $max) {
-            return false;
+            return max(1, $hits[count($hits) - $max] + $windowSeconds - time());
         }
         $hits[] = time();
         pn_atomic_write($path, json_encode($hits));
-        return true;
+        return 0;
     });
 }
 

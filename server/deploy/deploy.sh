@@ -55,11 +55,12 @@ tar -czf "$WORK/dist.tgz" -C dist .
 tar -czf "$WORK/api.tgz" -C server/api .
 tar -czf "$WORK/src.tgz" -C server/src .
 tar -czf "$WORK/seed.tgz" -C server/seed .
+tar -czf "$WORK/bin.tgz" -C server/bin .
 
 STAGE="$APP_ROOT/.deploy-incoming/$TS"
 echo "==> Uploading to $DEPLOY_HOST:$STAGE"
 ssh "$DEPLOY_HOST" "mkdir -p -- $(printf '%q' "$STAGE")"
-scp -q "$WORK"/dist.tgz "$WORK"/api.tgz "$WORK"/src.tgz "$WORK"/seed.tgz "$DEPLOY_HOST:$STAGE/"
+scp -q "$WORK"/dist.tgz "$WORK"/api.tgz "$WORK"/src.tgz "$WORK"/seed.tgz "$WORK"/bin.tgz "$DEPLOY_HOST:$STAGE/"
 
 echo "==> Deploying on the server"
 {
@@ -74,14 +75,15 @@ BACKUPS="$APP_ROOT/backups"
 UPLOADS="$APP_ROOT/uploads"
 [ -f "$APP_ROOT/server/config.php" ] || { echo "server/config.php is missing: not a configured app root" >&2; exit 1; }
 
-mkdir -p "$STAGE/dist" "$STAGE/api" "$STAGE/src" "$STAGE/seed"
+mkdir -p "$STAGE/dist" "$STAGE/api" "$STAGE/src" "$STAGE/seed" "$STAGE/bin"
 tar -xzf "$STAGE/dist.tgz" -C "$STAGE/dist"
 tar -xzf "$STAGE/api.tgz" -C "$STAGE/api"
 tar -xzf "$STAGE/src.tgz" -C "$STAGE/src"
 tar -xzf "$STAGE/seed.tgz" -C "$STAGE/seed"
+tar -xzf "$STAGE/bin.tgz" -C "$STAGE/bin"
 
 echo "-- php -l"
-find "$STAGE/api" "$STAGE/src" -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+find "$STAGE/api" "$STAGE/src" "$STAGE/bin" -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
 
 echo "-- backup of uploads + data"
 mkdir -p "$BACKUPS"
@@ -106,8 +108,8 @@ echo "-- installing server/api (outside the webroot) and uploads/"
 mkdir -p "$APP_ROOT/server/api" "$UPLOADS"
 cp -a "$STAGE/api/." "$APP_ROOT/server/api/"
 
-echo "-- replacing server/src and server/seed (config.php untouched)"
-for part in src seed; do
+echo "-- replacing server/src, server/seed and server/bin (config.php untouched)"
+for part in src seed bin; do
   target="$APP_ROOT/server/$part"
   [ -e "$target" ] && mv -- "$target" "$target.prev-$TS"
   mv -- "$STAGE/$part" "$target"
@@ -115,15 +117,15 @@ for part in src seed; do
 done
 
 echo "-- permissions"
-$REMOTE_SUDO chown -R "$SITE_USER:$PRIVATE_GROUP" "$APP_ROOT/server/src" "$APP_ROOT/server/seed" "$APP_ROOT/server/api"
+$REMOTE_SUDO chown -R "$SITE_USER:$PRIVATE_GROUP" "$APP_ROOT/server/src" "$APP_ROOT/server/seed" "$APP_ROOT/server/bin" "$APP_ROOT/server/api"
 $REMOTE_SUDO chown "$SITE_USER:$SITE_GROUP" "$UPLOADS"
 chmod 755 "$UPLOADS"
 find "$APP_ROOT/server/api" -type d -exec chmod 750 {} + ; find "$APP_ROOT/server/api" -type f -exec chmod 640 {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -exec $REMOTE_SUDO chown -h "$SITE_USER:$SITE_GROUP" {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -type d -exec chmod 755 {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -type f -exec chmod 644 {} +
-find "$APP_ROOT/server/src" "$APP_ROOT/server/seed" -type d -exec chmod 750 {} +
-find "$APP_ROOT/server/src" "$APP_ROOT/server/seed" -type f -exec chmod 640 {} +
+find "$APP_ROOT/server/src" "$APP_ROOT/server/seed" "$APP_ROOT/server/bin" -type d -exec chmod 750 {} +
+find "$APP_ROOT/server/src" "$APP_ROOT/server/seed" "$APP_ROOT/server/bin" -type f -exec chmod 640 {} +
 
 echo "-- reloading $PHP_FPM_SERVICE"
 $REMOTE_SUDO systemctl reload "$PHP_FPM_SERVICE"

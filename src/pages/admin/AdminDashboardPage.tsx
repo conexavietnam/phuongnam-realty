@@ -42,6 +42,7 @@ import { WebsiteInfoTab } from '@/components/admin/settings/WebsiteInfoTab';
 import { FormSettingsTab } from '@/components/admin/settings/FormSettingsTab';
 import { FooterSettingsTab } from '@/components/admin/settings/FooterSettingsTab';
 import { SecurityTab } from '@/components/admin/settings/SecurityTab';
+import { AccountSetupBanner } from '@/components/admin/AccountSetupBanner';
 import { ConsignmentTab } from '@/components/admin/consignment/ConsignmentTab';
 import { LeadStatusControl } from '@/components/admin/consignment/LeadStatusControl';
 import { PromotedBanner } from '@/components/admin/consignment/PromotedBanner';
@@ -670,6 +671,13 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
           </button>
         </div>
       </header>
+
+      <AccountSetupBanner
+        onSetup={() => {
+          setActiveTab('settings');
+          setSettingsTab('security');
+        }}
+      />
 
       {/* Action Notification Toast */}
       {actionSuccess && (

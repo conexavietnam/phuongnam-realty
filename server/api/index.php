@@ -10,7 +10,10 @@ ini_set('log_errors', '1');
 
 require $serverDir . '/src/bootstrap.php';
 require $serverDir . '/src/storage.php';
+require $serverDir . '/src/totp.php';
 require $serverDir . '/src/auth.php';
+require $serverDir . '/src/account.php';
+require $serverDir . '/src/account_handlers.php';
 require $serverDir . '/src/settings.php';
 require $serverDir . '/src/handlers.php';
 
@@ -36,6 +39,22 @@ switch (trim($route, '/')) {
         pn_handle_otp_send();
     case 'auth/verify':
         pn_handle_otp_verify();
+    case 'auth/mode':
+        pn_handle_auth_mode();
+    case 'auth/login':
+        pn_handle_login();
+    case 'auth/account':
+        pn_handle_account_get();
+    case 'auth/account/set':
+        pn_handle_account_set();
+    case 'auth/logout-all':
+        pn_handle_logout_all();
+    case 'auth/2fa/begin':
+        pn_handle_twofa_begin();
+    case 'auth/2fa/enable':
+        pn_handle_twofa_enable();
+    case 'auth/2fa/disable':
+        pn_handle_twofa_disable();
     case 'auth/logout':
         pn_handle_logout();
     case 'auth/me':

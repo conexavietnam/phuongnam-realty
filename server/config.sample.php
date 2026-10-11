@@ -17,6 +17,12 @@ return [
     'uploads_dir' => dirname(__DIR__) . '/uploads',
     'uploads_url' => '/uploads/',
 
+    // 32-byte key (base64) that encrypts the 2FA (TOTP) secret at rest. Generate once, keep it secret:
+    //   php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;'
+    // Without it the 2FA endpoints answer 503. Losing it means 2FA can no longer be verified
+    // (recover with php server/bin/reset-admin.php).
+    'auth_key' => 'CHANGE_ME_BASE64_32_BYTES',
+
     // Keep true in production (HTTPS). Only set false for plain-HTTP local testing.
     'cookie_secure' => true,
 
