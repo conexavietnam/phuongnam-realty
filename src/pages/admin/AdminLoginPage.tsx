@@ -4,12 +4,18 @@ import { Link } from 'react-router-dom';
 import { Logo } from '@/components/common/Logo';
 import { Button } from '@/components/common/Button';
 import { api } from '@/services/apiClient';
+import type { AuthMode } from '@/services/apiClient';
+import { AdminPasswordLogin } from './AdminPasswordLogin';
 
 interface AdminLoginPageProps {
   onLoginSuccess: () => void;
 }
 
+type ModeState = AuthMode | 'loading' | 'error';
+
 export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
+  const [mode, setMode] = useState<ModeState>('loading');
+  const [modeAttempt, setModeAttempt] = useState(0);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -18,6 +24,21 @@ export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .getAuthMode()
+      .then((res) => {
+        if (!cancelled) setMode(res.mode);
+      })
+      .catch(() => {
+        if (!cancelled) setMode('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [modeAttempt]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -90,12 +111,38 @@ export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
             Đăng Nhập Quản Trị Viên
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Xác thực bảo mật 2 lớp qua Telegram
+            {mode === 'password' ? 'Đăng nhập bằng email và mật khẩu' : 'Xác thực bảo mật 2 lớp qua Telegram'}
           </p>
         </div>
 
         {/* Login Card */}
         <div className="bg-white/10 backdrop-blur-xl py-8 px-6 sm:px-8 shadow-2xl rounded-2xl border border-white/15">
+          {mode === 'loading' && <p className="text-center text-sm text-slate-400">Đang tải...</p>}
+
+          {mode === 'error' && (
+            <div className="text-center space-y-4">
+              <p className="text-sm text-rose-200">Không thể kết nối tới máy chủ.</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setMode('loading');
+                  setModeAttempt((value) => value + 1);
+                }}
+              >
+                Thử lại
+              </Button>
+            </div>
+          )}
+
+          {mode === 'password' && <AdminPasswordLogin onLoginSuccess={onLoginSuccess} />}
+
+          {mode === 'bootstrap' && (
+            <>
+          <div className="bg-gold-500/10 rounded-xl p-3.5 border border-gold-500/40 mb-4 text-xs text-gold-300 font-medium">
+            Lần đầu: đăng nhập bằng Telegram, sau đó thiết lập email và mật khẩu.
+          </div>
           <div className="bg-navy-900/80 rounded-xl p-3.5 border border-gold-500/30 mb-6 flex items-start gap-3">
             <div className="p-2 rounded-lg bg-gold-500/20 text-gold-400 shrink-0 mt-0.5">
               <MessageSquare className="w-4 h-4" />
@@ -232,6 +279,8 @@ export function AdminLoginPage({ onLoginSuccess }: AdminLoginPageProps) {
               </>
             )}
           </form>
+            </>
+          )}
 
           {/* Back to Public Web Link */}
           <div className="mt-6 pt-6 border-t border-white/10 text-center">

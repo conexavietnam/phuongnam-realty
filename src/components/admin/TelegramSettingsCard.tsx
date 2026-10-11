@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { api } from '@/services/apiClient';
-import type { AdminSettings } from '@/services/apiClient';
+import type { AdminSettings, AuthMode } from '@/services/apiClient';
 
 type Step = 'form' | 'otp' | 'done';
 
@@ -14,6 +14,8 @@ export function TelegramSettingsCard() {
   const [newPhone, setNewPhone] = useState('');
   const [newChatId, setNewChatId] = useState('');
   const [otp, setOtp] = useState('');
+  const [authMode, setAuthMode] = useState<AuthMode>('bootstrap');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +23,7 @@ export function TelegramSettingsCard() {
 
   useEffect(() => {
     api.getAdminSettings().then(setSettings).catch((err: Error) => setError(err.message));
+    api.getAuthMode().then((res) => setAuthMode(res.mode)).catch(() => setAuthMode('bootstrap'));
   }, []);
 
   useEffect(() => {
@@ -41,9 +44,17 @@ export function TelegramSettingsCard() {
       setError('Telegram ID phải gồm 5-15 chữ số.');
       return;
     }
+    if (authMode === 'password' && !currentPassword) {
+      setError('Vui lòng nhập mật khẩu hiện tại để xác nhận.');
+      return;
+    }
     setBusy(true);
     try {
-      const res = await api.requestTelegramChange({ newPhone: newPhone.trim(), newChatId: chatId });
+      const res = await api.requestTelegramChange({
+        newPhone: newPhone.trim(),
+        newChatId: chatId,
+        ...(authMode === 'password' ? { currentPassword } : {}),
+      });
       setOtp('');
       setCountdown(res.expiresIn);
       setStep('otp');
@@ -68,6 +79,7 @@ export function TelegramSettingsCard() {
       setSettings((prev) => ({ phone: res.phone, chatIdMasked: res.chatIdMasked, botUsername: prev?.botUsername ?? '' }));
       setNewPhone('');
       setNewChatId('');
+      setCurrentPassword('');
       setStep('done');
       setSuccess('Đã cập nhật thông tin quản trị. Lần đăng nhập sau dùng thông tin mới.');
     } catch (err) {
@@ -89,7 +101,7 @@ export function TelegramSettingsCard() {
             Hiện tại: SĐT đăng nhập{' '}
             <span className="font-mono text-navy-900 font-semibold">{settings?.phone ?? '...'}</span>, Telegram ID{' '}
             <span className="font-mono text-navy-900 font-semibold">{settings?.chatIdMasked ?? '...'}</span>. Mã OTP xác nhận
-            luôn được gửi về Telegram ID hiện tại (cũ). Bot token chỉ cấu hình trên máy chủ.
+            luôn được gửi về Telegram ID hiện tại (cũ). Telegram dùng để nhận cảnh báo bảo mật và đăng nhập lần đầu; số điện thoại chỉ dùng cho đăng nhập lần đầu. Bot token chỉ cấu hình trên máy chủ.
           </p>
         </div>
       </div>
@@ -142,6 +154,23 @@ export function TelegramSettingsCard() {
               />
             </div>
           </div>
+
+          {authMode === 'password' && (
+            <div className="max-w-sm">
+              <label htmlFor="tg-current-password" className="block text-xs font-semibold text-slate-700 mb-1">
+                Mật khẩu hiện tại (bắt buộc)
+              </label>
+              <input
+                id="tg-current-password"
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                maxLength={128}
+                className={INPUT_CLASS}
+              />
+            </div>
+          )}
 
           <Button type="submit" variant="primary" size="sm" disabled={busy} className="text-xs font-semibold py-2.5 px-6">
             {busy ? 'Đang gửi...' : 'Yêu cầu mã OTP (gửi về Telegram hiện tại)'}
