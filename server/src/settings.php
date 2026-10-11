@@ -137,7 +137,15 @@ function pn_handle_settings_request(): never
         pn_fail(429, 'Bạn yêu cầu quá nhiều lần. Vui lòng thử lại sau ít phút.');
     }
     $current = pn_admin_settings();
-    $changes = pn_parse_settings_change(pn_read_json_object(), $current);
+    $body = pn_read_json_object();
+    if (pn_auth_mode() === 'password') {
+        $account = pn_account_load();
+        if ($account === null) {
+            pn_fail(503, 'Tệp tài khoản bị hỏng. Hãy dùng reset-admin.php trên máy chủ.');
+        }
+        pn_require_current_password($account, $body['currentPassword'] ?? null);
+    }
+    $changes = pn_parse_settings_change($body, $current);
     $probe = '🔔 <b>[PHƯƠNG NAM REALTY]</b> Tin nhắn kiểm tra: tài khoản Telegram này đang được đề xuất làm tài khoản quản trị. Chưa có thay đổi nào được áp dụng.';
     if (isset($changes['chat_id']) && !pn_telegram_send($probe, $changes['chat_id'])) {
         pn_fail(422, 'Không gửi được tin nhắn tới Telegram ID mới. Hãy mở bot, bấm Start bằng tài khoản Telegram mới rồi thử lại.');

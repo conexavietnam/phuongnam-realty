@@ -82,8 +82,63 @@ function pn_is_admin(): bool
     if (!pn_session_start(false)) {
         return false;
     }
-    return ($_SESSION['admin'] ?? false) === true
-        && time() - (int) ($_SESSION['login_at'] ?? 0) < PN_SESSION_LIFETIME;
+    if (($_SESSION['admin'] ?? false) !== true) {
+        return false;
+    }
+    $now = time();
+    $loginAt = (int) ($_SESSION['login_at'] ?? 0);
+    $lastSeen = (int) ($_SESSION['last_seen'] ?? $loginAt);
+    if ($now - $loginAt >= PN_SESSION_LIFETIME || $now - $lastSeen >= PN_SESSION_IDLE_SECONDS) {
+        return false;
+    }
+    if (!pn_session_epoch_valid((int) ($_SESSION['epoch'] ?? 0))) {
+        return false;
+    }
+    if ($now - $lastSeen >= 60) {
+        $_SESSION['last_seen'] = $now;
+    }
+    return true;
+}
+
+/**
+ * A session is only valid for the account generation it was created under. Without an account
+ * (bootstrap mode) only epoch 0 sessions count; a damaged account file fails closed.
+ */
+function pn_session_epoch_valid(int $epoch): bool
+{
+    if (!is_file(pn_account_path())) {
+        return $epoch === 0;
+    }
+    $account = pn_account_load();
+    return $account !== null && $epoch === (int) $account['session_epoch'];
+}
+
+/** Starts a fresh admin session (new session id) bound to the given account epoch. */
+function pn_session_begin(int $epoch): void
+{
+    pn_session_start(true);
+    session_regenerate_id(true);
+    $now = time();
+    $_SESSION = [
+        'admin' => true,
+        'login_at' => $now,
+        'last_seen' => $now,
+        'csrf' => bin2hex(random_bytes(32)),
+        'epoch' => $epoch,
+    ];
+}
+
+function pn_session_destroy(): void
+{
+    $_SESSION = [];
+    setcookie(PN_SESSION_COOKIE, '', [
+        'expires' => time() - 3600,
+        'path' => '/api/',
+        'secure' => pn_config()['cookie_secure'],
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
+    session_destroy();
 }
 
 function pn_require_admin(): void
@@ -163,6 +218,9 @@ function pn_handle_otp_send(): never
 {
     pn_require_method(['POST']);
     pn_check_origin();
+    if (pn_auth_mode() !== 'bootstrap') {
+        pn_fail(403, 'Không khả dụng');
+    }
     if (!pn_rate_ok('otp_send', pn_client_ip(), 3, 600) || !pn_rate_ok('otp_send_all', 'global', 10, 600)) {
         pn_fail(429, 'Bạn yêu cầu mã quá nhiều lần. Vui lòng thử lại sau ít phút.');
     }
@@ -187,6 +245,9 @@ function pn_handle_otp_verify(): never
 {
     pn_require_method(['POST']);
     pn_check_origin();
+    if (pn_auth_mode() !== 'bootstrap') {
+        pn_fail(403, 'Không khả dụng');
+    }
     if (!pn_rate_ok('otp_verify', pn_client_ip(), 30, 600)) {
         pn_fail(429, 'Quá nhiều lần thử. Vui lòng thử lại sau.');
     }
@@ -202,13 +263,8 @@ function pn_handle_otp_verify(): never
     if ($result !== 'ok') {
         pn_fail(401, $result === 'expired' ? 'Mã OTP đã hết hạn hoặc không tồn tại.' : 'Mã OTP không đúng.');
     }
-    pn_session_start(true);
-    session_regenerate_id(true);
-    $_SESSION = [
-        'admin' => true,
-        'login_at' => time(),
-        'csrf' => bin2hex(random_bytes(32)),
-    ];
+    pn_session_begin(0);
+    pn_security_alert('Đăng nhập quản trị bằng Telegram OTP (chế độ khởi tạo)', pn_login_alert_fields(pn_client_ip()));
     pn_send(200, ['ok' => true, 'csrf' => $_SESSION['csrf']]);
 }
 
@@ -218,15 +274,7 @@ function pn_handle_logout(): never
     pn_check_origin();
     pn_require_admin();
     pn_require_csrf();
-    $_SESSION = [];
-    setcookie(PN_SESSION_COOKIE, '', [
-        'expires' => time() - 3600,
-        'path' => '/api/',
-        'secure' => pn_config()['cookie_secure'],
-        'httponly' => true,
-        'samesite' => 'Strict',
-    ]);
-    session_destroy();
+    pn_session_destroy();
     pn_send(200, ['ok' => true]);
 }
 

@@ -151,18 +151,41 @@ Serve the site over HTTPS only: the session cookie is `Secure`, `HttpOnly`, `Sam
 | `data&c=<name>` | GET | public for properties, projects, news, agents, consignments, company, filters, menu; admin for customer_leads, media | read a collection. `consignments` has two views on the same URL: an admin session gets everything (`no-store`); everyone else gets only `published`/`sold` items (missing status = published) without keys starting with `_` or named `internalNote`, `leadId`, `ownerName`, `ownerPhone` (`no-cache`, `Vary: Cookie`) |
 | `data&c=<name>` | PUT | admin + `X-CSRF-Token` | replace a collection (JSON, max 2MB, shape-validated; `consignments` items also need an `id`, a `status` of draft/published/sold when present, bounded text/image sizes, numeric price/area/rooms, `section` in ky-gui/chuyen-nhuong/du-an, bounded investor/projectStatus/priceFrom/floor/view/categoryLabel and a highlights list of at most 20 short strings) |
 | `lead` | POST | public | contact/consignment form: validated, honeypot `website`, 5 per 10 min per IP, saved, Telegram notice |
-| `auth/otp` | POST `{phone}` | public | admin phone only; OTP stored as hash, 3 min TTL, 3 sends per 10 min per IP |
-| `auth/verify` | POST `{otp}` | public | 5 attempts per OTP (then 429), regenerates session, returns CSRF token |
+| `auth/mode` | GET | public | `{mode: password or bootstrap, twofa: false}` and nothing more |
+| `auth/login` | POST `{email,password,code?}` | public | password mode only (bootstrap: 403). Max 4KB. Same 401 `Email hoặc mật khẩu không đúng` for unknown email, wrong password, wrong/missing code; `401 {twofa:true}` only after the password was verified. 429 + `Retry-After` for: 10 attempts/15 min per IP, 120/10 min global, per-account lock after 5 / 8 / 10 failures (1 / 5 / 30 min, identical for unknown emails). Regenerates the session |
+| `auth/otp` | POST `{phone}` | public | bootstrap mode only (403 once an account exists); admin phone only; OTP stored as hash, 3 min TTL, 3 sends per 10 min per IP |
+| `auth/verify` | POST `{otp}` | public | bootstrap mode only; 5 attempts per OTP (then 429), regenerates session, returns CSRF token |
+| `auth/account` | GET | admin | `{configured, email, twofaEnabled, twofaAvailable, lastLoginAt, lastLoginIp (masked), recoveryCodesLeft}` |
+| `auth/account/set` | POST `{email?, password?, currentPassword?}` | admin + CSRF | bootstrap: creates the account; password mode: needs `currentPassword`. Policy errors are 422. Bumps the session epoch (other sessions die, this one is kept) |
+| `auth/logout-all` | POST | admin + CSRF | bumps the session epoch and destroys the current session |
+| `auth/2fa/begin` | POST `{password}` | admin + CSRF | 503 without `auth_key`; returns `{secret, otpauth}` (pending for 15 min) |
+| `auth/2fa/enable` | POST `{code}` | admin + CSRF | verifies the TOTP, returns 10 recovery codes once (stored only as hashes), bumps the epoch |
+| `auth/2fa/disable` | POST `{password, code}` | admin + CSRF | code = TOTP or a recovery code; bumps the epoch |
 | `auth/me` | GET | session | `{authenticated, csrf}` |
 | `auth/logout` | POST | admin + CSRF | destroy session |
 | `settings/admin` | GET | admin | `{phone, chatIdMasked, botUsername}` (bot username fetched once via `getMe` and cached in `admin_settings.json`) |
-| `settings/telegram/request` | POST `{newChatId?, newPhone?}` | admin + CSRF | probe message to the new chat id (422 if Telegram rejects it), then OTP sent to the OLD chat id only; 3 per 10 min per session+IP |
+| `settings/telegram/request` | POST `{newChatId?, newPhone?, currentPassword}` | admin + CSRF (+ current password in password mode) | probe message to the new chat id (422 if Telegram rejects it), then OTP sent to the OLD chat id only; 3 per 10 min per session+IP |
 | `settings/telegram/confirm` | POST `{otp}` | admin + CSRF | 5 attempts then 429 and pending cleared; on success writes `data/admin_settings.json` and notifies old and new chat |
 | `upload` | POST multipart `file`, `category` | admin + CSRF | JPG/PNG/WebP/GIF only (finfo + getimagesize), 5MB, random name, appended to `media` |
 
 If Telegram cannot deliver the OTP, `auth/otp` returns 502 and no OTP stays valid.
 
 Effective admin phone and chat id come from `data/admin_settings.json` when present, otherwise from `config.php`. The bot token is only ever read from `config.php`.
+
+## Admin login modes and recovery
+
+Two modes, decided by whether `data/admin_account.json` exists:
+
+- **bootstrap** (no account): the Telegram OTP login works; afterwards the dashboard asks for an email + password (Security tab). Creating the account switches the site to password mode and disables `auth/otp` / `auth/verify`.
+- **password**: only `auth/login` works. Optional TOTP 2FA needs `auth_key` in `config.php` (see `config.sample.php`: 32 random bytes in base64); it encrypts the TOTP secret at rest.
+
+There is no web "forgot password". If the password (or the 2FA device and recovery codes) is lost, SSH to the server and run as the site user (not root):
+
+```bash
+php server/bin/reset-admin.php          # asks to type RESET; --yes skips the prompt
+```
+
+It backs up and deletes `data/admin_account.json`, deletes all session and login-lock files, sends a Telegram alert and returns the site to bootstrap mode. The script refuses to run under a web SAPI. If `auth_key` is lost while 2FA is on, the same reset is the recovery. Manual checklist: `docs/ADMIN_AUTH.md`.
 
 ## Local development
 
@@ -183,7 +206,7 @@ For tests without real Telegram, set `telegram_api_base` to a local stub and use
 bash server/tests/smoke.sh            # optional: PHP_BIN=php8.3 APP_PORT=18080 STUB_PORT=18081
 ```
 
-It copies `server/` into a temp app root with its own config, starts `php -S` for the API and for a stub Telegram server (to read the OTP), and prints PASS/FAIL per check. It exits non-zero when anything fails and removes the temp dir. It never uses real data or the real Telegram API. Checks: `php -l` on every file; anonymous 401s (leads, media, consignment PUT, upload); foreign Origin 403; OTP login through the stub; PUT without/with a wrong CSRF token 403; invalid consignment status/price/size/shape 422; public consignments hide drafts and private keys while the admin sees them (plus cache headers); upload of PHP code 415; OTP lockout 429.
+It copies `server/` into a temp app root with its own config, starts `php -S` for the API and for a stub Telegram server (to read the OTP), and prints PASS/FAIL per check. It exits non-zero when anything fails and removes the temp dir. It never uses real data or the real Telegram API. Checks: `php -l` on every file (including `server/bin`); email/password login, lockouts, password policy, 2FA (RFC 6238 vectors), epoch/idle logic and `reset-admin.php`; anonymous 401s (leads, media, consignment PUT, upload); foreign Origin 403; OTP login through the stub; PUT without/with a wrong CSRF token 403; invalid consignment status/price/size/shape 422; public consignments hide drafts and private keys while the admin sees them (plus cache headers); upload of PHP code 415; OTP lockout 429.
 
 ## Rotating the Telegram bot token
 
