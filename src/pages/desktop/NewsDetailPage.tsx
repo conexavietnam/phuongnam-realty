@@ -9,6 +9,7 @@ import { Button } from '@/components/common/Button';
 import { newsService } from '@/services/newsService';
 import { renderRichHtml, stripHtml } from '@/utils/richText';
 import { categoryPath, formatNewsDate } from '@/utils/newsMeta';
+import { CardGrid } from '@/components/common/CardGrid';
 
 export function NewsDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -129,11 +130,11 @@ export function NewsDetailPage() {
             title="BÀI VIẾT LIÊN QUAN"
             description="Đón đọc các thông tin và bài viết phân tích thị trường mới nhất."
           />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <CardGrid cols={3} gap="lg" direct>
             {relatedArticles.map((item) => (
               <NewsCard key={item.id} article={item} />
             ))}
-          </div>
+          </CardGrid>
         </div>
       </section>
     </DesktopLayout>

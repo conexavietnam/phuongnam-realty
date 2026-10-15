@@ -7,6 +7,7 @@ import { Pagination } from '@/components/common/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 import { useDataListener } from '@/hooks';
 import { newsService } from '@/services/newsService';
+import { CardGrid } from '@/components/common/CardGrid';
 
 interface NewsListingProps {
   // Slug of the category page; undefined = all articles (/tin-tuc).
@@ -64,11 +65,11 @@ export function NewsListing({ categorySlug }: NewsListingProps) {
           {current.length === 0 ? (
             <p className="py-12 text-center text-slate-500">Chưa có bài viết nào trong chuyên mục này.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <CardGrid cols={4}>
               {current.map((article) => (
                 <NewsCard key={article.id} article={article} />
               ))}
-            </div>
+            </CardGrid>
           )}
 
           <div className="mt-12">

@@ -9,6 +9,7 @@ import { Button } from '@/components/common/Button';
 import { useDataListener } from '@/hooks';
 import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
+import { CardGrid } from '@/components/common/CardGrid';
 
 export function ProjectsPage() {
   useDataListener();
@@ -39,11 +40,11 @@ export function ProjectsPage() {
             description="Tìm hiểu thông tin quy hoạch, bảng giá và tiến độ xây dựng mới nhất của từng dự án."
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <CardGrid cols={3} gap="lg">
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
-          </div>
+          </CardGrid>
         </div>
       </section>
 
@@ -68,11 +69,11 @@ export function ProjectsPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardGrid cols={3} direct>
             {relatedProperties.map((prop) => (
               <PropertyCard key={prop.id} property={prop} />
             ))}
-          </div>
+          </CardGrid>
         </div>
       </section>
     </DesktopLayout>

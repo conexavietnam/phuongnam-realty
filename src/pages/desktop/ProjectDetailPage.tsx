@@ -10,6 +10,7 @@ import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { renderRichHtml } from '@/utils/richText';
 import { typeLabel } from '@/utils/typeLabel';
+import { CardGrid } from '@/components/common/CardGrid';
 
 export function ProjectDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -178,11 +179,11 @@ export function ProjectDetailPage() {
             title="BẤT ĐỘNG SẢN LIÊN QUAN"
             description="Tham khảo thêm các căn hộ và nhà phố sẵn sàng bàn giao lân cận."
           />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardGrid cols={3} direct>
             {relatedProperties.map((prop) => (
               <PropertyCard key={prop.id} property={prop} />
             ))}
-          </div>
+          </CardGrid>
         </div>
       </section>
     </DesktopLayout>

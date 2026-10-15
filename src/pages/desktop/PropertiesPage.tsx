@@ -12,6 +12,7 @@ import { propertyService } from '@/services/propertyService';
 import { companyService } from '@/services/companyService';
 import { filtersFromSearchParams, searchParamsFromFilters } from '@/utils/filterQuery';
 import type { PropertyFilter } from '@/types';
+import { CardGrid } from '@/components/common/CardGrid';
 
 export function PropertiesPage() {
   const dataVersion = useDataListener();
@@ -84,11 +85,11 @@ export function PropertiesPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <CardGrid cols={4}>
                 {featuredList.map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))}
-              </div>
+              </CardGrid>
 
               {displayLimit < filteredProperties.length && (
                 <div className="mt-12 text-center">
@@ -115,11 +116,11 @@ export function PropertiesPage() {
             title="BẤT ĐỘNG SẢN TƯƠNG TỰ"
             description="Các lựa chọn được nhiều khách hàng quan tâm nhất trong tuần."
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <CardGrid cols={4}>
             {similarList.map((prop) => (
               <PropertyCard key={prop.id} property={prop} />
             ))}
-          </div>
+          </CardGrid>
         </div>
       </section>
 
