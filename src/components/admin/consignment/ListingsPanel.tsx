@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { ListingStatusChip, SectionChip } from '@/components/admin/consignment/StatusChip';
 import type { AdminActions } from '@/components/admin/consignment/types';
 import { consignmentService } from '@/services/consignmentService';
+import { formatArea, formatBillion } from '@/utils/numberFormat';
 import { CONSIGNMENT_STATUS_LABELS, listingUrl, priceLabel, purposeLabel, SECTION_LABELS } from '@/utils/consignment';
 import type { ConsignmentListing, ConsignmentSection, ConsignmentStatus } from '@/types';
 
@@ -163,7 +164,12 @@ export function ListingsPanel({ listings, actions, initialSection, onEdit, onCre
                     {item.propertyType ? consignmentService.propertyTypeLabel(item.propertyType) : '-'}
                     <span className="text-slate-400"> · {purposeLabel(item.purpose)}</span>
                   </td>
-                  <td className="py-3 px-4 font-bold text-gold-600 whitespace-nowrap">{priceLabel(item)}</td>
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    <div className="font-bold text-gold-600">{priceLabel(item)}</div>
+                    <div className="text-[11px] text-slate-400">
+                      {formatBillion(item.price)} · {formatArea(item.area)}
+                    </div>
+                  </td>
                   <td className="py-3 px-4 text-slate-600 max-w-xs truncate">{item.location || '-'}</td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-end gap-1 flex-wrap">

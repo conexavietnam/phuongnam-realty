@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
+import { NumberInput } from '@/components/common/NumberInput';
 import { ImageField } from '@/components/admin/ImageField';
 import { SeoFields } from '@/components/admin/seo/SeoFields';
 import { SlugField } from '@/components/admin/seo/SlugField';
@@ -25,6 +26,7 @@ import { cleanSeoForSave } from '@/utils/seoFields';
 import { nextOldSlugs } from '@/utils/slugHistory';
 import { normalizeEditorHtml } from '@/utils/richText';
 import { slugify } from '@/utils/slug';
+import { formatBillionShort } from '@/utils/numberFormat';
 import type { ConsignmentListing, ConsignmentPurpose, ConsignmentSection, ConsignmentStatus } from '@/types';
 
 interface ListingEditorModalProps {
@@ -69,11 +71,6 @@ function HighlightsField({ value, onChange }: { value: string[]; onChange: (item
       />
     </Field>
   );
-}
-
-function toNumber(value: string): number {
-  const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 export function ListingEditorModal({ initial, isNew, actions, onClose }: ListingEditorModalProps) {
@@ -231,13 +228,14 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
           </Field>
 
           <Field label="Giá (tỷ VNĐ, dùng cho bộ lọc)">
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={draft.price || ''}
-              onChange={(e) => set('price', toNumber(e.target.value))}
-              placeholder="VD: 4.5 (để trống = Liên hệ)"
+            <NumberInput
+              value={draft.price}
+              onChange={(v) => set('price', v ?? 0)}
+              decimals={3}
+              unit="tỷ"
+              kind="billion"
+              zeroAsEmpty
+              placeholder="VD: 4,5 (để trống = Liên hệ)"
               className={INPUT}
             />
           </Field>
@@ -248,13 +246,22 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
               value={draft.priceDisplay}
               onChange={(e) => set('priceDisplay', e.target.value)}
               maxLength={100}
-              placeholder="VD: 4.5 Tỷ hoặc 18 Triệu/tháng"
+              placeholder="VD: 4,5 tỷ hoặc 18 triệu/tháng"
               className={INPUT}
             />
+            <button
+              type="button"
+              onClick={() => set('priceDisplay', formatBillionShort(draft.price))}
+              disabled={!(draft.price > 0) || draft.priceDisplay.trim() !== ''}
+              title={draft.priceDisplay.trim() !== '' ? 'Xóa giá hiển thị hiện tại để tự tạo lại' : 'Điền giá hiển thị từ giá số ở bên'}
+              className="mt-1 text-[11px] font-semibold text-gold-600 hover:text-gold-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Tự tạo từ giá
+            </button>
           </Field>
 
           <Field label="Diện tích (m²)">
-            <input type="number" min={0} value={draft.area || ''} onChange={(e) => set('area', toNumber(e.target.value))} className={INPUT} />
+            <NumberInput value={draft.area} onChange={(v) => set('area', v ?? 0)} decimals={2} unit="m²" kind="area" zeroAsEmpty className={INPUT} />
           </Field>
 
           {draft.section !== 'du-an' && (
@@ -264,13 +271,13 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
           )}
 
           <Field label="Phòng ngủ">
-            <input type="number" min={0} value={draft.bedrooms || ''} onChange={(e) => set('bedrooms', toNumber(e.target.value))} className={INPUT} />
+            <NumberInput value={draft.bedrooms} onChange={(v) => set('bedrooms', v ?? 0)} max={99} unit="phòng" zeroAsEmpty className={INPUT} />
           </Field>
 
           {draft.section !== 'du-an' && (
             <>
               <Field label="Phòng tắm">
-                <input type="number" min={0} value={draft.bathrooms || ''} onChange={(e) => set('bathrooms', toNumber(e.target.value))} className={INPUT} />
+                <NumberInput value={draft.bathrooms} onChange={(v) => set('bathrooms', v ?? 0)} max={99} unit="phòng" zeroAsEmpty className={INPUT} />
               </Field>
 
               <Field label="Pháp lý">

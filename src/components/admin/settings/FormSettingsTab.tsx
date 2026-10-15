@@ -2,8 +2,10 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { ArrowDown, ArrowUp, Plus, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/common/Button';
+import { NumberInput } from '@/components/common/NumberInput';
 import { companyService } from '@/services/companyService';
 import { getPriceBounds } from '@/utils/priceRange';
+import { formatNumber } from '@/utils/numberFormat';
 import type { FilterConfig, FilterOption } from '@/types/common';
 
 type GroupKey = keyof FilterConfig;
@@ -32,19 +34,20 @@ function toValue(label: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-type BoundsDraft = Record<string, { min: string; max: string }>;
-
-const fmt = (n: number | null | undefined): string => (n == null ? '' : String(n));
-
-function toNumber(text: string): number | null {
-  const trimmed = text.trim().replace(',', '.');
-  return trimmed === '' ? null : Number(trimmed);
+interface Bounds {
+  min: number | null;
+  max: number | null;
 }
 
+type BoundsDraft = Record<string, Bounds>;
+
+const EMPTY_BOUNDS: Bounds = { min: null, max: null };
+const fmt = (n: number | null): string => formatNumber(n, 3);
+
 function suggestLabel(min: number | null, max: number | null): string {
-  if (min === null && max !== null) return `Dưới ${max} tỷ`;
-  if (min !== null && max === null) return `Trên ${min} tỷ`;
-  return `${min}–${max} tỷ`;
+  if (min === null && max !== null) return `Dưới ${fmt(max)} tỷ`;
+  if (min !== null && max === null) return `Trên ${fmt(min)} tỷ`;
+  return `${fmt(min)}–${fmt(max)} tỷ`;
 }
 
 function suggestValue(min: number | null, max: number | null): string {
@@ -65,7 +68,7 @@ function initialBounds(config: FilterConfig): BoundsDraft {
   const draft: BoundsDraft = {};
   for (const option of config.priceRanges) {
     const [min, max] = getPriceBounds(option) ?? [null, null];
-    draft[option.value] = { min: fmt(min), max: fmt(max) };
+    draft[option.value] = { min, max };
   }
   return draft;
 }
@@ -88,8 +91,8 @@ function validate(config: FilterConfig, bounds: BoundsDraft): string | null {
     }
   }
   for (const option of config.priceRanges) {
-    const b = bounds[option.value] ?? { min: '', max: '' };
-    const problem = boundsProblem(toNumber(b.min), toNumber(b.max));
+    const b = bounds[option.value] ?? EMPTY_BOUNDS;
+    const problem = boundsProblem(b.min, b.max);
     if (problem) return `Mức giá "${option.label}": ${problem}.`;
   }
   return null;
@@ -98,7 +101,7 @@ function validate(config: FilterConfig, bounds: BoundsDraft): string | null {
 export function FormSettingsTab() {
   const [draft, setDraft] = useState<FilterConfig>(() => mapOptions(companyService.getFilterConfig(), (o) => ({ ...o })));
   const [bounds, setBounds] = useState<BoundsDraft>(() => initialBounds(companyService.getFilterConfig()));
-  const [newBounds, setNewBounds] = useState({ min: '', max: '' });
+  const [newBounds, setNewBounds] = useState<Bounds>(EMPTY_BOUNDS);
   const [newLabels, setNewLabels] = useState<Record<GroupKey, string>>({ regions: '', propertyTypes: '', priceRanges: '' });
   const [saving, setSaving] = useState(false);
   const [banner, setBanner] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
@@ -111,8 +114,8 @@ export function FormSettingsTab() {
   const rename = (key: GroupKey, index: number, label: string) =>
     updateGroup(key, draft[key].map((o, i) => (i === index ? { ...o, label } : o)));
 
-  const setBound = (value: string, side: 'min' | 'max', text: string) => {
-    setBounds((prev) => ({ ...prev, [value]: { ...prev[value], [side]: text } }));
+  const setBound = (value: string, side: 'min' | 'max', next: number | null) => {
+    setBounds((prev) => ({ ...prev, [value]: { ...(prev[value] ?? EMPTY_BOUNDS), [side]: next } }));
     setBanner(null);
   };
 
@@ -127,8 +130,8 @@ export function FormSettingsTab() {
   };
 
   const add = (key: GroupKey) => {
-    const newMin = toNumber(newBounds.min);
-    const newMax = toNumber(newBounds.max);
+    const newMin = newBounds.min;
+    const newMax = newBounds.max;
     if (key === 'priceRanges') {
       const problem = boundsProblem(newMin, newMax);
       if (problem) {
@@ -148,8 +151,8 @@ export function FormSettingsTab() {
     }
     updateGroup(key, [...draft[key], { value, label }]);
     if (key === 'priceRanges') {
-      setBounds((prev) => ({ ...prev, [value]: { min: newBounds.min, max: newBounds.max } }));
-      setNewBounds({ min: '', max: '' });
+      setBounds((prev) => ({ ...prev, [value]: { ...newBounds } }));
+      setNewBounds(EMPTY_BOUNDS);
     }
     setNewLabels((prev) => ({ ...prev, [key]: '' }));
   };
@@ -164,8 +167,8 @@ export function FormSettingsTab() {
     const trimmed = mapOptions(draft, (o) => ({ ...o, label: o.label.trim() }));
     trimmed.priceRanges = trimmed.priceRanges.map((o) => ({
       ...o,
-      min: toNumber(bounds[o.value].min),
-      max: toNumber(bounds[o.value].max),
+      min: bounds[o.value].min,
+      max: bounds[o.value].max,
     }));
     setSaving(true);
     try {
@@ -227,24 +230,30 @@ export function FormSettingsTab() {
                       className={INPUT_CLASS}
                     />
                     {key === 'priceRanges' && (
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={bounds[option.value]?.min ?? ''}
-                          onChange={(e) => setBound(option.value, 'min', e.target.value)}
-                          placeholder="Từ (tỷ)"
-                          aria-label={`${option.label}: giá từ (tỷ)`}
+                      <div className="flex items-start gap-1.5 mt-1">
+                        <NumberInput
+                          value={bounds[option.value]?.min}
+                          onChange={(v) => setBound(option.value, 'min', v)}
+                          decimals={3}
+                          unit="tỷ"
+                          min={0}
+                          kind="billion"
+                          placeholder="Từ"
+                          ariaLabel={`${option.label}: giá từ (tỷ)`}
                           className={INPUT_CLASS}
+                          wrapperClassName="flex-1 min-w-0"
                         />
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={bounds[option.value]?.max ?? ''}
-                          onChange={(e) => setBound(option.value, 'max', e.target.value)}
-                          placeholder="Đến (tỷ)"
-                          aria-label={`${option.label}: giá đến (tỷ)`}
+                        <NumberInput
+                          value={bounds[option.value]?.max}
+                          onChange={(v) => setBound(option.value, 'max', v)}
+                          decimals={3}
+                          unit="tỷ"
+                          min={0}
+                          kind="billion"
+                          placeholder="Đến"
+                          ariaLabel={`${option.label}: giá đến (tỷ)`}
                           className={INPUT_CLASS}
+                          wrapperClassName="flex-1 min-w-0"
                         />
                       </div>
                     )}
@@ -271,24 +280,30 @@ export function FormSettingsTab() {
             </ul>
 
             {key === 'priceRanges' && (
-              <div className="flex items-center gap-1.5 pt-1">
-                <input
-                  type="text"
-                  inputMode="decimal"
+              <div className="flex items-start gap-1.5 pt-1">
+                <NumberInput
                   value={newBounds.min}
-                  onChange={(e) => setNewBounds((prev) => ({ ...prev, min: e.target.value }))}
-                  placeholder="Từ (tỷ)"
-                  aria-label="Mức giá mới: từ (tỷ)"
+                  onChange={(v) => setNewBounds((prev) => ({ ...prev, min: v }))}
+                  decimals={3}
+                  unit="tỷ"
+                  min={0}
+                  kind="billion"
+                  placeholder="Từ"
+                  ariaLabel="Mức giá mới: từ (tỷ)"
                   className={INPUT_CLASS}
+                  wrapperClassName="flex-1 min-w-0"
                 />
-                <input
-                  type="text"
-                  inputMode="decimal"
+                <NumberInput
                   value={newBounds.max}
-                  onChange={(e) => setNewBounds((prev) => ({ ...prev, max: e.target.value }))}
-                  placeholder="Đến (tỷ)"
-                  aria-label="Mức giá mới: đến (tỷ)"
+                  onChange={(v) => setNewBounds((prev) => ({ ...prev, max: v }))}
+                  decimals={3}
+                  unit="tỷ"
+                  min={0}
+                  kind="billion"
+                  placeholder="Đến"
+                  ariaLabel="Mức giá mới: đến (tỷ)"
                   className={INPUT_CLASS}
+                  wrapperClassName="flex-1 min-w-0"
                 />
               </div>
             )}

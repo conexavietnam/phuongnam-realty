@@ -30,6 +30,8 @@ import { Link } from 'react-router-dom';
 import { Logo } from '@/components/common/Logo';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
+import { NumberInput } from '@/components/common/NumberInput';
+import { formatArea, formatPriceShort, formatVnd } from '@/utils/numberFormat';
 import { ImageField } from '@/components/admin/ImageField';
 import { SeoFields } from '@/components/admin/seo/SeoFields';
 import { SlugField } from '@/components/admin/seo/SlugField';
@@ -1066,8 +1068,11 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             {typeLabel(prop.type)}
                           </span>
                         </td>
-                        <td className="py-3 px-4 font-bold text-gold-600">{prop.priceDisplay}</td>
-                        <td className="py-3 px-4 text-slate-700">{prop.area} m²</td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="font-bold text-gold-600">{prop.priceDisplay}</div>
+                          <div className="text-[11px] text-slate-400">{formatVnd(prop.price)}</div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700 whitespace-nowrap">{formatArea(prop.area)}</td>
                         <td className="py-3 px-4 text-slate-600">{prop.bedrooms} PN • {prop.bathrooms} WC</td>
                         <td className="py-3 px-4 text-slate-600">{prop.legal}</td>
                         <td className="py-3 px-4 text-slate-600 max-w-xs truncate">{prop.location}</td>
@@ -1833,36 +1838,42 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                   required
                   value={editingProperty.priceDisplay}
                   onChange={(e) => setEditingProperty({ ...editingProperty, priceDisplay: e.target.value })}
-                  placeholder="VD: 4.5 Tỷ hoặc 18 Triệu/tháng"
+                  placeholder="VD: 4,5 tỷ hoặc 18 triệu/tháng"
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 />
+                <button
+                  type="button"
+                  onClick={() => setEditingProperty({ ...editingProperty, priceDisplay: formatPriceShort(editingProperty.price) })}
+                  disabled={!(editingProperty.price > 0) || editingProperty.priceDisplay.trim() !== ''}
+                  title={editingProperty.priceDisplay.trim() !== '' ? 'Xóa mức giá hiển thị hiện tại để tự tạo lại' : 'Điền mức giá hiển thị từ giá trị số'}
+                  className="mt-1 text-[11px] font-semibold text-gold-600 hover:text-gold-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Tự tạo từ giá
+                </button>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Giá trị số (VNĐ để lọc tìm kiếm) (*)</label>
-                <input
-                  type="number"
-                  required
+                <label className="block font-semibold text-slate-700 mb-1">Giá trị số (VNĐ, dùng để lọc tìm kiếm; để trống = Liên hệ)</label>
+                <NumberInput
                   value={editingProperty.price}
-                  onChange={(e) => setEditingProperty({ ...editingProperty, price: Number(e.target.value) })}
-                  placeholder="VD: 4500000000"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono"
+                  onChange={(v) => setEditingProperty({ ...editingProperty, price: v ?? 0 })}
+                  unit="₫"
+                  kind="vnd"
+                  zeroAsEmpty
+                  placeholder="VD: 4.500.000.000"
                 />
               </div>
 
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Diện tích (m²)</label>
-                <input
-                  type="number"
+                <NumberInput
                   value={editingProperty.area}
-                  onChange={(e) =>
-                    setEditingProperty({
-                      ...editingProperty,
-                      area: Number(e.target.value),
-                    })
-                  }
+                  onChange={(v) => setEditingProperty({ ...editingProperty, area: v ?? 0 })}
+                  decimals={2}
+                  unit="m²"
+                  kind="area"
+                  zeroAsEmpty
                   placeholder="75"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 />
               </div>
 
@@ -1880,19 +1891,21 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Phòng ngủ / Phòng tắm</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
+                  <NumberInput
                     value={editingProperty.bedrooms}
-                    onChange={(e) => setEditingProperty({ ...editingProperty, bedrooms: Number(e.target.value) })}
-                    placeholder="2 PN"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                    onChange={(v) => setEditingProperty({ ...editingProperty, bedrooms: v ?? 0 })}
+                    max={99}
+                    unit="PN"
+                    ariaLabel="Số phòng ngủ"
+                    placeholder="2"
                   />
-                  <input
-                    type="number"
+                  <NumberInput
                     value={editingProperty.bathrooms}
-                    onChange={(e) => setEditingProperty({ ...editingProperty, bathrooms: Number(e.target.value) })}
-                    placeholder="2 WC"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                    onChange={(v) => setEditingProperty({ ...editingProperty, bathrooms: v ?? 0 })}
+                    max={99}
+                    unit="WC"
+                    ariaLabel="Số phòng tắm"
+                    placeholder="2"
                   />
                 </div>
               </div>
