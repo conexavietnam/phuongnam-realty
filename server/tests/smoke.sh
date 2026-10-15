@@ -10,6 +10,8 @@ set -u
 PHP_BIN="${PHP_BIN:-php}"
 APP_PORT="${APP_PORT:-18080}"
 STUB_PORT="${STUB_PORT:-18081}"
+SEO_PORT="${SEO_PORT:-18082}"
+BROKEN_PORT="${BROKEN_PORT:-18083}"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ROOT="$(mktemp -d)"
 BASE="http://127.0.0.1:${APP_PORT}/api/index.php"
@@ -74,6 +76,7 @@ header_has() { # name extended-regex
 # Prints the HTTP status; the body goes to $BODY and the response headers to $HEADERS.
 http() {
   local code
+  : > "$BODY"
   code="$(curl -s -o "$BODY" -D "$HEADERS" -w '%{http_code}' "$@")"
   cat "$BODY" >> "$ALL_BODIES"
   printf '%s' "$code"
@@ -97,9 +100,9 @@ command -v curl >/dev/null || { echo "curl not found"; exit 2; }
 # App root: <root>/web/api/index.php, <root>/server/{src,seed,config.php}, <root>/data, <root>/uploads
 mkdir -p "$ROOT/web/api" "$ROOT/server" "$ROOT/data" "$ROOT/uploads"
 cp "$REPO/server/api/index.php" "$ROOT/web/api/index.php"
-cp -r "$REPO/server/src" "$REPO/server/seed" "$REPO/server/bin" "$ROOT/server/"
+cp -r "$REPO/server/src" "$REPO/server/seed" "$REPO/server/bin" "$REPO/server/seo" "$ROOT/server/"
 AUTH_KEY="$("$PHP_BIN" -r 'echo base64_encode(random_bytes(32));')"
-write_config() { # base64 auth key ("" = not configured)
+write_config() { # base64 auth key ("" = not configured), optional extra config line
   cat > "$ROOT/server/config.php" <<PHPCFG
 <?php
 return [
@@ -113,6 +116,8 @@ return [
     'uploads_url' => '/uploads/',
     'cookie_secure' => false,
     'auth_key' => '$1',
+    'webroot' => '${ROOT}/web',
+    ${2:-}
 ];
 PHPCFG
 }
@@ -120,7 +125,7 @@ write_config "$AUTH_KEY"
 
 echo "== php -l on every server file"
 lint_failures=0
-for f in "$REPO"/server/api/*.php "$REPO"/server/src/*.php "$REPO"/server/bin/*.php; do
+for f in "$REPO"/server/api/*.php "$REPO"/server/src/*.php "$REPO"/server/bin/*.php "$REPO"/server/seo/*.php; do
   "$PHP_BIN" -l "$f" >/dev/null 2>&1 || { echo "FAIL  php -l $f"; lint_failures=$((lint_failures + 1)); }
 done
 check "php -l (all files)" 0 "$lint_failures"
@@ -229,6 +234,448 @@ printf '<?php echo "pwned"; ?>' > "$ROOT/evil.php"
 check "upload of PHP code posing as PNG -> 415" 415 "$(http -b "$JAR" -X POST -H "X-CSRF-Token: $CSRF" -F "file=@$ROOT/evil.php;type=image/png;filename=evil.png" -F category=general "$BASE?r=upload")"
 check "upload of evil.php -> 415" 415 "$(http -b "$JAR" -X POST -H "X-CSRF-Token: $CSRF" -F "file=@$ROOT/evil.php;type=image/jpeg;filename=evil.php" -F category=general "$BASE?r=upload")"
 check "nothing landed in uploads" 0 "$(find "$ROOT/uploads" -type f | wc -l | tr -d ' ')"
+
+# ---------------------------------------------------------------------------------------------
+# SEO: validation of the new seo / slug / company.seo fields, then the server-side SEO shell
+# ---------------------------------------------------------------------------------------------
+body_has_f() { # name literal
+  if grep -qF -- "$2" "$BODY"; then
+    echo "PASS  $1"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL  $1 (missing: $2)"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+body_lacks_f() { # name literal
+  if grep -qF -- "$2" "$BODY"; then
+    echo "FAIL  $1 (unexpected: $2)"
+    FAIL=$((FAIL + 1))
+  else
+    echo "PASS  $1"
+    PASS=$((PASS + 1))
+  fi
+}
+
+body_count() { # name literal expected-count
+  local n
+  n="$(grep -oF -- "$2" "$BODY" | wc -l | tr -d ' ')"
+  check "$1" "$3" "$n"
+}
+
+header_lacks() { # name extended-regex
+  if grep -qiE -- "$2" "$HEADERS"; then
+    echo "FAIL  $1 (unexpected header: $2)"
+    FAIL=$((FAIL + 1))
+  else
+    echo "PASS  $1"
+    PASS=$((PASS + 1))
+  fi
+}
+
+putc() { # collection json [extra curl args...]
+  local name=$1 json=$2
+  shift 2
+  http -b "$JAR" -X PUT -H "$JSON" -H "X-CSRF-Token: $CSRF" "$@" --data "$json" "$BASE?r=data&c=${name}"
+}
+
+echo "== seo: write validation (items)"
+SEO_OK='{"title":"Tiêu đề SEO","description":"Mô tả SEO","keywords":["a","b"],"ogImage":"/uploads/x.jpg","noindex":false}'
+check "news with a valid seo object -> 200" 200 "$(putc news "[{\"id\":\"n\",\"slug\":\"tin-hop-le\",\"title\":\"t\",\"seo\":${SEO_OK}}]")"
+check "news with https ogImage and empty ogImage -> 200" 200 "$(putc news '[{"id":"n","slug":"a-1","seo":{"ogImage":"https://cdn.example/x.png"}},{"id":"m","seo":{"ogImage":""}}]')"
+check "projects with a valid seo object -> 200" 200 "$(putc projects "[{\"id\":\"p\",\"slug\":\"du-an-1\",\"seo\":${SEO_OK}}]")"
+check "properties with a valid seo object -> 200" 200 "$(putc properties "[{\"id\":\"p\",\"slug\":\"bds-1\",\"seo\":${SEO_OK}}]")"
+check "consignments with a valid seo object -> 200" 200 "$(putc consignments "[{\"id\":\"c\",\"slug\":\"tin-1\",\"seo\":${SEO_OK}}]")"
+check "item without seo or slug stays valid -> 200" 200 "$(putc news '[{"id":"n","title":"t"}]')"
+check "news seo title over 120 chars -> 422" 422 "$(putc news "[{\"id\":\"n\",\"seo\":{\"title\":\"$(head -c 121 /dev/zero | tr '\0' 'a')\"}}]")"
+check "projects seo description over 320 chars -> 422" 422 "$(putc projects "[{\"id\":\"n\",\"seo\":{\"description\":\"$(head -c 321 /dev/zero | tr '\0' 'a')\"}}]")"
+check "properties seo with 16 keywords -> 422" 422 "$(putc properties "[{\"id\":\"n\",\"seo\":{\"keywords\":[$(printf '"k",%.0s' $(seq 1 15))\"z\"]}}]")"
+check "consignments keyword over 60 chars -> 422" 422 "$(putc consignments "[{\"id\":\"n\",\"seo\":{\"keywords\":[\"$(head -c 61 /dev/zero | tr '\0' 'a')\"]}}]")"
+check "seo keywords not a list -> 422" 422 "$(putc news '[{"id":"n","seo":{"keywords":"a,b"}}]')"
+check "seo keywords with a number -> 422" 422 "$(putc news '[{"id":"n","seo":{"keywords":[1]}}]')"
+check "seo ogImage javascript: URL -> 422" 422 "$(putc news '[{"id":"n","seo":{"ogImage":"javascript:alert(1)"}}]')"
+check "seo ogImage plain http URL -> 422" 422 "$(putc news '[{"id":"n","seo":{"ogImage":"http://example.test/x.png"}}]')"
+check "seo ogImage protocol-relative URL -> 422" 422 "$(putc news '[{"id":"n","seo":{"ogImage":"//evil.test/x.png"}}]')"
+check "seo ogImage with a quote -> 422" 422 "$(putc news '[{"id":"n","seo":{"ogImage":"/uploads/x\"onerror=1"}}]')"
+check "seo ogImage over 500 chars -> 422" 422 "$(putc news "[{\"id\":\"n\",\"seo\":{\"ogImage\":\"/uploads/$(head -c 500 /dev/zero | tr '\0' 'a')\"}}]")"
+check "seo noindex as a string -> 422" 422 "$(putc news '[{"id":"n","seo":{"noindex":"yes"}}]')"
+check "seo with an unknown key -> 422" 422 "$(putc news '[{"id":"n","seo":{"title":"t","extra":1}}]')"
+check "seo as a list -> 422" 422 "$(putc news '[{"id":"n","seo":["a"]}]')"
+check "seo as a string -> 422" 422 "$(putc news '[{"id":"n","seo":"x"}]')"
+check "seo title as an array -> 422" 422 "$(putc news '[{"id":"n","seo":{"title":["x"]}}]')"
+check "news slug with upper case -> 422" 422 "$(putc news '[{"id":"n","slug":"Tin-Tuc"}]')"
+check "projects slug with a slash -> 422" 422 "$(putc projects '[{"id":"n","slug":"a/b"}]')"
+check "properties slug with a space -> 422" 422 "$(putc properties '[{"id":"n","slug":"a b"}]')"
+check "consignments slug with an accent -> 422" 422 "$(putc consignments '[{"id":"n","slug":"đường"}]')"
+check "slug longer than 200 chars -> 422" 422 "$(putc news "[{\"id\":\"n\",\"slug\":\"$(head -c 201 /dev/zero | tr '\0' 'a')\"}]")"
+check "slug as a number -> 422" 422 "$(putc news '[{"id":"n","slug":5}]')"
+check "consignments seo invalid -> 422" 422 "$(putc consignments '[{"id":"n","slug":"ok","seo":{"noindex":1}}]')"
+
+echo "== seo: write validation (company.seo)"
+COMPANY_BASE='"name":"Phương Nam Realty","slogan":"s"'
+cput() { putc company "{${COMPANY_BASE},\"seo\":$1}"; }
+check "company without seo -> 200" 200 "$(putc company "{${COMPANY_BASE}}")"
+check "company with a full valid seo -> 200" 200 "$(cput '{"titleSuffix":" | PN","defaultDescription":"d","defaultOgImage":"/images/og-default.png","googleSiteVerification":"abcDEF1234_-xyz","bingSiteVerification":"","googleHtmlFile":{"name":"google0123456789abcdef.html","content":"google-site-verification: google0123456789abcdef.html"},"indexSite":true}')"
+check "company seo with googleHtmlFile null -> 200" 200 "$(cput '{"googleHtmlFile":null,"indexSite":false}')"
+check "company seo titleSuffix over 60 chars -> 422" 422 "$(cput "{\"titleSuffix\":\"$(head -c 61 /dev/zero | tr '\0' 'a')\"}")"
+check "company seo defaultDescription over 320 chars -> 422" 422 "$(cput "{\"defaultDescription\":\"$(head -c 321 /dev/zero | tr '\0' 'a')\"}")"
+check "company seo bad defaultOgImage -> 422" 422 "$(cput '{"defaultOgImage":"javascript:alert(1)"}')"
+check "company seo verification code too short -> 422" 422 "$(cput '{"googleSiteVerification":"abc"}')"
+check "company seo verification code with a quote -> 422" 422 "$(cput '{"bingSiteVerification":"abcdefghij\"><script>"}')"
+check "company seo verification code over 100 chars -> 422" 422 "$(cput "{\"googleSiteVerification\":\"$(head -c 101 /dev/zero | tr '\0' 'a')\"}")"
+check "company seo html file bad name -> 422" 422 "$(cput '{"googleHtmlFile":{"name":"evil.html","content":"x"}}')"
+check "company seo html file name with a path -> 422" 422 "$(cput '{"googleHtmlFile":{"name":"../google0123456789.html","content":"x"}}')"
+check "company seo html file content with markup -> 422" 422 "$(cput '{"googleHtmlFile":{"name":"google0123456789.html","content":"<script>x</script>"}}')"
+check "company seo html file content over 200 chars -> 422" 422 "$(cput "{\"googleHtmlFile\":{\"name\":\"google0123456789.html\",\"content\":\"$(head -c 201 /dev/zero | tr '\0' 'a')\"}}")"
+check "company seo html file without content -> 422" 422 "$(cput '{"googleHtmlFile":{"name":"google0123456789.html"}}')"
+check "company seo indexSite as a string -> 422" 422 "$(cput '{"indexSite":"false"}')"
+check "company seo unknown key -> 422" 422 "$(cput '{"robotsTxt":"x"}')"
+check "company seo as a list -> 422" 422 "$(cput '["a"]')"
+
+echo "== seo: SEO shell fixtures"
+SEO="http://127.0.0.1:${SEO_PORT}"
+mkdir -p "$ROOT/web"
+cat > "$ROOT/web/index.html" <<'HTML'
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0A192F" />
+    <meta name="description" content="STATIC-DESCRIPTION" />
+    <meta property="og:title" content="STATIC-OG-TITLE" />
+    <meta property="og:description" content="STATIC-OG-DESCRIPTION" />
+    <title>STATIC-TITLE</title>
+    <script type="module" crossorigin src="/assets/index-abc.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+HTML
+cat > "$ROOT/data/news.json" <<'JSON'
+[
+ {"id":"n1","slug":"tin-thuong","title":"Tin thường","excerpt":"Tóm tắt tin thường","content":"<p>Nội dung <strong>chi tiết</strong> bài viết &amp; hơn nữa.</p><script>alert(2)</script>","thumbnail":"/uploads/n1.jpg","author":"Biên tập","publishedAt":"2026-03-01","seo":{"title":"SEO tiêu đề tin","description":"SEO mô tả tin","keywords":["bất động sản","Bất Động Sản","thị trường"]}},
+ {"id":"n2","slug":"tin-hostile","title":"</title><script>alert(1)</script>\"'&x","excerpt":"</script><script>alert(3)</script>","content":"","thumbnail":"/images/x.svg","publishedAt":"2026-03-02"},
+ {"id":"n3","slug":"tin-noindex","title":"Tin noindex","excerpt":"e","content":"c","thumbnail":"/uploads/n3.jpg","publishedAt":"2026-03-03","seo":{"noindex":true}}
+]
+JSON
+cat > "$ROOT/data/projects.json" <<'JSON'
+[{"id":"p1","slug":"du-an-mot","name":"Dự án Một","shortDescription":"Mô tả ngắn dự án","fullDescription":"<p>Chi tiết dự án</p>","thumbnail":"/uploads/p1.jpg","images":[],"priceFrom":"3 Tỷ","location":"Quận 2"}]
+JSON
+cat > "$ROOT/data/properties.json" <<'JSON'
+[{"id":"r1","slug":"bds-mot","title":"BĐS Một","shortDescription":"Mô tả BĐS","fullDescription":"","thumbnail":"/uploads/r1.jpg","price":4500000000,"location":"Thủ Đức","createdAt":"2026-02-01T00:00:00Z"}]
+JSON
+cat > "$ROOT/data/consignments.json" <<'JSON'
+[
+ {"id":"c1","slug":"ky-gui-dang","status":"published","section":"ky-gui","title":"Ký gửi đang đăng","shortDescription":"mô tả ký gửi","fullDescription":"<p>x</p>","thumbnail":"/uploads/c1.jpg","price":4.5,"publishedAt":"2026-04-01T00:00:00Z","internalNote":"SECRET-NOTE","ownerPhone":"0900111222"},
+ {"id":"c2","slug":"ky-gui-nhap","status":"draft","title":"Bản nháp","shortDescription":"nháp"},
+ {"id":"c3","slug":"ky-gui-sang-du-an","status":"published","section":"du-an","title":"Chuyển dự án","shortDescription":"d","publishedAt":"2026-04-02T00:00:00Z"},
+ {"id":"c4","slug":"ky-gui-da-ban","status":"sold","title":"Đã bán","shortDescription":"d","publishedAt":"2026-04-03T00:00:00Z","seo":{"noindex":true}},
+ {"id":"c5","slug":"ky-gui-sang-bds","status":"published","section":"chuyen-nhuong","title":"Chuyển BĐS","shortDescription":"d","price":2,"publishedAt":"2026-04-04T00:00:00Z"}
+]
+JSON
+write_company() { # indexSite (true|false)
+  cat > "$ROOT/data/company.json" <<JSON
+{"name":"Phương Nam Realty","slogan":"Kiến tạo giá trị","hotline":"0901 234 567","email":"info@example.test","address":"Hà Nội","social":{"facebook":"https://facebook.com/pn","zalo":"#"},"seo":{"titleSuffix":" | PN Test","defaultDescription":"Mô tả mặc định test","googleSiteVerification":"abcdefghij1234567890","bingSiteVerification":"BINGCODE1234567890","googleHtmlFile":{"name":"google1234567890abcdef.html","content":"google-site-verification: google1234567890abcdef.html"},"indexSite":$1}}
+JSON
+}
+write_company true
+
+# nginx stand-in: every request goes to server/seo/index.php with REQUEST_URI intact.
+cat > "$ROOT/seo_router.php" <<PHPROUTER
+<?php
+\$_SERVER['SCRIPT_FILENAME'] = '${ROOT}/server/seo/index.php';
+require '${ROOT}/server/seo/index.php';
+PHPROUTER
+"$PHP_BIN" -d opcache.enable=0 -S "127.0.0.1:${SEO_PORT}" "$ROOT/seo_router.php" >"$ROOT/seo.log" 2>&1 &
+PIDS+=($!)
+wait_for "$SEO/" || { echo "SEO shell did not start:"; cat "$ROOT/seo.log"; exit 2; }
+
+echo "== seo: published news"
+check "news article -> 200" 200 "$(http "$SEO/tin-tuc/tin-thuong")"
+header_has "HTML with charset" '^content-type: text/html; charset=utf-8'
+header_has "nosniff" '^x-content-type-options: nosniff'
+header_has "revalidation cache header" '^cache-control: public, max-age=0, must-revalidate'
+header_has "ETag present" '^etag: '
+header_has "Last-Modified present" '^last-modified: '
+header_lacks "indexable page has no X-Robots-Tag" '^x-robots-tag'
+body_has_f "custom seo title" '<title>SEO tiêu đề tin</title>'
+body_count "exactly one <title>" '<title>' 1
+body_count "exactly one description meta" 'name="description"' 1
+body_lacks_f "static description replaced" 'STATIC-DESCRIPTION'
+body_lacks_f "static og:title replaced" 'STATIC-OG-TITLE'
+body_has_f "custom seo description" '<meta name="description" content="SEO mô tả tin" />'
+body_has_f "keywords de-duplicated" '<meta name="keywords" content="bất động sản, thị trường" />'
+body_has_f "robots index" '<meta name="robots" content="index, follow" />'
+body_has_f "canonical from the Host header" '<link rel="canonical" href="https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/tin-thuong" />'
+body_has_f "og:type article" '<meta property="og:type" content="article" />'
+body_has_f "og:locale" '<meta property="og:locale" content="vi_VN" />'
+body_has_f "og:site_name" '<meta property="og:site_name" content="Phương Nam Realty" />'
+body_has_f "og:title" '<meta property="og:title" content="SEO tiêu đề tin" />'
+body_has_f "og:url absolute" '<meta property="og:url" content="https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/tin-thuong" />'
+body_has_f "og:image absolute" '<meta property="og:image" content="https://127.0.0.1:'"${SEO_PORT}"'/uploads/n1.jpg" />'
+body_has_f "twitter card" '<meta name="twitter:card" content="summary_large_image" />'
+body_has_f "google-site-verification" '<meta name="google-site-verification" content="abcdefghij1234567890" />'
+body_has_f "msvalidate.01" '<meta name="msvalidate.01" content="BINGCODE1234567890" />'
+body_has_f "Article JSON-LD" '"@type":"Article"'
+body_has_f "Article author" '"author":{"@type":"Person","name":"Biên tập"}'
+body_has_f "Article date" '"datePublished":"2026-03-01"'
+body_has_f "BreadcrumbList JSON-LD" '"@type":"BreadcrumbList"'
+body_has_f "crawler h1" '<h1>Tin thường</h1>'
+body_has_f "crawler description paragraph" '<p>SEO mô tả tin</p>'
+body_has_f "crawler plain-text excerpt (entities escaped again)" '<p>Nội dung chi tiết bài viết &amp; hơn nữa.</p>'
+body_lacks_f "stored HTML never injected" '<strong>'
+body_lacks_f "stored script content never injected" 'alert(2)'
+body_has_f "SPA entry script kept" '<script type="module" crossorigin src="/assets/index-abc.js"></script>'
+body_has_f "root div filled" '<div id="root"><main id="seo-fallback"'
+
+echo "== seo: derived defaults"
+check "project -> 200" 200 "$(http "$SEO/du-an/du-an-mot")"
+body_has_f "project title = name + site suffix" '<title>Dự án Một | PN Test</title>'
+body_has_f "project description from shortDescription" '<meta name="description" content="Mô tả ngắn dự án" />'
+body_has_f "project og:image from thumbnail" 'content="https://127.0.0.1:'"${SEO_PORT}"'/uploads/p1.jpg"'
+body_has_f "project og:type website" '<meta property="og:type" content="website" />'
+body_has_f "project RealEstateListing JSON-LD" '"@type":"RealEstateListing"'
+body_lacks_f "no keywords meta when none" 'name="keywords"'
+check "property -> 200" 200 "$(http "$SEO/chuyen-nhuong/bds-mot")"
+body_has_f "property title" '<title>BĐS Một | PN Test</title>'
+body_has_f "property price in VND" '"price":4500000000'
+body_has_f "property currency" '"priceCurrency":"VND"'
+check "consignment -> 200" 200 "$(http "$SEO/ky-gui/ky-gui-dang")"
+body_has_f "consignment title" '<title>Ký gửi đang đăng | PN Test</title>'
+body_has_f "consignment price billions -> VND" '"price":4500000000'
+body_lacks_f "consignment private note never leaks" 'SECRET-NOTE'
+body_lacks_f "consignment owner phone never leaks" '0900111222'
+check "promoted listing under /du-an -> 200" 200 "$(http "$SEO/du-an/ky-gui-sang-du-an")"
+body_has_f "promoted project title" '<title>Chuyển dự án | PN Test</title>'
+check "promoted listing under /chuyen-nhuong -> 200" 200 "$(http "$SEO/chuyen-nhuong/ky-gui-sang-bds")"
+body_has_f "promoted property price (2 billion)" '"price":2000000000'
+check "home -> 200" 200 "$(http "$SEO/")"
+body_has_f "home title from company name + slogan" '<title>Phương Nam Realty — Kiến tạo giá trị</title>'
+body_has_f "home default description from settings" '<meta name="description" content="Mô tả mặc định test" />'
+body_has_f "home default og image" '<meta property="og:image" content="https://127.0.0.1:'"${SEO_PORT}"'/images/og-default.png" />'
+body_has_f "home og image width" '<meta property="og:image:width" content="1200" />'
+body_has_f "home Organization JSON-LD" '"@type":"RealEstateAgent"'
+body_has_f "home WebSite JSON-LD" '"@type":"WebSite"'
+body_has_f "home sameAs only https links" '"sameAs":["https://facebook.com/pn"]'
+body_has_f "home canonical" '<link rel="canonical" href="https://127.0.0.1:'"${SEO_PORT}"'/" />'
+check "contact page -> 200" 200 "$(http "$SEO/lien-he")"
+body_has_f "contact title" '<title>Liên hệ tư vấn | PN Test</title>'
+check "trailing slash on a list page -> 200" 200 "$(http "$SEO/du-an/")"
+body_has_f "trailing slash canonical has none" '/du-an" />'
+
+echo "== seo: hostile content is escaped"
+check "hostile news -> 200" 200 "$(http "$SEO/tin-tuc/tin-hostile")"
+body_has_f "title escaped in <title>" '<title>&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;&quot;&#039;&amp;x | PN Test</title>'
+body_lacks_f "no raw script tag from the title" '<script>alert(1)'
+body_lacks_f "no raw script tag from the excerpt" '<script>alert(3)'
+body_lacks_f "no raw closing title injection" '</title><script>'
+body_has_f "JSON-LD escapes angle brackets" "$(printf '\134u003C/script\134u003E')"
+body_lacks_f "JSON-LD never carries a raw closing script from data" '</script><script>'
+body_has_f "svg thumbnail falls back to the default og image" 'content="https://127.0.0.1:'"${SEO_PORT}"'/images/og-default.png"'
+body_has_f "crawler h1 escaped" '<h1>&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;&quot;&#039;&amp;x</h1>'
+
+echo "== seo: lists"
+check "project list -> 200" 200 "$(http "$SEO/du-an")"
+body_has_f "list title" '<title>Dự án bất động sản | PN Test</title>'
+body_has_f "list links the native project" '<li><a href="/du-an/du-an-mot">Dự án Một</a></li>'
+body_has_f "list links the promoted project" '<li><a href="/du-an/ky-gui-sang-du-an">Chuyển dự án</a></li>'
+check "consignment list -> 200" 200 "$(http "$SEO/ky-gui")"
+body_has_f "ky-gui list has the ky-gui listing" '/ky-gui/ky-gui-dang'
+body_lacks_f "ky-gui list has no draft" 'ky-gui-nhap'
+body_lacks_f "ky-gui list has no promoted listing" 'ky-gui-sang-du-an'
+check "news list -> 200" 200 "$(http "$SEO/tin-tuc")"
+body_has_f "news list links an article" '/tin-tuc/tin-thuong'
+body_lacks_f "news list skips a noindex article" 'tin-noindex'
+check "property list -> 200" 200 "$(http "$SEO/chuyen-nhuong")"
+body_has_f "property list links a property" '/chuyen-nhuong/bds-mot'
+
+echo "== seo: 404, noindex, redirects"
+check "unknown news slug -> 404" 404 "$(http "$SEO/tin-tuc/khong-co")"
+body_has_f "404 keeps the SPA shell" '/assets/index-abc.js'
+body_has_f "404 is noindex" '<meta name="robots" content="noindex, nofollow" />'
+header_has "404 sends X-Robots-Tag" '^x-robots-tag: noindex, nofollow'
+body_lacks_f "404 has no canonical" 'rel="canonical"'
+check "unknown path -> 404" 404 "$(http "$SEO/khong-co-trang-nay")"
+check "unknown nested path -> 404" 404 "$(http "$SEO/du-an/a/b")"
+check "static index.html is not a route -> 404" 404 "$(http "$SEO/index.html")"
+check "double slash -> 404" 404 "$(http "$SEO//du-an")"
+check "invalid UTF-8 slug -> 404" 404 "$(http "$SEO/tin-tuc/%E0%FF")"
+check "draft consignment -> 404" 404 "$(http "$SEO/ky-gui/ky-gui-nhap")"
+body_lacks_f "draft title never shown" 'Bản nháp'
+check "listing under the wrong section -> 404" 404 "$(http "$SEO/chuyen-nhuong/ky-gui-dang")"
+check "noindex news -> 200" 200 "$(http "$SEO/tin-tuc/tin-noindex")"
+body_has_f "noindex item robots meta" '<meta name="robots" content="noindex, nofollow" />'
+header_has "noindex item X-Robots-Tag" '^x-robots-tag: noindex, nofollow'
+body_lacks_f "noindex item has no canonical" 'rel="canonical"'
+body_lacks_f "noindex item has no JSON-LD" 'application/ld+json'
+check "sold + noindex consignment -> 200" 200 "$(http "$SEO/ky-gui/ky-gui-da-ban")"
+header_has "sold noindex X-Robots-Tag" '^x-robots-tag: noindex, nofollow'
+check "consignment of another section -> 301" 301 "$(http "$SEO/ky-gui/ky-gui-sang-du-an")"
+header_has "301 points at the real section (absolute URL)" '^location: https://127.0.0.1:'"${SEO_PORT}"'/du-an/ky-gui-sang-du-an'
+check "consignment promoted to chuyen-nhuong -> 301" 301 "$(http "$SEO/ky-gui/ky-gui-sang-bds")"
+header_has "301 to chuyen-nhuong" '^location: .*/chuyen-nhuong/ky-gui-sang-bds'
+check "admin -> 200" 200 "$(http "$SEO/admin")"
+body_has_f "admin is noindex" '<meta name="robots" content="noindex, nofollow" />'
+header_has "admin X-Robots-Tag" '^x-robots-tag: noindex, nofollow'
+body_lacks_f "admin has no canonical" 'rel="canonical"'
+body_lacks_f "admin page has no crawler content" 'seo-fallback'
+
+echo "== seo: sitemap and robots"
+check "sitemap.xml -> 200" 200 "$(http "$SEO/sitemap.xml")"
+header_has "sitemap is XML" '^content-type: application/xml; charset=utf-8'
+body_has_f "sitemap root" '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+for p in "" du-an chuyen-nhuong ky-gui tin-tuc lien-he tin-tuc/tin-thuong tin-tuc/tin-hostile du-an/du-an-mot chuyen-nhuong/bds-mot ky-gui/ky-gui-dang du-an/ky-gui-sang-du-an chuyen-nhuong/ky-gui-sang-bds; do
+  body_has_f "sitemap lists /$p" "<loc>https://127.0.0.1:${SEO_PORT}/${p}</loc>"
+done
+body_has_f "sitemap lastmod from publishedAt" '<loc>https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/tin-thuong</loc><lastmod>2026-03-01</lastmod>'
+body_has_f "sitemap lastmod normalised from ISO" '<lastmod>2026-04-01T00:00:00+00:00</lastmod>'
+body_lacks_f "sitemap skips noindex news" 'tin-noindex'
+body_lacks_f "sitemap skips drafts" 'ky-gui-nhap'
+body_lacks_f "sitemap skips sold noindex" 'ky-gui-da-ban'
+body_lacks_f "sitemap skips admin" '/admin'
+check "every sitemap URL is absolute" "$(grep -o '<loc>' "$BODY" | wc -l | tr -d ' ')" "$(grep -o "<loc>https://127.0.0.1:${SEO_PORT}/" "$BODY" | wc -l | tr -d ' ')"
+check "robots.txt -> 200" 200 "$(http "$SEO/robots.txt")"
+header_has "robots is plain text" '^content-type: text/plain; charset=utf-8'
+body_has_f "robots allows all" 'Allow: /'
+body_has_f "robots blocks admin" 'Disallow: /admin'
+body_has_f "robots blocks api" 'Disallow: /api/'
+body_has_f "robots points at the sitemap" "Sitemap: https://127.0.0.1:${SEO_PORT}/sitemap.xml"
+check "Google HTML verification file -> 200" 200 "$(http "$SEO/google1234567890abcdef.html")"
+header_has "verification file is text/html" '^content-type: text/html; charset=utf-8'
+check "verification file body is exactly the stored content" "google-site-verification: google1234567890abcdef.html" "$(cat "$BODY")"
+check "another google*.html name -> 404" 404 "$(http "$SEO/google0000000000000000.html")"
+
+echo "== seo: HTTP behaviour"
+check "POST -> 405" 405 "$(http -X POST --data x "$SEO/")"
+header_has "405 lists the allowed methods" '^allow: GET, HEAD'
+check "PUT -> 405" 405 "$(http -X PUT --data x "$SEO/tin-tuc/tin-thuong")"
+check "HEAD -> 200" 200 "$(http -I "$SEO/tin-tuc/tin-thuong")"
+check "request URI over 2000 chars -> 414" 414 "$(http "$SEO/tin-tuc/$(head -c 2100 /dev/zero | tr '\0' 'a')")"
+check "path over 300 chars -> 414" 414 "$(http "$SEO/tin-tuc/$(head -c 400 /dev/zero | tr '\0' 'a')")"
+check "first fetch for the ETag" 200 "$(http "$SEO/tin-tuc/tin-thuong")"
+ETAG="$(grep -i '^etag:' "$HEADERS" | sed 's/^[Ee][Tt]ag: *//' | tr -d '\r')"
+LASTMOD="$(grep -i '^last-modified:' "$HEADERS" | sed 's/^[Ll]ast-[Mm]odified: *//' | tr -d '\r')"
+check "If-None-Match with the ETag -> 304" 304 "$(http -H "If-None-Match: ${ETAG}" "$SEO/tin-tuc/tin-thuong")"
+check "304 has no body" 0 "$(wc -c < "$BODY" | tr -d ' ')"
+check "If-None-Match with another ETag -> 200" 200 "$(http -H 'If-None-Match: W/"other"' "$SEO/tin-tuc/tin-thuong")"
+check "If-Modified-Since with the Last-Modified -> 304" 304 "$(http -H "If-Modified-Since: ${LASTMOD}" "$SEO/tin-tuc/tin-thuong")"
+check "404 is never answered with 304" 404 "$(http -H "If-None-Match: ${ETAG}" "$SEO/tin-tuc/khong-co")"
+check "Host header decides the canonical host" 200 "$(http -H 'Host: www.example.test' "$SEO/tin-tuc/tin-thuong")"
+body_has_f "canonical uses the request Host" '<link rel="canonical" href="https://www.example.test/tin-tuc/tin-thuong" />'
+check "hostile Host header -> 200" 200 "$(http -H 'Host: a"b<c' "$SEO/tin-tuc/tin-thuong")"
+body_has_f "hostile Host falls back to the production host" '<link rel="canonical" href="https://phuongnamrealty.vn/tin-tuc/tin-thuong" />'
+body_lacks_f "hostile Host is never echoed" 'a"b<c'
+write_config "$AUTH_KEY" "'site_url' => 'https://canonical.example/',"
+check "site_url configured -> 200" 200 "$(http -H 'Host: www.example.test' "$SEO/tin-tuc/tin-thuong")"
+body_has_f "canonical uses site_url, not Host" '<link rel="canonical" href="https://canonical.example/tin-tuc/tin-thuong" />'
+check "sitemap uses site_url" 200 "$(http "$SEO/sitemap.xml")"
+body_has_f "sitemap URLs on site_url" '<loc>https://canonical.example/tin-tuc/tin-thuong</loc>'
+write_config "$AUTH_KEY"
+
+echo "== seo: indexSite = false"
+write_company false
+check "robots.txt when indexing is off -> 200" 200 "$(http "$SEO/robots.txt")"
+body_has_f "robots disallows everything" 'Disallow: /'
+body_lacks_f "robots has no Sitemap line" 'Sitemap:'
+body_lacks_f "robots has no Allow line" 'Allow: /'
+check "sitemap when indexing is off -> 200" 200 "$(http "$SEO/sitemap.xml")"
+check "sitemap is an empty urlset" 0 "$(grep -c '<url>' "$BODY" | tr -d ' ')"
+body_has_f "empty sitemap is still valid XML" '</urlset>'
+check "page when indexing is off -> 200" 200 "$(http "$SEO/tin-tuc/tin-thuong")"
+body_has_f "page is noindex" '<meta name="robots" content="noindex, nofollow" />'
+header_has "page X-Robots-Tag" '^x-robots-tag: noindex, nofollow'
+write_company true
+
+echo "== seo: missing and corrupt data"
+rm -f "$ROOT/data/news.json"
+check "news.json missing -> list still served from the seed" 200 "$(http "$SEO/tin-tuc")"
+check "the SEO shell never creates data files" 0 "$([ -f "$ROOT/data/news.json" ] && echo 1 || echo 0)"
+check "slug from the missing file -> 404, not an error" 404 "$(http "$SEO/tin-tuc/tin-thuong")"
+printf '{{{ not json' > "$ROOT/data/news.json"
+check "corrupt news.json -> list served from the seed" 200 "$(http "$SEO/tin-tuc")"
+body_has_f "seed article is linked" '/tin-tuc/xu-huong-gia-bat-dong-san-ven-song-2025'
+printf '[]' > "$ROOT/data/company.json"
+check "company.json with the wrong shape -> home 200" 200 "$(http "$SEO/")"
+body_has_f "default title from the seed company" '<title>Phương Nam Realty — Kiến tạo giá trị, Đồng hành cùng bạn</title>'
+printf '"just a string"' > "$ROOT/data/projects.json"
+check "projects.json with the wrong shape -> 200" 200 "$(http "$SEO/du-an")"
+check "corrupt data still gives a valid sitemap" 200 "$(http "$SEO/sitemap.xml")"
+body_has_f "sitemap built from the seeds" '<urlset'
+
+echo "== seo: unusable server config falls back to the static shell"
+BROKEN="$ROOT/broken"
+mkdir -p "$BROKEN/server" "$BROKEN/public_html"
+cp -r "$REPO/server/src" "$REPO/server/seed" "$REPO/server/seo" "$BROKEN/server/"
+printf '<?php return "not an array";' > "$BROKEN/server/config.php"
+cp "$ROOT/web/index.html" "$BROKEN/public_html/index.html"
+cat > "$BROKEN/router.php" <<PHPROUTER
+<?php
+\$_SERVER['SCRIPT_FILENAME'] = '${BROKEN}/server/seo/index.php';
+require '${BROKEN}/server/seo/index.php';
+PHPROUTER
+"$PHP_BIN" -d opcache.enable=0 -S "127.0.0.1:${BROKEN_PORT}" "$BROKEN/router.php" >"$BROKEN/app.log" 2>&1 &
+PIDS+=($!)
+wait_for "http://127.0.0.1:${BROKEN_PORT}/" || { echo "broken-config SEO shell did not start"; exit 2; }
+check "page with a broken config -> 200" 200 "$(http "http://127.0.0.1:${BROKEN_PORT}/tin-tuc/tin-thuong")"
+body_has_f "broken config serves the untouched static index.html" '<title>STATIC-TITLE</title>'
+body_lacks_f "broken config injects nothing" 'og:locale'
+check "sitemap with a broken config -> 503 (never a fake page)" 503 "$(http "http://127.0.0.1:${BROKEN_PORT}/sitemap.xml")"
+check "robots.txt with a broken config -> 503" 503 "$(http "http://127.0.0.1:${BROKEN_PORT}/robots.txt")"
+check "no PHP error text in the fallback" 0 "$(grep -ci 'warning\|fatal\|stack trace\|exception' "$BODY" | tr -d ' ')"
+
+echo "== seo: derivation test vectors (shared with src/utils/seo.ts)"
+cat > "$ROOT/seo_vectors.php" <<'PHPVEC'
+<?php
+declare(strict_types=1);
+require $argv[1] . '/storage.php';
+require $argv[1] . '/seo.php';
+$v = json_decode(file_get_contents($argv[2]), true, 64, JSON_THROW_ON_ERROR);
+$fail = 0;
+$total = 0;
+$expect = static function (string $name, mixed $want, mixed $got) use (&$fail, &$total): void {
+    $total++;
+    if ($want !== $got) {
+        $fail++;
+        fwrite(STDERR, "VECTOR FAIL $name\n  want: " . json_encode($want, JSON_UNESCAPED_UNICODE) . "\n  got:  " . json_encode($got, JSON_UNESCAPED_UNICODE) . "\n");
+    }
+};
+foreach ($v['plainText'] as $i => [$in, $out]) {
+    $expect("plainText #$i", $out, pn_seo_plain_text($in));
+}
+foreach ($v['snippet'] as $i => [$in, $out]) {
+    $expect("snippet #$i", $out, pn_seo_snippet($in));
+}
+foreach ($v['usableImage'] as $i => [$in, $out]) {
+    $expect("usableImage #$i", $out, pn_seo_usable_image($in));
+}
+foreach ($v['keywords'] as $i => [$in, $out]) {
+    $expect("keywords #$i", $out, pn_seo_clean_keywords($in));
+}
+foreach ($v['items'] as $i => $case) {
+    $site = pn_seo_site($case['company']);
+    $meta = pn_seo_item_meta($case['kind'], $case['item'], $site, $case['path']);
+    foreach ($case['expect'] as $key => $want) {
+        $expect("items #$i {$case['name']} $key", $want, $meta[$key]);
+    }
+}
+foreach ($v['pages'] as $i => $case) {
+    $site = pn_seo_site($case['company']);
+    $meta = $case['page'] === 'home' ? pn_seo_home_meta($site) : pn_seo_static_meta($case['page'], $case['path'], $site);
+    foreach ($case['expect'] as $key => $want) {
+        $expect("pages #$i {$case['page']} $key", $want, $meta[$key]);
+    }
+}
+echo $total . ' ' . $fail;
+PHPVEC
+VECTOR_OUT="$("$PHP_BIN" "$ROOT/seo_vectors.php" "$ROOT/server/src" "$REPO/server/tests/seo-vectors.json" 2>"$ROOT/vectors.err")"
+cat "$ROOT/vectors.err"
+check "PHP derivation matches every shared vector (checked: ${VECTOR_OUT%% *})" 0 "${VECTOR_OUT##* }"
+
+rm -f "$ROOT/data/news.json" "$ROOT/data/projects.json" "$ROOT/data/properties.json" "$ROOT/data/consignments.json" "$ROOT/data/company.json"
 
 echo "== OTP lockout"
 check "second OTP request -> 200" 200 "$(http -X POST -H "$JSON" --data "{\"phone\":\"${ADMIN_PHONE}\"}" "$BASE?r=auth/otp")"

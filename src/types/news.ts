@@ -1,3 +1,5 @@
+import type { ItemSeo } from './seo';
+
 export type NewsCategory = 'thi-truong' | 'tin-tuc' | 'du-an';
 
 export interface NewsArticle {
@@ -12,4 +14,5 @@ export interface NewsArticle {
   author: string;
   publishedAt: string;
   readTime: string;
+  seo?: ItemSeo;
 }

@@ -1,3 +1,5 @@
+import type { ItemSeo } from './seo';
+
 export type PropertyType = 'can-ho' | 'nha-pho' | 'biet-thu' | 'shophouse' | 'dat-nen';
 
 export interface Property {
@@ -27,6 +29,7 @@ export interface Property {
   createdAt: string;
   // Set only on listings promoted from Ký gửi; 'sold' shows a "Đã giao dịch" badge.
   consignmentStatus?: 'published' | 'sold';
+  seo?: ItemSeo;
 }
 
 export interface PropertyFilter {

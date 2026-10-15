@@ -1,11 +1,12 @@
 import type { KeyboardEvent } from 'react';
 
-export type SettingsTab = 'website' | 'form' | 'footer' | 'security';
+export type SettingsTab = 'website' | 'form' | 'footer' | 'seo' | 'security';
 
 const TABS: Array<{ id: SettingsTab; label: string }> = [
   { id: 'website', label: 'Thông tin Website' },
   { id: 'form', label: 'Form' },
   { id: 'footer', label: 'Chân trang' },
+  { id: 'seo', label: 'SEO' },
   { id: 'security', label: 'Bảo mật' },
 ];
 
@@ -25,7 +26,7 @@ export function SettingsTabBar({ active, onChange }: SettingsTabBarProps) {
   };
 
   return (
-    <div role="tablist" aria-label="Cài đặt" className="inline-flex gap-1 p-1 rounded-xl bg-slate-200/70">
+    <div role="tablist" aria-label="Cài đặt" className="inline-flex max-w-full overflow-x-auto gap-1 p-1 rounded-xl bg-slate-200/70">
       {TABS.map((tab, index) => {
         const selected = tab.id === active;
         return (

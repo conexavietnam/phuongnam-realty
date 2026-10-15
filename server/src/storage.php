@@ -56,6 +56,21 @@ const PN_CONSIGNMENT_TEXT_LIMITS = [
 ];
 const PN_CONSIGNMENT_NUMBER_KEYS = ['price', 'area', 'bedrooms', 'bathrooms'];
 
+const PN_SEO_TITLE_MAX = 120;
+const PN_SEO_DESCRIPTION_MAX = 320;
+const PN_SEO_MAX_KEYWORDS = 15;
+const PN_SEO_KEYWORD_MAX = 60;
+const PN_SEO_URL_MAX = 500;
+const PN_SEO_SUFFIX_MAX = 60;
+const PN_SEO_ITEM_KEYS = ['title', 'description', 'keywords', 'ogImage', 'noindex'];
+const PN_SEO_SITE_KEYS = ['titleSuffix', 'defaultDescription', 'defaultOgImage', 'googleSiteVerification', 'bingSiteVerification', 'googleHtmlFile', 'indexSite'];
+const PN_SEO_SLUG_PATTERN = '/^[a-z0-9-]{0,200}$/D';
+/** A site path under /uploads/ or /images/, or an https URL: nothing that could carry markup. */
+const PN_SEO_IMAGE_PATTERN = '~^(?:/(?:uploads|images)/[^\s"\'<>\\\\]*|https://[^\s"\'<>\\\\]+)$~D';
+const PN_SEO_VERIFICATION_PATTERN = '/^[A-Za-z0-9_-]{10,100}$/D';
+const PN_SEO_HTML_FILE_NAME_PATTERN = '/^google[a-z0-9]{8,64}\.html$/D';
+const PN_SEO_HTML_FILE_CONTENT_PATTERN = '/^[A-Za-z0-9 :._-]{1,200}$/D';
+
 function pn_collection_kind(string $name): ?string
 {
     return PN_PUBLIC_COLLECTIONS[$name] ?? PN_ADMIN_COLLECTIONS[$name] ?? null;
@@ -175,6 +190,9 @@ function pn_valid_consignment_item(mixed $item): bool
     if (isset($item['featured']) && !is_bool($item['featured'])) {
         return false;
     }
+    if (!pn_valid_seo_fields($item)) {
+        return false;
+    }
     if (isset($item['images'])) {
         if (!is_array($item['images']) || !array_is_list($item['images']) || count($item['images']) > PN_CONSIGNMENT_MAX_IMAGES) {
             return false;
@@ -199,6 +217,78 @@ function pn_valid_string_list(mixed $list, int $maxItems, int $maxLength): bool
         }
     }
     return true;
+}
+
+function pn_valid_seo_string(mixed $value, int $maxLength): bool
+{
+    return $value === null || (is_string($value) && mb_strlen($value) <= $maxLength);
+}
+
+function pn_valid_seo_image(mixed $value): bool
+{
+    return $value === null || $value === ''
+        || (is_string($value) && strlen($value) <= PN_SEO_URL_MAX && preg_match(PN_SEO_IMAGE_PATTERN, $value) === 1);
+}
+
+function pn_is_object_array(mixed $value): bool
+{
+    return is_array($value) && ($value === [] || !array_is_list($value));
+}
+
+/** Optional per-item SEO object: bounded text, a short keyword list, a safe image URL and a noindex flag. */
+function pn_valid_seo(mixed $seo): bool
+{
+    if ($seo === null) {
+        return true;
+    }
+    if (!pn_is_object_array($seo) || array_diff(array_keys($seo), PN_SEO_ITEM_KEYS) !== []) {
+        return false;
+    }
+    return pn_valid_seo_string($seo['title'] ?? null, PN_SEO_TITLE_MAX)
+        && pn_valid_seo_string($seo['description'] ?? null, PN_SEO_DESCRIPTION_MAX)
+        && (!isset($seo['keywords']) || pn_valid_string_list($seo['keywords'], PN_SEO_MAX_KEYWORDS, PN_SEO_KEYWORD_MAX))
+        && pn_valid_seo_image($seo['ogImage'] ?? null)
+        && (!isset($seo['noindex']) || is_bool($seo['noindex']));
+}
+
+/** slug (lowercase letters, digits, dashes) and seo of a project, property, news or consignment item. */
+function pn_valid_seo_fields(array $item): bool
+{
+    if (isset($item['slug']) && (!is_string($item['slug']) || preg_match(PN_SEO_SLUG_PATTERN, $item['slug']) !== 1)) {
+        return false;
+    }
+    return pn_valid_seo($item['seo'] ?? null);
+}
+
+function pn_valid_google_html_file(mixed $file): bool
+{
+    return $file === null || (
+        pn_is_object_array($file) && array_diff(array_keys($file), ['name', 'content']) === []
+        && is_string($file['name'] ?? null) && preg_match(PN_SEO_HTML_FILE_NAME_PATTERN, $file['name']) === 1
+        && is_string($file['content'] ?? null) && preg_match(PN_SEO_HTML_FILE_CONTENT_PATTERN, $file['content']) === 1
+    );
+}
+
+/** company.seo: site-wide SEO settings. */
+function pn_valid_company_seo(mixed $seo): bool
+{
+    if ($seo === null) {
+        return true;
+    }
+    if (!pn_is_object_array($seo) || array_diff(array_keys($seo), PN_SEO_SITE_KEYS) !== []) {
+        return false;
+    }
+    foreach (['googleSiteVerification', 'bingSiteVerification'] as $key) {
+        $code = $seo[$key] ?? null;
+        if ($code !== null && $code !== '' && (!is_string($code) || preg_match(PN_SEO_VERIFICATION_PATTERN, $code) !== 1)) {
+            return false;
+        }
+    }
+    return pn_valid_seo_string($seo['titleSuffix'] ?? null, PN_SEO_SUFFIX_MAX)
+        && pn_valid_seo_string($seo['defaultDescription'] ?? null, PN_SEO_DESCRIPTION_MAX)
+        && pn_valid_seo_image($seo['defaultOgImage'] ?? null)
+        && pn_valid_google_html_file($seo['googleHtmlFile'] ?? null)
+        && (!isset($seo['indexSite']) || is_bool($seo['indexSite']));
 }
 
 function pn_valid_consignments(array $list): bool
@@ -249,7 +339,10 @@ function pn_validate_collection(string $name, mixed $data): bool
         return false;
     }
     if ($kind === 'object') {
-        return $data !== [] && !array_is_list($data);
+        if ($data === [] || array_is_list($data)) {
+            return false;
+        }
+        return $name !== 'company' || pn_valid_company_seo($data['seo'] ?? null);
     }
     if (!array_is_list($data)) {
         return false;
@@ -268,6 +361,13 @@ function pn_validate_collection(string $name, mixed $data): bool
     }
     if ($name === 'consignments') {
         return pn_valid_consignments($data);
+    }
+    if (in_array($name, ['projects', 'properties', 'news'], true)) {
+        foreach ($data as $item) {
+            if (!pn_valid_seo_fields($item)) {
+                return false;
+            }
+        }
     }
     return true;
 }

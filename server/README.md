@@ -12,6 +12,7 @@ Small same-origin API for the SPA. No database, no Node on the server. Secrets l
   server/
     config.php                   <- real secrets, never committed
     api/index.php                <- PHP entry point (nginx maps /api/index.php to this file)
+    seo/index.php                <- SEO shell: HTML routes, sitemap.xml, robots.txt (see "SEO shell" below)
     src/  seed/                  <- from this repo's server/src and server/seed
   public_html/                   <- nginx root: ONLY the built SPA (contents of `dist/`)
 ```
@@ -43,7 +44,7 @@ chmod 750 server server/api server/src server/seed data
 chmod 640 server/config.php server/src/*.php
 chmod 770 data                              # php-fpm (group www-data) must write here
 chmod 755 uploads                           # php-fpm user owns it; nginx reads it
-# php-fpm pool: add <app root>/server, <app root>/data and <app root>/uploads to open_basedir
+# php-fpm pool: add <app root>/server, <app root>/data, <app root>/uploads and <app root>/public_html (the SEO shell reads index.html) to open_basedir
 ```
 
 ### Every release
@@ -61,12 +62,12 @@ The script, in order:
 
 1. runs `npm run build`, requires `dist/index.html`, refuses `dist/` containing `api/`, `uploads/` or
    `config.php`, and aborts if anything shaped like a Telegram bot token is in `dist/`;
-2. uploads tarballs of `dist`, `server/api`, `server/src` and `server/seed` to a staging dir
+2. uploads tarballs of `dist`, `server/api`, `server/seo`, `server/src` and `server/seed` to a staging dir
    (`$APP_ROOT/.deploy-incoming/<timestamp>`);
 3. on the server: `php -l` on every PHP file, then a timestamped backup
    `$APP_ROOT/backups/pre-deploy-<timestamp>.tgz` of `uploads` and `data` (dir mode 700,
    newest 14 kept);
-4. replaces the built files in `public_html/`, then installs `server/api`, `server/src` and
+4. replaces the built files in `public_html/`, then installs `server/api`, `server/seo`, `server/src` and
    `server/seed`. It never touches `uploads/`, `data/` or `server/config.php`;
 5. fixes permissions (public files 755/644, `server/src` and `server/seed` 750/640), reloads php-fpm;
 6. checks from your machine: home page 200, `api/index.php?r=auth/me` 200, `/server/config.php` not 200.
@@ -139,7 +140,96 @@ location ^~ /uploads/ {
 }
 ```
 
-The pool's `open_basedir` must include `<app root>/server`, `<app root>/data` and `<app root>/uploads`.
+The pool's `open_basedir` must include `<app root>/server`, `<app root>/data`, `<app root>/uploads` and `<app root>/public_html`.
+
+## SEO shell (Google, Zalo, Facebook)
+
+The SPA ships one static `<head>`. Crawlers that do not run JavaScript (Zalo, Facebook) and Google's first pass
+need the real title, description, canonical, Open Graph tags and JSON-LD in the HTML. `server/seo/index.php`
+(logic in `server/src/seo.php`) takes the built `public_html/index.html`, replaces its title/meta tags with the
+ones for the requested URL, puts a small crawler-readable block (h1, description, excerpt, links) inside
+`<div id="root">` (React replaces it on start-up) and sends it. It only reads data (falls back to `server/seed`
+when a collection is missing or corrupt) and never writes. It also serves `/sitemap.xml`, `/robots.txt` and the
+Google HTML verification file `/google<token>.html` (name and content come from Cài đặt > SEO).
+
+Behaviour: unknown paths and unknown slugs answer **404** with the normal SPA shell and `noindex` (no soft 404); a
+`/ky-gui/<slug>` whose listing belongs to another section answers **301** to its real URL; drafts never resolve;
+items with `seo.noindex` (or the whole site when `company.seo.indexSite` is false) get `<meta name="robots">` and
+`X-Robots-Tag`; `/admin` is always `noindex, nofollow`; only GET/HEAD (405 otherwise); HTML has
+`Cache-Control: public, max-age=0, must-revalidate` + `ETag`/`Last-Modified` (304 supported). If the script
+itself fails (bad config, missing index.html) it logs the error and sends the plain static `index.html`
+(sitemap/robots answer 503 instead of a fake page).
+
+Optional keys in `server/config.php`: `'site_url' => 'https://phuongnamrealty.vn'` (canonical origin; without it
+the script uses `https://` + the Host header) and `'webroot' => '<app root>/public_html'` (default is
+`<app root>/public_html`).
+
+### Route table (one table: `PN_SEO_ROUTES` in `server/src/seo.php`, `SITE_ROUTES` in `src/seo/routes.ts`)
+
+| Path | Page | Answer |
+|-|-|-|
+| `/` | home | 200, Organization + WebSite JSON-LD |
+| `/du-an`, `/chuyen-nhuong`, `/ky-gui`, `/tin-tuc` | lists | 200, up to 30 item links in the body |
+| `/du-an/:slug` | project, or a promoted listing with section `du-an` | 200 / 404 |
+| `/chuyen-nhuong/:slug` | property, or a promoted listing with section `chuyen-nhuong` | 200 / 404 |
+| `/ky-gui/:slug` | published or sold listing | 200 / 301 to its section / 404 (drafts) |
+| `/tin-tuc/:slug` | news article (Article JSON-LD) | 200 / 404 |
+| `/lien-he` | contact | 200 |
+| `/admin` | admin SPA | 200, `noindex, nofollow`, no data lookup |
+| `/sitemap.xml`, `/robots.txt`, `/google<token>.html` | generated | 200 (verification file only for the configured name) |
+| anything else | SPA shell | 404, `noindex` |
+
+### nginx
+
+Add inside the site's `server { }` (apply it BEFORE deploying this release: the post-deploy check requests
+`/sitemap.xml`). `root` stays `<app root>/public_html`. The `/api/` and `/uploads/` blocks above stay as they are.
+
+```nginx
+root <app root>/public_html;
+
+# "/" must reach PHP. It is an exact match, so the "index" directive never serves index.html for it.
+location = / { try_files /__seo__ @seo; }
+
+# machine-readable documents; a PHP failure stays a 5xx here (crawlers retry), never an HTML page
+location = /sitemap.xml { try_files /__seo__ @seo_doc; }
+location = /robots.txt { try_files /__seo__ @seo_doc; }
+location ~ ^/google[a-z0-9]+\.html$ { try_files /__seo__ @seo_doc; }
+
+# the raw SPA shell stays reachable (the service worker precaches it) but is never indexed
+location = /index.html { add_header X-Robots-Tag "noindex" always; }
+
+# real files (assets, icons, sw.js, manifest, images) are served as is; every other URL goes to the SEO shell.
+# Do NOT add "$uri/" or "/index.html" to this try_files: that would bypass PHP.
+location / { try_files $uri @seo; }
+
+location @seo {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME <app root>/server/seo/index.php;
+    fastcgi_param REQUEST_URI $request_uri;
+    fastcgi_pass unix:/run/php/<pool>.sock;
+    fastcgi_read_timeout 10s;
+    fastcgi_intercept_errors on;
+    error_page 500 502 503 504 = @spa_static;     # PHP down: serve the plain SPA so the site never breaks
+}
+
+location @seo_doc {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME <app root>/server/seo/index.php;
+    fastcgi_param REQUEST_URI $request_uri;
+    fastcgi_pass unix:/run/php/<pool>.sock;
+    fastcgi_read_timeout 10s;
+}
+
+location @spa_static { rewrite ^ /index.html break; }
+```
+
+Why it works: `/` and the three documents never look at the disk; every other URL is first looked up as a file
+(so `/assets/...`, `/favicon.svg` keep being served statically) and otherwise handed to PHP, whose 404/301 answers
+pass through untouched (`fastcgi_intercept_errors` only rewrites the 5xx codes listed in `error_page`).
+Check after applying: `nginx -t && systemctl reload nginx`, then
+`curl -sI https://<domain>/ -A Googlebot` (expect `200`, `etag`), `curl -s https://<domain>/tin-tuc/<slug> | grep -E '<title>|canonical'`,
+`curl -s -o /dev/null -w '%{http_code}' https://<domain>/khong-co` (expect `404`).
+Full guide: `docs/SEO.md`.
 
 Serve the site over HTTPS only: the session cookie is `Secure`, `HttpOnly`, `SameSite=Strict`
 (path `/api/`). Keep `server/` and `data/` outside the nginx root.
@@ -149,7 +239,7 @@ Serve the site over HTTPS only: the session cookie is `Secure`, `HttpOnly`, `Sam
 | Route | Method | Auth | Purpose |
 |-|-|-|-|
 | `data&c=<name>` | GET | public for properties, projects, news, agents, consignments, company, filters, menu; admin for customer_leads, media | read a collection. `consignments` has two views on the same URL: an admin session gets everything (`no-store`); everyone else gets only `published`/`sold` items (missing status = published) without keys starting with `_` or named `internalNote`, `leadId`, `ownerName`, `ownerPhone` (`no-cache`, `Vary: Cookie`) |
-| `data&c=<name>` | PUT | admin + `X-CSRF-Token` | replace a collection (JSON, max 2MB, shape-validated; `consignments` items also need an `id`, a `status` of draft/published/sold when present, bounded text/image sizes, numeric price/area/rooms, `section` in ky-gui/chuyen-nhuong/du-an, bounded investor/projectStatus/priceFrom/floor/view/categoryLabel and a highlights list of at most 20 short strings) |
+| `data&c=<name>` | PUT | admin + `X-CSRF-Token` | replace a collection (JSON, max 2MB, shape-validated; `consignments` items also need an `id`, a `status` of draft/published/sold when present, bounded text/image sizes, numeric price/area/rooms, `section` in ky-gui/chuyen-nhuong/du-an, bounded investor/projectStatus/priceFrom/floor/view/categoryLabel and a highlights list of at most 20 short strings; projects/properties/news/consignments also validate `slug` (`a-z0-9-`, max 200) and an optional `seo` object: title max 120, description max 320, at most 15 keywords of 60 chars, `ogImage` a `/uploads/`, `/images/` or https URL, boolean `noindex`, no other keys; `company.seo` is bounded too: suffix, description, verification codes, `google<token>.html` file name and content, `indexSite` boolean) |
 | `lead` | POST | public | contact/consignment form: validated, honeypot `website`, 5 per 10 min per IP, saved, Telegram notice |
 | `auth/mode` | GET | public | `{mode: password or bootstrap, twofa: false}` and nothing more |
 | `auth/login` | POST `{email,password,code?}` | public | password mode only (bootstrap: 403). Max 4KB. Same 401 `Email hoặc mật khẩu không đúng` for unknown email, wrong password, wrong/missing code; `401 {twofa:true}` only after the password was verified. 429 + `Retry-After` for: 10 attempts/15 min per IP, 120/10 min global, per-account lock after 5 / 8 / 10 failures (1 / 5 / 30 min, identical for unknown emails). Regenerates the session |
@@ -206,7 +296,7 @@ For tests without real Telegram, set `telegram_api_base` to a local stub and use
 bash server/tests/smoke.sh            # optional: PHP_BIN=php8.3 APP_PORT=18080 STUB_PORT=18081
 ```
 
-It copies `server/` into a temp app root with its own config, starts `php -S` for the API and for a stub Telegram server (to read the OTP), and prints PASS/FAIL per check. It exits non-zero when anything fails and removes the temp dir. It never uses real data or the real Telegram API. Checks: `php -l` on every file (including `server/bin`); email/password login, lockouts, password policy, 2FA (RFC 6238 vectors), epoch/idle logic and `reset-admin.php`; anonymous 401s (leads, media, consignment PUT, upload); foreign Origin 403; OTP login through the stub; PUT without/with a wrong CSRF token 403; invalid consignment status/price/size/shape 422; public consignments hide drafts and private keys while the admin sees them (plus cache headers); upload of PHP code 415; OTP lockout 429.
+It copies `server/` (including `server/seo/`) into a temp app root with its own config, starts `php -S` for the API and for a stub Telegram server (to read the OTP), and prints PASS/FAIL per check. It exits non-zero when anything fails and removes the temp dir. It never uses real data or the real Telegram API. Checks: `php -l` on every file (including `server/bin`); email/password login, lockouts, password policy, 2FA (RFC 6238 vectors), epoch/idle logic and `reset-admin.php`; anonymous 401s (leads, media, consignment PUT, upload); foreign Origin 403; OTP login through the stub; PUT without/with a wrong CSRF token 403; invalid consignment status/price/size/shape 422; public consignments hide drafts and private keys while the admin sees them (plus cache headers); upload of PHP code 415; OTP lockout 429; the new `seo`/`slug`/`company.seo` write validation (422 cases); the SEO shell (head injection, escaping of hostile titles in the head and in JSON-LD, 404/301/noindex rules, sitemap/robots/Google file, 304, canonical host, `indexSite=false`, missing/corrupt data, broken config fallback) on extra `php -S` instances (ports `SEO_PORT`=18082, `BROKEN_PORT`=18083); and the derivation vectors in `server/tests/seo-vectors.json`, which `node scripts/check-seo.mjs` runs against `src/utils/seo.ts`.
 
 ## Rotating the Telegram bot token
 

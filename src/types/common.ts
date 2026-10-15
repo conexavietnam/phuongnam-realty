@@ -1,3 +1,5 @@
+import type { CompanySeo } from './seo';
+
 export interface Image {
   src: string;
   alt: string;
@@ -78,6 +80,7 @@ export interface CompanyInfo {
   social: SocialLinks;
   googleMapsEmbed: string;
   googleMapsLink: string;
+  seo?: CompanySeo;
 }
 
 // Bounds are in billions of VND (inclusive); null/undefined means open-ended.

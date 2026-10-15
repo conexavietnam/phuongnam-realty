@@ -23,6 +23,11 @@ return [
     // (recover with php server/bin/reset-admin.php).
     'auth_key' => 'CHANGE_ME_BASE64_32_BYTES',
 
+    // SEO shell (server/seo/index.php). Canonical origin of the site; without it the Host header is used.
+    // 'site_url' => 'https://example.com',
+    // Directory holding the built index.html (default: <app root>/public_html).
+    // 'webroot' => dirname(__DIR__) . '/public_html',
+
     // Keep true in production (HTTPS). Only set false for plain-HTTP local testing.
     'cookie_secure' => true,
 

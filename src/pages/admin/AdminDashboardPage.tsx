@@ -31,6 +31,10 @@ import { Logo } from '@/components/common/Logo';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { ImageField } from '@/components/admin/ImageField';
+import { SeoFields } from '@/components/admin/seo/SeoFields';
+import { SlugField } from '@/components/admin/seo/SlugField';
+import { cleanSeoForSave } from '@/utils/seoFields';
+import { slugify } from '@/utils/slug';
 import { GalleryField } from '@/components/admin/GalleryField';
 import { LazyRichTextEditor } from '@/components/admin/LazyRichTextEditor';
 import { useBatchUpload, progressLabel } from '@/components/admin/useBatchUpload';
@@ -41,6 +45,7 @@ import type { SettingsTab } from '@/components/admin/settings/SettingsTabBar';
 import { WebsiteInfoTab } from '@/components/admin/settings/WebsiteInfoTab';
 import { FormSettingsTab } from '@/components/admin/settings/FormSettingsTab';
 import { FooterSettingsTab } from '@/components/admin/settings/FooterSettingsTab';
+import { SeoSettingsTab } from '@/components/admin/settings/SeoSettingsTab';
 import { SecurityTab } from '@/components/admin/settings/SecurityTab';
 import { AccountSetupBanner } from '@/components/admin/AccountSetupBanner';
 import { ConsignmentTab } from '@/components/admin/consignment/ConsignmentTab';
@@ -163,6 +168,16 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     Promise.all([dataStorage.loadAdmin(), mediaService.load()]).catch(showError);
   }, []);
 
+  // Slug helpers for the editors: the slug stored on the server (empty for a new item) decides the
+  // "link will break" warning; news slugs only have to be unique among news (own URL space /tin-tuc).
+  const savedSlugOf = (list: Array<{ id: string; slug: string }>, id: string): string =>
+    list.find((item) => item.id === id)?.slug ?? '';
+
+  const newsSlugConflict = (slug: string, exceptId: string): string | null =>
+    news.some((n) => n.slug === slug && n.id !== exceptId)
+      ? `Đường dẫn "${slug}" đã được dùng bởi một bài viết khác. Vui lòng đổi sang đường dẫn khác.`
+      : null;
+
   // === PROJECT CRUD ACTIONS ===
   const handleOpenAddProject = () => {
     setEditingProject({
@@ -203,14 +218,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     const projectToSave: Project = {
       ...editingProject,
       fullDescription: normalizeEditorHtml(editingProject.fullDescription),
-      slug:
-        editingProject.slug.trim() ||
-        editingProject.name
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/đ/g, 'd')
-          .replace(/[^a-z0-9]/g, '-'),
+      slug: slugify(editingProject.slug.trim() || editingProject.name) || editingProject.id,
+      seo: cleanSeoForSave(editingProject.seo),
     };
 
     const projectConflict = consignmentService.slugConflictMessage(projectToSave.slug, projectToSave.id);
@@ -276,14 +285,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     const propToSave: Property = {
       ...editingProperty,
       fullDescription: normalizeEditorHtml(editingProperty.fullDescription),
-      slug:
-        editingProperty.slug.trim() ||
-        editingProperty.title
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/đ/g, 'd')
-          .replace(/[^a-z0-9]/g, '-'),
+      slug: slugify(editingProperty.slug.trim() || editingProperty.title) || editingProperty.id,
+      seo: cleanSeoForSave(editingProperty.seo),
     };
 
     const propertyConflict = consignmentService.slugConflictMessage(propToSave.slug, propToSave.id);
@@ -342,15 +345,15 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     const newsToSave: NewsArticle = {
       ...editingNews,
       content: normalizedContent,
-      slug:
-        editingNews.slug.trim() ||
-        editingNews.title
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/đ/g, 'd')
-          .replace(/[^a-z0-9]/g, '-'),
+      slug: slugify(editingNews.slug.trim() || editingNews.title) || editingNews.id,
+      seo: cleanSeoForSave(editingNews.seo),
     };
+
+    const newsConflict = newsSlugConflict(newsToSave.slug, newsToSave.id);
+    if (newsConflict) {
+      alert(newsConflict);
+      return;
+    }
 
     if (!(await attempt(() => dataStorage.saveNews(newsToSave)))) return;
     refreshAllData();
@@ -1481,6 +1484,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
               )}
               {settingsTab === 'form' && <FormSettingsTab />}
               {settingsTab === 'footer' && <FooterSettingsTab />}
+              {settingsTab === 'seo' && <SeoSettingsTab />}
               {settingsTab === 'security' && <SecurityTab />}
             </div>
           </div>
@@ -1587,16 +1591,16 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                 />
               </div>
 
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Đường dẫn tĩnh (Slug)</label>
-                <input
-                  type="text"
-                  value={editingProject.slug}
-                  onChange={(e) => setEditingProject({ ...editingProject, slug: e.target.value })}
-                  placeholder="Tự sinh nếu để trống"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono"
-                />
-              </div>
+              <SlugField
+                id="projSlug"
+                value={editingProject.slug}
+                onChange={(slug) => setEditingProject({ ...editingProject, slug })}
+                title={editingProject.name}
+                prefix="/du-an/"
+                savedSlug={savedSlugOf(projects, editingProject.id)}
+                published={savedSlugOf(projects, editingProject.id) !== ''}
+                conflict={(slug) => consignmentService.slugConflictMessage(slug, editingProject.id)}
+              />
 
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Phân loại (*)</label>
@@ -1741,6 +1745,16 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                   Ghim làm dự án nổi bật hiển thị trên Trang chủ
                 </label>
               </div>
+
+              <SeoFields
+                value={editingProject.seo}
+                onChange={(seo) => setEditingProject({ ...editingProject, seo })}
+                title={editingProject.name}
+                shortDescription={editingProject.shortDescription}
+                thumbnail={editingProject.thumbnail}
+                slug={editingProject.slug}
+                section="du-an"
+              />
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
@@ -1774,6 +1788,19 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                   onChange={(e) => setEditingProperty({ ...editingProperty, title: e.target.value })}
                   placeholder="VD: Căn hộ 2PN Palm River view sông thoáng mát"
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <SlugField
+                  id="propSlug"
+                  value={editingProperty.slug}
+                  onChange={(slug) => setEditingProperty({ ...editingProperty, slug })}
+                  title={editingProperty.title}
+                  prefix="/chuyen-nhuong/"
+                  savedSlug={savedSlugOf(properties, editingProperty.id)}
+                  published={savedSlugOf(properties, editingProperty.id) !== ''}
+                  conflict={(slug) => consignmentService.slugConflictMessage(slug, editingProperty.id)}
                 />
               </div>
 
@@ -1928,6 +1955,16 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                   category="property"
                 />
               </div>
+
+              <SeoFields
+                value={editingProperty.seo}
+                onChange={(seo) => setEditingProperty({ ...editingProperty, seo })}
+                title={editingProperty.title}
+                shortDescription={editingProperty.shortDescription}
+                thumbnail={editingProperty.thumbnail}
+                slug={editingProperty.slug}
+                section="chuyen-nhuong"
+              />
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
@@ -1961,6 +1998,17 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
               />
             </div>
+
+            <SlugField
+              id="newsSlug"
+              value={editingNews.slug}
+              onChange={(slug) => setEditingNews({ ...editingNews, slug })}
+              title={editingNews.title}
+              prefix="/tin-tuc/"
+              savedSlug={savedSlugOf(news, editingNews.id)}
+              published={savedSlugOf(news, editingNews.id) !== ''}
+              conflict={(slug) => newsSlugConflict(slug, editingNews.id)}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -2027,6 +2075,18 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                 value={editingNews.content}
                 onChange={(html) => setEditingNews({ ...editingNews, content: html })}
                 category="news"
+              />
+            </div>
+
+            <div>
+              <SeoFields
+                value={editingNews.seo}
+                onChange={(seo) => setEditingNews({ ...editingNews, seo })}
+                title={editingNews.title}
+                shortDescription={editingNews.excerpt}
+                thumbnail={editingNews.thumbnail}
+                slug={editingNews.slug}
+                section="tin-tuc"
               />
             </div>
 

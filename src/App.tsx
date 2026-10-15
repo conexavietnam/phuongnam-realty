@@ -1,6 +1,9 @@
 import { Routes, Route } from 'react-router-dom'
 import { LayoutSwitch } from '@/layouts/LayoutSwitch'
 import { useScrollTop } from '@/hooks/useScrollTop'
+import { RouteSeo } from '@/components/seo/RouteSeo'
+import { SITE_ROUTES } from '@/seo/routes'
+import type { RoutePage } from '@/seo/routes'
 
 // Desktop Pages
 import { HomePage } from '@/pages/desktop/HomePage'
@@ -36,44 +39,46 @@ function ScrollToTop() {
   return null
 }
 
-interface RouteConfig {
-  path: string
+interface PageComponents {
   desktop: React.ComponentType
   mobile: React.ComponentType
 }
 
-const routes: RouteConfig[] = [
-  { path: '/', desktop: HomePage, mobile: MobileHomePage },
-  { path: '/du-an', desktop: ProjectsPage, mobile: MobileProjectsPage },
-  { path: '/du-an/:slug', desktop: ProjectDetailPage, mobile: MobileProjectDetailPage },
-  { path: '/chuyen-nhuong', desktop: PropertiesPage, mobile: MobilePropertiesPage },
-  { path: '/chuyen-nhuong/:slug', desktop: PropertyDetailPage, mobile: MobilePropertyDetailPage },
-  { path: '/ky-gui', desktop: ConsignmentPage, mobile: MobileConsignmentPage },
-  { path: '/ky-gui/:slug', desktop: ConsignmentDetailPage, mobile: MobileConsignmentDetailPage },
-  { path: '/tin-tuc', desktop: NewsPage, mobile: MobileNewsPage },
-  { path: '/tin-tuc/:slug', desktop: NewsDetailPage, mobile: MobileNewsDetailPage },
-  { path: '/lien-he', desktop: ContactPage, mobile: MobileContactPage },
-  { path: '*', desktop: NotFoundPage, mobile: MobileNotFoundPage },
-]
+// Paths come from SITE_ROUTES (src/seo/routes.ts), the single route table shared with the SEO code.
+const PAGES: Record<Exclude<RoutePage, 'admin'>, PageComponents> = {
+  home: { desktop: HomePage, mobile: MobileHomePage },
+  projects: { desktop: ProjectsPage, mobile: MobileProjectsPage },
+  project: { desktop: ProjectDetailPage, mobile: MobileProjectDetailPage },
+  properties: { desktop: PropertiesPage, mobile: MobilePropertiesPage },
+  property: { desktop: PropertyDetailPage, mobile: MobilePropertyDetailPage },
+  consignments: { desktop: ConsignmentPage, mobile: MobileConsignmentPage },
+  consignment: { desktop: ConsignmentDetailPage, mobile: MobileConsignmentDetailPage },
+  news: { desktop: NewsPage, mobile: MobileNewsPage },
+  article: { desktop: NewsDetailPage, mobile: MobileNewsDetailPage },
+  contact: { desktop: ContactPage, mobile: MobileContactPage },
+}
 
 export default function App() {
   return (
     <>
       <ScrollToTop />
+      <RouteSeo />
       <Routes>
-        <Route path="/admin" element={<AdminPage />} />
-        {routes.map(({ path, desktop: DesktopPage, mobile: MobilePage }) => (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <LayoutSwitch
-                desktop={<DesktopPage />}
-                mobile={<MobilePage />}
-              />
-            }
-          />
-        ))}
+        {SITE_ROUTES.map(({ path, page }) => {
+          if (page === 'admin') return <Route key={path} path={path} element={<AdminPage />} />
+          const { desktop: DesktopPage, mobile: MobilePage } = PAGES[page]
+          return (
+            <Route
+              key={path}
+              path={path}
+              element={<LayoutSwitch desktop={<DesktopPage />} mobile={<MobilePage />} />}
+            />
+          )
+        })}
+        <Route
+          path="*"
+          element={<LayoutSwitch desktop={<NotFoundPage />} mobile={<MobileNotFoundPage />} />}
+        />
       </Routes>
     </>
   )
