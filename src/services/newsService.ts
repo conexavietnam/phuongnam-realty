@@ -1,5 +1,6 @@
 import { dataStorage } from '@/services/dataStorage';
-import type { NewsArticle, PaginatedResult, PaginationParams, NewsCategory } from '@/types';
+import { categoryLabelFor, countByCategory, sortCategories } from '@/utils/newsMeta';
+import type { NewsArticle, NewsCategoryItem, PaginatedResult, PaginationParams, NewsCategory } from '@/types';
 
 export const newsService = {
   getAll(): NewsArticle[] {
@@ -25,6 +26,25 @@ export const newsService = {
 
   getByCategory(category: NewsCategory | string): NewsArticle[] {
     return dataStorage.getNews().filter((item) => item.category === category);
+  },
+
+  // Categories in display order (order, then label).
+  getCategories(): NewsCategoryItem[] {
+    return sortCategories(dataStorage.getNewsCategories());
+  },
+
+  getCategory(slug: string): NewsCategoryItem | undefined {
+    return dataStorage.getNewsCategories().find((c) => c.slug === slug);
+  },
+
+  // Category label for display: the list's label, else the one stored with the article.
+  getCategoryLabel(article: NewsArticle): string {
+    return categoryLabelFor(article, dataStorage.getNewsCategories());
+  },
+
+  // Number of articles per category slug (including slugs that are not in the list).
+  getCategoryCounts(): Record<string, number> {
+    return countByCategory(dataStorage.getNews());
   },
 
   getRelated(currentId: string, limit: number = 3): NewsArticle[] {

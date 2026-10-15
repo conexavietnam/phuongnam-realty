@@ -883,6 +883,26 @@ check "PHP derivation matches every shared vector (checked: ${VECTOR_OUT%% *})" 
 
 rm -f "$ROOT/data/news.json" "$ROOT/data/news_categories.json" "$ROOT/data/projects.json" "$ROOT/data/properties.json" "$ROOT/data/consignments.json" "$ROOT/data/company.json"
 
+echo "== menu: link vectors (shared with src/utils/menuConfig.ts)"
+cat > "$ROOT/menu_vectors.php" <<'PHPVEC'
+<?php
+declare(strict_types=1);
+require $argv[1] . '/storage.php';
+$v = json_decode(file_get_contents($argv[2]), true, 64, JSON_THROW_ON_ERROR);
+$fail = 0;
+foreach ($v['links'] as [$url, $ok]) {
+    if (pn_valid_menu_link($url) !== $ok) {
+        $fail++;
+        fwrite(STDERR, 'MENU VECTOR FAIL ' . json_encode($url, JSON_UNESCAPED_UNICODE) . ' want ' . json_encode($ok) . "
+");
+    }
+}
+echo count($v['links']) . ' ' . $fail;
+PHPVEC
+MENU_VECTOR_OUT="$("$PHP_BIN" "$ROOT/menu_vectors.php" "$ROOT/server/src" "$REPO/server/tests/menu-vectors.json" 2>"$ROOT/menu_vectors.err")"
+cat "$ROOT/menu_vectors.err"
+check "PHP menu link check matches every shared vector (checked: ${MENU_VECTOR_OUT%% *})" 0 "${MENU_VECTOR_OUT##* }"
+
 echo "== OTP lockout"
 check "second OTP request -> 200" 200 "$(http -X POST -H "$JSON" --data "{\"phone\":\"${ADMIN_PHONE}\"}" "$BASE?r=auth/otp")"
 REAL="$(last_otp)"

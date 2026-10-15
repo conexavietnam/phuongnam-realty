@@ -33,20 +33,27 @@ import { Modal } from '@/components/common/Modal';
 import { NumberInput } from '@/components/common/NumberInput';
 import { formatArea, formatPriceShort, formatVnd } from '@/utils/numberFormat';
 import { ImageField } from '@/components/admin/ImageField';
-import { SeoFields } from '@/components/admin/seo/SeoFields';
 import { SlugField } from '@/components/admin/seo/SlugField';
+import { SeoFields } from '@/components/admin/seo/SeoFields';
 import { cleanSeoForSave } from '@/utils/seoFields';
+import { NewsSubTabBar } from '@/components/admin/news/NewsSubTabBar';
+import type { NewsSubTab } from '@/components/admin/news/NewsSubTabBar';
+import { NewsCategoriesPanel } from '@/components/admin/news/NewsCategoriesPanel';
+import { NewsEditorModal } from '@/components/admin/news/NewsEditorModal';
+import type { EditableNews } from '@/components/admin/news/NewsEditorModal';
+import { formatNewsDateTime } from '@/utils/newsMeta';
 import { slugify } from '@/utils/slug';
 import { nextOldSlugs } from '@/utils/slugHistory';
 import { GalleryField } from '@/components/admin/GalleryField';
 import { LazyRichTextEditor } from '@/components/admin/LazyRichTextEditor';
 import { useBatchUpload, progressLabel } from '@/components/admin/useBatchUpload';
 import { ImageDropZone, UploadResultSummary } from '@/components/admin/UploadFeedback';
-import { normalizeEditorHtml, stripHtml } from '@/utils/richText';
+import { normalizeEditorHtml } from '@/utils/richText';
 import { SettingsTabBar } from '@/components/admin/settings/SettingsTabBar';
 import type { SettingsTab } from '@/components/admin/settings/SettingsTabBar';
 import { WebsiteInfoTab } from '@/components/admin/settings/WebsiteInfoTab';
 import { FormSettingsTab } from '@/components/admin/settings/FormSettingsTab';
+import { MenuSettingsTab } from '@/components/admin/settings/MenuSettingsTab';
 import { FooterSettingsTab } from '@/components/admin/settings/FooterSettingsTab';
 import { SeoSettingsTab } from '@/components/admin/settings/SeoSettingsTab';
 import { SecurityTab } from '@/components/admin/settings/SecurityTab';
@@ -59,12 +66,13 @@ import type { AdminActions } from '@/components/admin/consignment/types';
 import { dataStorage } from '@/services/dataStorage';
 import { applicationStage, purposeLabel } from '@/utils/consignment';
 import { consignmentService } from '@/services/consignmentService';
-import { humanize, typeLabel } from '@/utils/typeLabel';
+import { typeLabel } from '@/utils/typeLabel';
 import { mediaService } from '@/services/mediaService';
+import { newsService } from '@/services/newsService';
 import type { MediaItem } from '@/services/mediaService';
 import type { Project, ProjectCategory } from '@/types/project';
 import type { Property, PropertyType } from '@/types/property';
-import type { NewsArticle, NewsCategory } from '@/types/news';
+import type { NewsArticle } from '@/types/news';
 import type { CompanyInfo } from '@/types/common';
 import type { ConsignmentListing, CustomerLead, LeadStatus } from '@/types/consignment';
 
@@ -112,8 +120,8 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
 
-  const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
-  const [editingNews, setEditingNews] = useState<(NewsArticle & { featured?: boolean }) | null>(null);
+  const [newsSubTab, setNewsSubTab] = useState<NewsSubTab>('posts');
+  const [newsEditor, setNewsEditor] = useState<{ item: EditableNews; isNew: boolean } | null>(null);
 
   // Media Tab direct VPS modal
   const [isMediaUploadModalOpen, setIsMediaUploadModalOpen] = useState(false);
@@ -171,15 +179,9 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     Promise.all([dataStorage.loadAdmin(), mediaService.load()]).catch(showError);
   }, []);
 
-  // Slug helpers for the editors: the slug stored on the server (empty for a new item) decides the
-  // "link will break" warning; news slugs only have to be unique among news (own URL space /tin-tuc).
+  // Slug helper for the editors: the slug stored on the server (empty for a new item) decides the "link will break" warning.
   const savedSlugOf = (list: Array<{ id: string; slug: string }>, id: string): string =>
     list.find((item) => item.id === id)?.slug ?? '';
-
-  const newsSlugConflict = (slug: string, exceptId: string): string | null =>
-    news.some((n) => n.id !== exceptId && (n.slug === slug || (n.oldSlugs ?? []).includes(slug)))
-      ? `Đường dẫn "${slug}" đã được dùng bởi một bài viết khác. Vui lòng đổi sang đường dẫn khác.`
-      : null;
 
   // === PROJECT CRUD ACTIONS ===
   const handleOpenAddProject = () => {
@@ -316,58 +318,30 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     }
   };
 
-  // === NEWS CRUD ACTIONS ===
+  // === NEWS CRUD ACTIONS (the editor itself lives in components/admin/news/NewsEditorModal) ===
   const handleOpenAddNews = () => {
-    setEditingNews({
-      id: `news-${Date.now()}`,
-      title: '',
-      slug: '',
-      category: 'thi-truong',
-      categoryLabel: 'Thị trường',
-      excerpt: '',
-      content: '',
-      author: 'Phương Nam Realty',
-      publishedAt: new Date().toISOString().split('T')[0],
-      readTime: '4 phút',
-      thumbnail: '/images/projects/the-global-city.svg',
-      featured: false,
+    const firstCategory = dataStorage.getNewsCategories()[0];
+    setNewsEditor({
+      isNew: true,
+      item: {
+        id: `news-${Date.now()}`,
+        title: '',
+        slug: '',
+        category: firstCategory?.slug ?? '',
+        categoryLabel: firstCategory?.label ?? '',
+        excerpt: '',
+        content: '',
+        author: 'Phương Nam Realty',
+        publishedAt: new Date().toISOString(),
+        readTime: '',
+        thumbnail: '/images/projects/the-global-city.svg',
+        featured: false,
+      },
     });
-    setIsNewsModalOpen(true);
   };
 
   const handleOpenEditNews = (item: NewsArticle) => {
-    setEditingNews({ ...item, featured: (item as any).featured ?? false });
-    setIsNewsModalOpen(true);
-  };
-
-  const handleSaveNews = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingNews || !editingNews.title.trim()) return;
-    const normalizedContent = normalizeEditorHtml(editingNews.content);
-    if (!stripHtml(normalizedContent) && !/<img\b/i.test(normalizedContent)) {
-      alert('Vui lòng nhập nội dung bài viết.');
-      return;
-    }
-
-    const newNewsSlug = slugify(editingNews.slug.trim() || editingNews.title) || editingNews.id;
-    const newsToSave: NewsArticle = {
-      ...editingNews,
-      content: normalizedContent,
-      slug: newNewsSlug,
-      seo: cleanSeoForSave(editingNews.seo),
-      oldSlugs: nextOldSlugs(news.find((n) => n.id === editingNews.id), newNewsSlug),
-    };
-
-    const newsConflict = newsSlugConflict(newsToSave.slug, newsToSave.id);
-    if (newsConflict) {
-      alert(newsConflict);
-      return;
-    }
-
-    if (!(await attempt(() => dataStorage.saveNews(newsToSave)))) return;
-    refreshAllData();
-    setIsNewsModalOpen(false);
-    showNotification(`Đã lưu bài viết "${newsToSave.title}" thành công!`);
+    setNewsEditor({ isNew: false, item: { ...item, featured: (item as EditableNews).featured ?? false } });
   };
 
   const handleDeleteNews = async (id: string, title: string) => {
@@ -1235,6 +1209,21 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
         {/* ===================== TAB 5: NEWS MANAGEMENT ===================== */}
         {activeTab === 'news' && (
           <div className="space-y-6 animate-in fade-in duration-200">
+            <NewsSubTabBar
+              active={newsSubTab}
+              onChange={setNewsSubTab}
+              postCount={news.length}
+              categoryCount={dataStorage.getNewsCategories().length}
+            />
+          </div>
+        )}
+        {activeTab === 'news' && newsSubTab === 'categories' && (
+          <div id="news-tabpanel" role="tabpanel" aria-labelledby="news-tab-categories" className="mt-6">
+            <NewsCategoriesPanel actions={consignmentActions} />
+          </div>
+        )}
+        {activeTab === 'news' && newsSubTab === 'posts' && (
+          <div id="news-tabpanel" role="tabpanel" aria-labelledby="news-tab-posts" className="space-y-6 mt-6 animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
               <div>
                 <h2 className="text-xl font-bold text-navy-900">Quản Lý Tin Tức & Thị Trường</h2>
@@ -1278,9 +1267,9 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-slate-600">{item.categoryLabel || humanize(item.category)}</td>
+                        <td className="py-3 px-4 text-slate-600">{newsService.getCategoryLabel(item)}</td>
                         <td className="py-3 px-4 text-slate-600">{item.author}</td>
-                        <td className="py-3 px-4 text-slate-500">{item.publishedAt}</td>
+                        <td className="py-3 px-4 text-slate-500 whitespace-nowrap">{formatNewsDateTime(item.publishedAt)}</td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Link
@@ -1495,6 +1484,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
                 <WebsiteInfoTab company={company} onChange={setCompany} onSubmit={handleSaveCompany} />
               )}
               {settingsTab === 'form' && <FormSettingsTab />}
+              {settingsTab === 'menu' && <MenuSettingsTab />}
               {settingsTab === 'footer' && <FooterSettingsTab />}
               {settingsTab === 'seo' && <SeoSettingsTab />}
               {settingsTab === 'security' && <SecurityTab />}
@@ -2000,126 +1990,14 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
       )}
 
       {/* ===================== MODAL: NEWS EDIT/ADD ===================== */}
-      {isNewsModalOpen && editingNews && (
-        <Modal
-          isOpen={isNewsModalOpen}
-          onClose={() => setIsNewsModalOpen(false)}
-          title={editingNews.id.startsWith('news-') ? 'Thêm Bài Viết Mới' : `Chỉnh Sửa Tin Tức`}
-          size="2xl"
-        >
-          <form onSubmit={handleSaveNews} className="space-y-5 text-xs">
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Tiêu đề bài viết (*)</label>
-              <input
-                type="text"
-                required
-                value={editingNews.title}
-                onChange={(e) => setEditingNews({ ...editingNews, title: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
-              />
-            </div>
-
-            <SlugField
-              id="newsSlug"
-              value={editingNews.slug}
-              onChange={(slug) => setEditingNews({ ...editingNews, slug })}
-              title={editingNews.title}
-              prefix="/tin-tuc/"
-              savedSlug={savedSlugOf(news, editingNews.id)}
-              published={savedSlugOf(news, editingNews.id) !== ''}
-              conflict={(slug) => newsSlugConflict(slug, editingNews.id)}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Chuyên mục (*)</label>
-                <select
-                  value={editingNews.category}
-                  onChange={(e) => {
-                    const cat = e.target.value as NewsCategory;
-                    const labels: Record<NewsCategory, string> = {
-                      'thi-truong': 'Thị trường',
-                      'tin-tuc': 'Tin tức',
-                      'du-an': 'Dự án',
-                    };
-                    setEditingNews({
-                      ...editingNews,
-                      category: cat,
-                      categoryLabel: labels[cat] || 'Thị trường',
-                    });
-                  }}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"
-                >
-                  <option value="thi-truong">Thị trường</option>
-                  <option value="tin-tuc">Tin tức</option>
-                  <option value="du-an">Dự án</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Tác giả</label>
-                <input
-                  type="text"
-                  value={editingNews.author}
-                  onChange={(e) => setEditingNews({ ...editingNews, author: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-
-            {/* Visual News Thumbnail Picker */}
-            <div>
-              <ImageField
-                label="Ảnh đại diện bài viết (Thumbnail)"
-                value={editingNews.thumbnail}
-                onChange={(url) => setEditingNews({ ...editingNews, thumbnail: url })}
-                category="news"
-                required
-                helperText="Ảnh bìa hiển thị trên trang tin tức và mạng xã hội."
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Tóm tắt ngắn (Excerpt)</label>
-              <textarea
-                rows={2}
-                value={editingNews.excerpt}
-                onChange={(e) => setEditingNews({ ...editingNews, excerpt: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1.5">Nội dung chi tiết bài viết (*)</label>
-              <LazyRichTextEditor
-                value={editingNews.content}
-                onChange={(html) => setEditingNews({ ...editingNews, content: html })}
-                category="news"
-              />
-            </div>
-
-            <div>
-              <SeoFields
-                value={editingNews.seo}
-                onChange={(seo) => setEditingNews({ ...editingNews, seo })}
-                title={editingNews.title}
-                shortDescription={editingNews.excerpt}
-                thumbnail={editingNews.thumbnail}
-                slug={editingNews.slug}
-                section="tin-tuc"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsNewsModalOpen(false)}>
-                Hủy
-              </Button>
-              <Button type="submit" variant="primary" size="sm">
-                Lưu Bài Viết
-              </Button>
-            </div>
-          </form>
-        </Modal>
+      {newsEditor && (
+        <NewsEditorModal
+          key={newsEditor.item.id}
+          initial={newsEditor.item}
+          isNew={newsEditor.isNew}
+          actions={consignmentActions}
+          onClose={() => setNewsEditor(null)}
+        />
       )}
 
       {/* Modal: Direct VPS Image Link Input */}

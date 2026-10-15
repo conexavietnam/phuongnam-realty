@@ -16,6 +16,7 @@ import { PropertyDetailPage } from '@/pages/desktop/PropertyDetailPage'
 import { ConsignmentPage } from '@/pages/desktop/ConsignmentPage'
 import { ConsignmentDetailPage } from '@/pages/desktop/ConsignmentDetailPage'
 import { NewsPage } from '@/pages/desktop/NewsPage'
+import { NewsCategoryPage } from '@/pages/desktop/NewsCategoryPage'
 import { NewsDetailPage } from '@/pages/desktop/NewsDetailPage'
 import { ContactPage } from '@/pages/desktop/ContactPage'
 import { NotFoundPage } from '@/pages/desktop/NotFoundPage'
@@ -29,6 +30,7 @@ import { MobilePropertyDetailPage } from '@/pages/mobile/MobilePropertyDetailPag
 import { MobileConsignmentPage } from '@/pages/mobile/MobileConsignmentPage'
 import { MobileConsignmentDetailPage } from '@/pages/mobile/MobileConsignmentDetailPage'
 import { MobileNewsPage } from '@/pages/mobile/MobileNewsPage'
+import { MobileNewsCategoryPage } from '@/pages/mobile/MobileNewsCategoryPage'
 import { MobileNewsDetailPage } from '@/pages/mobile/MobileNewsDetailPage'
 import { MobileContactPage } from '@/pages/mobile/MobileContactPage'
 import { MobileNotFoundPage } from '@/pages/mobile/MobileNotFoundPage'
@@ -56,6 +58,7 @@ const PAGES: Record<Exclude<RoutePage, 'admin'>, PageComponents> = {
   consignments: { desktop: ConsignmentPage, mobile: MobileConsignmentPage },
   consignment: { desktop: ConsignmentDetailPage, mobile: MobileConsignmentDetailPage },
   news: { desktop: NewsPage, mobile: MobileNewsPage },
+  newsCategory: { desktop: NewsCategoryPage, mobile: MobileNewsCategoryPage },
   article: { desktop: NewsDetailPage, mobile: MobileNewsDetailPage },
   contact: { desktop: ContactPage, mobile: MobileContactPage },
 }

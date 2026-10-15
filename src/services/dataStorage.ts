@@ -4,15 +4,16 @@
 // only requires changing this file and apiClient.ts.
 import type { Project } from '@/types/project';
 import type { Property } from '@/types/property';
-import type { NewsArticle } from '@/types/news';
+import type { NewsArticle, NewsCategoryItem } from '@/types/news';
 import type { Agent } from '@/types/contact';
 import type { ConsignmentListing, CustomerLead } from '@/types/consignment';
-import type { FilterConfig, FooterConfig, MenuConfig } from '@/types/common';
+import type { FilterConfig, FooterConfig, MenuConfig, MenuItem } from '@/types/common';
 import type { CompanySeo } from '@/types/seo';
 
 import initialProjects from '@/data/projects.json';
 import initialProperties from '@/data/properties.json';
 import initialNews from '@/data/news.json';
+import initialNewsCategories from '@/data/news_categories.json';
 import initialCompany from '@/data/company.json';
 import initialConsignments from '@/data/consignments.json';
 import initialAgents from '@/data/agents.json';
@@ -29,6 +30,7 @@ interface Collections {
   projects: Project[];
   properties: Property[];
   news: NewsArticle[];
+  news_categories: NewsCategoryItem[];
   agents: Agent[];
   consignments: ConsignmentListing[];
   company: Company;
@@ -45,6 +47,7 @@ const PUBLIC_COLLECTIONS: PublicCollectionName[] = [
   'projects',
   'properties',
   'news',
+  'news_categories',
   'agents',
   'consignments',
   'company',
@@ -56,6 +59,7 @@ const BUNDLED: Collections = {
   projects: initialProjects as unknown as Project[],
   properties: initialProperties as unknown as Property[],
   news: initialNews as unknown as NewsArticle[],
+  news_categories: initialNewsCategories as unknown as NewsCategoryItem[],
   agents: initialAgents as unknown as Agent[],
   consignments: initialConsignments.map(normalizeListing),
   company: initialCompany,
@@ -177,6 +181,18 @@ export const dataStorage = {
     return commit('news', cache.news.filter((n) => n.id !== id));
   },
 
+  // === NEWS CATEGORIES ===
+  getNewsCategories(): NewsCategoryItem[] {
+    return cache.news_categories;
+  },
+
+  // Saves the whole category list. When `news` is given (articles moved to another category or following a renamed
+  // category) the articles are saved first, so no article points at a category that was already removed.
+  async saveNewsCategories(categories: NewsCategoryItem[], news?: NewsArticle[]): Promise<void> {
+    if (news) await commit('news', news);
+    await commit('news_categories', categories);
+  },
+
   // === COMPANY, MENU, FILTERS, AGENTS (site configuration) ===
   getCompany(): Company {
     return cache.company;
@@ -196,6 +212,26 @@ export const dataStorage = {
 
   saveFooter(footer: FooterConfig): Promise<void> {
     return commit('menu', { ...cache.menu, footer });
+  },
+
+  getDefaultNavigation(): Pick<MenuConfig, 'desktop' | 'mobileBottomNav'> {
+    return { desktop: BUNDLED.menu.desktop, mobileBottomNav: BUNDLED.menu.mobileBottomNav };
+  },
+
+  // Header/drawer menu and bottom bar. The footer stays untouched. Like saveFooter the cache changes first; when the
+  // server refuses, commit() re-reads the stored menu, and if the server cannot be reached either the old menu is put back.
+  async saveNavigation(nav: { desktop: MenuItem[]; mobileBottomNav: MenuItem[] }): Promise<void> {
+    const previous = cache.menu;
+    const next = { ...previous, ...nav };
+    try {
+      await commit('menu', next);
+    } catch (err) {
+      if (cache.menu === next) {
+        cache.menu = previous;
+        emitChange();
+      }
+      throw err;
+    }
   },
 
   getFilters(): FilterConfig {
@@ -246,6 +282,7 @@ export const dataStorage = {
         projects: cache.projects,
         properties: cache.properties,
         news: cache.news,
+        newsCategories: cache.news_categories,
         company: cache.company,
         consignments: cache.consignments,
         leads: cache.customer_leads,
@@ -268,6 +305,7 @@ export const dataStorage = {
       ['projects', 'projects'],
       ['properties', 'properties'],
       ['news', 'news'],
+      ['newsCategories', 'news_categories'],
       ['company', 'company'],
       ['consignments', 'consignments'],
       ['leads', 'customer_leads'],
@@ -283,7 +321,7 @@ export const dataStorage = {
   },
 
   async resetToDefault(): Promise<void> {
-    const names: CollectionName[] = ['projects', 'properties', 'news', 'company', 'consignments'];
+    const names: CollectionName[] = ['projects', 'properties', 'news', 'news_categories', 'company', 'consignments'];
     for (const name of names) {
       await commit(name, BUNDLED[name] as Collections[typeof name]);
     }

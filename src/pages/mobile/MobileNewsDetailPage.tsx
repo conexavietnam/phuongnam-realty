@@ -5,9 +5,9 @@ import { MobileLayout } from '@/layouts/MobileLayout';
 import { MobileNewsCard } from '@/components/mobile/MobileNewsCard';
 import { MobileNotFoundPage } from './MobileNotFoundPage';
 import { newsService } from '@/services/newsService';
-import { Badge } from '@/components/common/Badge';
+import { CategoryChip } from '@/components/common/CategoryChip';
 import { renderRichHtml } from '@/utils/richText';
-import { typeLabel } from '@/utils/typeLabel';
+import { formatNewsDate } from '@/utils/newsMeta';
 
 export function MobileNewsDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -20,13 +20,13 @@ export function MobileNewsDetailPage() {
   return (
     <MobileLayout>
       <div className="px-4 py-6">
-        <Badge variant="navy" className="mb-4 relative top-0 left-0">{newsItem.categoryLabel || typeLabel(newsItem.category)}</Badge>
+        <CategoryChip article={newsItem} className="mb-4" />
         <h1 className="text-xl font-bold text-navy-900 mb-4 leading-tight">{newsItem.title}</h1>
         
         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mb-6 border-b border-slate-100 pb-4">
           <div className="flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" />
-            <span>{newsItem.publishedAt}</span>
+            <span>{formatNewsDate(newsItem.publishedAt)}</span>
           </div>
           <div className="flex items-center gap-1">
             <User className="w-3.5 h-3.5" />

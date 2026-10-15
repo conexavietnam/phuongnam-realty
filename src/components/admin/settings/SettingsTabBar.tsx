@@ -1,10 +1,11 @@
 import type { KeyboardEvent } from 'react';
 
-export type SettingsTab = 'website' | 'form' | 'footer' | 'seo' | 'security';
+export type SettingsTab = 'website' | 'form' | 'menu' | 'footer' | 'seo' | 'security';
 
 const TABS: Array<{ id: SettingsTab; label: string }> = [
   { id: 'website', label: 'Thông tin Website' },
   { id: 'form', label: 'Form' },
+  { id: 'menu', label: 'Menu' },
   { id: 'footer', label: 'Chân trang' },
   { id: 'seo', label: 'SEO' },
   { id: 'security', label: 'Bảo mật' },
