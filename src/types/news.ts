@@ -15,6 +15,8 @@ export interface NewsCategoryItem {
   description: string;
   order: number;
   seo?: NewsCategorySeo;
+  // Previous slugs (newest last, max 10); /tin-tuc/danh-muc/<old> redirects (301) to the current one.
+  oldSlugs?: string[];
 }
 
 export interface NewsArticle {

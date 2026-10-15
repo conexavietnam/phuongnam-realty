@@ -79,7 +79,7 @@ const PN_NEWS_CATEGORY_LABEL_MAX = 60;
 const PN_NEWS_CATEGORY_DESCRIPTION_MAX = 300;
 const PN_NEWS_CATEGORY_ID_MAX = 100;
 const PN_NEWS_CATEGORY_SLUG_PATTERN = '/^[a-z0-9-]{1,80}$/D';
-const PN_NEWS_CATEGORY_KEYS = ['id', 'slug', 'label', 'description', 'order', 'seo'];
+const PN_NEWS_CATEGORY_KEYS = ['id', 'slug', 'label', 'description', 'order', 'seo', 'oldSlugs'];
 const PN_NEWS_CATEGORY_SEO_KEYS = ['title', 'description'];
 /** News slugs that would collide with a fixed URL: /tin-tuc/danh-muc/<category>. Keep in step with RESERVED_NEWS_SLUGS in src/utils/newsMeta.ts. */
 const PN_NEWS_RESERVED_SLUGS = ['danh-muc'];
@@ -325,6 +325,9 @@ function pn_valid_news_category(mixed $item): bool
     if (!is_int($item['order'] ?? null)) {
         return false;
     }
+    if (isset($item['oldSlugs']) && !pn_valid_category_old_slugs($item)) {
+        return false;
+    }
     $seo = $item['seo'] ?? null;
     if ($seo === null) {
         return true;
@@ -332,6 +335,21 @@ function pn_valid_news_category(mixed $item): bool
     return pn_is_object_array($seo) && array_diff(array_keys($seo), PN_NEWS_CATEGORY_SEO_KEYS) === []
         && pn_valid_seo_string($seo['title'] ?? null, PN_SEO_TITLE_MAX)
         && pn_valid_seo_string($seo['description'] ?? null, PN_SEO_DESCRIPTION_MAX);
+}
+
+/** oldSlugs of a category: at most 10 distinct valid slugs, none equal to the current slug. */
+function pn_valid_category_old_slugs(array $item): bool
+{
+    $list = $item['oldSlugs'];
+    if (!is_array($list) || !array_is_list($list) || count($list) > PN_SEO_MAX_OLD_SLUGS) {
+        return false;
+    }
+    foreach ($list as $old) {
+        if (!is_string($old) || preg_match(PN_NEWS_CATEGORY_SLUG_PATTERN, $old) !== 1 || $old === $item['slug']) {
+            return false;
+        }
+    }
+    return count(array_unique($list)) === count($list);
 }
 
 /** news_categories: at most 40 entries with unique slugs. */

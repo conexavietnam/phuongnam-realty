@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import * as news from '../src/utils/newsMeta.ts';
 import * as menu from '../src/utils/menuConfig.ts';
+import { nextOldSlugs } from '../src/utils/slugHistory.ts';
 
 const vectors = JSON.parse(readFileSync(fileURLToPath(new URL('../server/tests/menu-vectors.json', import.meta.url)), 'utf8'));
 
@@ -93,6 +94,14 @@ expect('label falls back to the stored one', 'Cũ', news.categoryLabelFor({ cate
 expect('label falls back to the code', 'x', news.categoryLabelFor({ category: 'x', categoryLabel: '' }, categories));
 expect('counts', { a: 2, b: 1 }, news.countByCategory([{ category: 'a' }, { category: 'b' }, { category: 'a' }]));
 expect('authors', ['An', 'Bình'], news.usedAuthors([{ author: 'Bình' }, { author: ' An ' }, { author: '' }, { author: 'Bình' }, {}]));
+
+// Category slug history (same helper as articles)
+expect('rename keeps the previous slug', ['a'], nextOldSlugs({ slug: 'a' }, 'b'));
+expect('rename keeps earlier history', ['x', 'a'], nextOldSlugs({ slug: 'a', oldSlugs: ['x'] }, 'b'));
+expect('renaming back drops the reused slug from the history', ['x', 'b'], nextOldSlugs({ slug: 'b', oldSlugs: ['x', 'a'] }, 'a'));
+expect('no rename, no history', undefined, nextOldSlugs({ slug: 'a' }, 'a'));
+expect('new category has no history', undefined, nextOldSlugs(undefined, 'a'));
+expect('history is capped at 10', ['s2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10', 'a'], nextOldSlugs({ slug: 'a', oldSlugs: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10'] }, 'b'));
 
 // News: reading time (200 words per minute, at least 1)
 const words = (n) => Array.from({ length: n }, (_, i) => `từ${i}`).join(' ');

@@ -18,6 +18,7 @@ import {
 } from '@/utils/newsCategories';
 import { newId } from '@/utils/ids';
 import { slugify } from '@/utils/slug';
+import { nextOldSlugs } from '@/utils/slugHistory';
 import type { NewsArticle, NewsCategoryItem } from '@/types/news';
 
 const INPUT = 'w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-gold-500/40';
@@ -65,7 +66,7 @@ function CategoryEditorModal({ original, categories, actions, onClose }: EditorP
       setError(`Tối đa ${CATEGORY_LIMITS.max} danh mục.`);
       return;
     }
-    const item = toCategory(original?.id ?? newId('cat'), original?.order ?? categories.length + 1, fields);
+    const item = toCategory(original?.id ?? newId('cat'), original?.order ?? categories.length + 1, fields, nextOldSlugs(original, finalSlug));
     const list = original ? categories.map((c) => (c.id === original.id ? item : c)) : [...categories, item];
     const renamed = original !== undefined && (original.slug !== item.slug || original.label !== item.label);
     const news = renamed && postCount > 0 ? withCategory(dataStorage.getNews(), original.slug, item) : undefined;
@@ -123,7 +124,8 @@ function CategoryEditorModal({ original, categories, actions, onClose }: EditorP
           </p>
           {original && slugChanged && (
             <p role="alert" className="mt-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
-              Đổi đường dẫn: link cũ <span className="font-mono">{categoryPath(original.slug)}</span> sẽ không còn dùng được.
+              Đổi đường dẫn: link cũ sẽ tự chuyển hướng 301 sang link mới. Link hiện tại:{' '}
+              <span className="font-mono">{categoryPath(original.slug)}</span>.
               {postCount > 0 && ` ${postCount} bài viết sẽ tự chuyển sang đường dẫn mới.`}
             </p>
           )}

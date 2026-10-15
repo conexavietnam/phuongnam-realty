@@ -50,7 +50,7 @@ Tab **Tin tức** có hai tab con: **Bài viết** và **Danh mục**.
 Bảng danh mục cho thêm, sửa, xóa, đổi thứ tự (mũi tên), xem số bài mỗi danh mục. Quy tắc:
 
 - Tên tối đa 60 ký tự, không trùng tên; đường dẫn (slug) tự tạo từ tên, sửa được, chỉ gồm `a-z 0-9 -`, không trùng; mô tả tối đa 300 ký tự; SEO tiêu đề/mô tả tùy chọn. Tối đa 40 danh mục.
-- Đổi slug hoặc tên: các bài viết thuộc danh mục tự theo. Link cũ `/tin-tuc/danh-muc/<slug-cu>` không còn dùng được (không có chuyển hướng 301 cho danh mục).
+- Đổi slug hoặc tên: các bài viết thuộc danh mục tự theo. Link cũ `/tin-tuc/danh-muc/<slug-cu>` tự chuyển hướng 301 sang link mới (cả trên Google lẫn trong website); hệ thống nhớ tối đa 10 đường dẫn cũ. Không đặt trùng đường dẫn đang dùng hoặc đường dẫn cũ của danh mục khác; đặt lại đúng đường dẫn cũ của chính danh mục đó thì nó rời khỏi lịch sử.
 - Xóa danh mục đang có bài: bắt buộc chọn danh mục khác để chuyển bài sang. Danh mục không có bài xóa thẳng.
 - Dữ liệu danh mục cũ trong bài (slug không còn trong danh sách) vẫn hiển thị bằng nhãn đã lưu, không có link.
 
@@ -73,6 +73,7 @@ Checklist:
 
 - [ ] Thêm danh mục "Pháp lý", slug tự ra `phap-ly`; tạo trùng tên bị báo lỗi.
 - [ ] Đổi slug danh mục đang có bài: cảnh báo hiện số bài; bài vẫn nằm trong danh mục.
+- [ ] Cảnh báo "Đổi đường dẫn: link cũ sẽ tự chuyển hướng 301 sang link mới." hiện ra; sau khi lưu, mở link cũ `/tin-tuc/danh-muc/<slug-cu>` thì tự sang link mới (`curl -sI` thấy `301`).
 - [ ] Xóa danh mục có bài: nút bị khóa tới khi chọn danh mục nhận bài.
 - [ ] Soạn bài: tạo danh mục nhanh, chọn tác giả đã dùng, đổi giờ đăng, bật/tắt Tự tính.
 - [ ] Đặt slug bài là `danh-muc`: bị từ chối.

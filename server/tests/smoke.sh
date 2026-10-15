@@ -378,6 +378,17 @@ check "seo with an unknown key -> 422" 422 "$(putc news_categories '[{"id":"a","
 check "seo title over 120 chars -> 422" 422 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"a\",\"label\":\"A\",\"order\":1,\"seo\":{\"title\":\"$(head -c 121 /dev/zero | tr '\0' 'a')\"}}]")"
 check "category that is not an object -> 422" 422 "$(putc news_categories '["tin-tuc"]')"
 check "categories as an object -> 422" 422 "$(putc news_categories '{"slug":"a"}')"
+check "category oldSlugs valid -> 200" 200 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["cu","cu-2"]}]')"
+check "category oldSlugs with 10 entries -> 200" 200 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"moi\",\"label\":\"A\",\"order\":1,\"oldSlugs\":[$(printf '"s%s",' $(seq 1 9))\"s10\"]}]")"
+check "category oldSlugs with 11 entries -> 422" 422 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"moi\",\"label\":\"A\",\"order\":1,\"oldSlugs\":[$(printf '"s%s",' $(seq 1 10))\"s11\"]}]")"
+check "category oldSlugs containing the current slug -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["moi"]}]')"
+check "category oldSlugs with a duplicate -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["cu","cu"]}]')"
+check "category oldSlugs with upper case -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["Cu"]}]')"
+check "category oldSlugs with a slash -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["a/b"]}]')"
+check "category oldSlugs empty string -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":[""]}]')"
+check "category oldSlug over 80 chars -> 422" 422 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"moi\",\"label\":\"A\",\"order\":1,\"oldSlugs\":[\"$(head -c 81 /dev/zero | tr '\0' 'a')\"]}]")"
+check "category oldSlugs not a list -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":"cu"}]')"
+check "category oldSlugs with a non-string -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":[5]}]')"
 CAT_40="$(for i in $(seq 1 40); do printf '{"id":"c%s","slug":"s%s","label":"L%s","order":%s},' "$i" "$i" "$i" "$i"; done)"
 check "40 categories -> 200" 200 "$(putc news_categories "[${CAT_40%,}]")"
 check "41 categories -> 422" 422 "$(putc news_categories "[${CAT_40}{\"id\":\"c41\",\"slug\":\"s41\",\"label\":\"L41\",\"order\":41}]")"
@@ -478,7 +489,7 @@ cat > "$ROOT/data/news_categories.json" <<'JSON'
  {"id":"k1","slug":"thi-truong","label":"Thị trường","description":"Phân tích thị trường","order":1},
  {"id":"k2","slug":"hostile","label":"</title><script>alert(9)</script>\"'&c","description":"</script><script>alert(8)</script>","order":2},
  {"id":"k3","slug":"trong","label":"Chuyên mục trống","order":3},
- {"id":"k4","slug":"tuy-chinh","label":"Tùy chỉnh","description":"Mô tả gốc","order":4,"seo":{"title":"SEO tiêu đề chuyên mục","description":"SEO mô tả chuyên mục"}}
+ {"id":"k4","slug":"tuy-chinh","label":"Tùy chỉnh","description":"Mô tả gốc","order":4,"seo":{"title":"SEO tiêu đề chuyên mục","description":"SEO mô tả chuyên mục"},"oldSlugs":["tuy-chinh-cu","thi-truong"]}
 ]
 JSON
 cat > "$ROOT/data/projects.json" <<'JSON'
@@ -655,6 +666,15 @@ check "/tin-tuc/danh-muc alone is no article -> 404" 404 "$(http "$SEO/tin-tuc/d
 check "/tin-tuc/danh-muc/ with a trailing slash -> 404" 404 "$(http "$SEO/tin-tuc/danh-muc/")"
 check "category page with a trailing slash -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/thi-truong/")"
 check "category page with a query string -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/thi-truong?page=2")"
+echo "== seo: renamed category slugs redirect (301)"
+check "old category slug -> 301" 301 "$(http "$SEO/tin-tuc/danh-muc/tuy-chinh-cu")"
+header_has "301 points at the current category (absolute URL)" '^location: https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/danh-muc/tuy-chinh\s*$'
+check "old category slug with a trailing slash -> 301" 301 "$(http "$SEO/tin-tuc/danh-muc/tuy-chinh-cu/")"
+check "a slug that is current for another category wins over an old slug -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/thi-truong")"
+body_has_f "the current owner serves the page, not a redirect" '<title>Thị trường | PN Test</title>'
+check "old category slug is not an article route -> 404" 404 "$(http "$SEO/tin-tuc/tuy-chinh-cu")"
+check "category old slug with junk -> 404" 404 "$(http "$SEO/tin-tuc/danh-muc/tuy-chinh-cu%00")"
+check "category old slug under another section -> 404" 404 "$(http "$SEO/du-an/tuy-chinh-cu")"
 check "news list -> 200" 200 "$(http "$SEO/tin-tuc")"
 body_has_f "news list links every category" '<li><a href="/tin-tuc/danh-muc/thi-truong">Thị trường</a></li>'
 body_has_f "news list links the custom category" '<li><a href="/tin-tuc/danh-muc/tuy-chinh">Tùy chỉnh</a></li>'
@@ -722,6 +742,7 @@ for c in thi-truong hostile tuy-chinh; do
 done
 body_has_f "category lastmod is its newest article" '<loc>https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/danh-muc/tuy-chinh</loc><lastmod>2026-03-05</lastmod>'
 body_lacks_f "sitemap skips an empty category" '/tin-tuc/danh-muc/trong'
+body_lacks_f "sitemap never lists an old category slug" 'tuy-chinh-cu'
 body_lacks_f "sitemap skips drafts" 'ky-gui-nhap'
 body_lacks_f "sitemap skips sold noindex" 'ky-gui-da-ban'
 body_lacks_f "sitemap skips admin" '/admin'

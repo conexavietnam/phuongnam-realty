@@ -39,6 +39,8 @@ export function categoryProblem(fields: CategoryFields, others: readonly NewsCat
   if (label.length > CATEGORY_LIMITS.label) return `Tên danh mục tối đa ${CATEGORY_LIMITS.label} ký tự.`;
   if (!SLUG_PATTERN.test(fields.slug)) return 'Đường dẫn chỉ gồm chữ thường không dấu, số và dấu gạch ngang (tối đa 80 ký tự).';
   if (others.some((c) => c.slug === fields.slug)) return `Đường dẫn "${fields.slug}" đã được dùng bởi danh mục "${others.find((c) => c.slug === fields.slug)?.label}".`;
+  const heldBy = others.find((c) => (c.oldSlugs ?? []).includes(fields.slug));
+  if (heldBy) return `Đường dẫn "${fields.slug}" đang được giữ làm đường dẫn cũ của danh mục "${heldBy.label}" (link cũ tự chuyển hướng). Vui lòng chọn đường dẫn khác.`;
   if (others.some((c) => c.label.trim().toLowerCase() === label.toLowerCase())) return `Đã có danh mục tên "${label}".`;
   if (fields.description.trim().length > CATEGORY_LIMITS.description) return `Mô tả tối đa ${CATEGORY_LIMITS.description} ký tự.`;
   if (fields.seoTitle.trim().length > CATEGORY_LIMITS.seoTitle) return `Tiêu đề SEO tối đa ${CATEGORY_LIMITS.seoTitle} ký tự.`;
@@ -46,7 +48,7 @@ export function categoryProblem(fields: CategoryFields, others: readonly NewsCat
   return null;
 }
 
-export function toCategory(id: string, order: number, fields: CategoryFields): NewsCategoryItem {
+export function toCategory(id: string, order: number, fields: CategoryFields, oldSlugs?: string[]): NewsCategoryItem {
   const seoTitle = fields.seoTitle.trim();
   const seoDescription = fields.seoDescription.trim();
   const item: NewsCategoryItem = {
@@ -56,6 +58,7 @@ export function toCategory(id: string, order: number, fields: CategoryFields): N
     description: fields.description.trim(),
     order,
   };
+  if (oldSlugs && oldSlugs.length > 0) item.oldSlugs = oldSlugs;
   if (seoTitle || seoDescription) {
     item.seo = { ...(seoTitle ? { title: seoTitle } : {}), ...(seoDescription ? { description: seoDescription } : {}) };
   }

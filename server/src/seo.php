@@ -343,6 +343,18 @@ function pn_seo_find_category(array $data, string $slug): ?array
     return null;
 }
 
+/** Category that used to have this slug (kept in oldSlugs when an admin renames it), or null. */
+function pn_seo_category_by_old_slug(array $data, string $slug): ?array
+{
+    foreach ($data['newsCategories'] as $category) {
+        $old = is_array($category['oldSlugs'] ?? null) ? $category['oldSlugs'] : [];
+        if (in_array($slug, $old, true)) {
+            return $category;
+        }
+    }
+    return null;
+}
+
 function pn_seo_category_path(array $category): string
 {
     return PN_SEO_NEWS_CATEGORY_BASE . '/' . rawurlencode($category['slug']);
@@ -814,7 +826,9 @@ function pn_seo_resolve(string $path, array $data, array $site): array
         case 'newsCategory':
             $category = pn_seo_find_category($data, (string) $slug);
             if ($category === null) {
-                return $notFound;
+                // A slug that is current for some category always wins above; only then does the history count.
+                $renamed = pn_seo_category_by_old_slug($data, (string) $slug);
+                return $renamed !== null ? ['status' => 301, 'location' => pn_seo_category_path($renamed)] : $notFound;
             }
             $entries = pn_seo_category_entries($catalog, $category, $site);
             return ['status' => 200, 'page' => [

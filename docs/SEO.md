@@ -27,6 +27,8 @@ Bảng route (một bảng cho mỗi phía, phải giống nhau): `src/seo/route
 | `/tin-tuc/:slug` | article | slug `danh-muc` bị giữ riêng, bài không được dùng |
 | `/lien-he`, `/admin` | contact, admin | |
 
+Đổi đường dẫn (slug) của danh mục: hệ thống ghi nhớ tối đa 10 đường dẫn cũ (`oldSlugs`) và `/tin-tuc/danh-muc/<slug-cu>` trả 301 sang địa chỉ mới (kiểm tra bằng `curl -sI`); đường dẫn cũ không nằm trong sitemap, và đường dẫn đang là của một danh mục khác luôn thắng đường dẫn cũ.
+
 Trang danh mục: tiêu đề là tiêu đề SEO của danh mục, nếu trống là tên danh mục + hậu tố; mô tả là mô tả SEO, nếu trống là mô tả ngắn của danh mục, nếu trống nữa là câu mặc định "Tin tức chuyên mục ...". Menu website không ảnh hưởng SEO shell hay sitemap.
 
 Quy tắc suy ra giá trị mặc định (khi để trống) nằm ở một chỗ cho mỗi phía và phải giống hệt nhau: `src/utils/seo.ts` (trình duyệt) và `server/src/seo.php` (máy chủ). Bộ ví dụ kiểm tra chung: `server/tests/seo-vectors.json`.
