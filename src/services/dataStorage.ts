@@ -8,6 +8,7 @@ import type { NewsArticle } from '@/types/news';
 import type { Agent } from '@/types/contact';
 import type { ConsignmentListing, CustomerLead } from '@/types/consignment';
 import type { FilterConfig, FooterConfig, MenuConfig } from '@/types/common';
+import type { CompanySeo } from '@/types/seo';
 
 import initialProjects from '@/data/projects.json';
 import initialProperties from '@/data/properties.json';
@@ -22,7 +23,7 @@ import { normalizeLead, normalizeListing } from '@/utils/consignment';
 
 export const DATA_CHANGED_EVENT = 'pn_data_changed';
 
-type Company = typeof initialCompany & { heroBannerImage?: string; logoImage?: string };
+type Company = typeof initialCompany & { heroBannerImage?: string; logoImage?: string; seo?: CompanySeo };
 
 interface Collections {
   projects: Project[];

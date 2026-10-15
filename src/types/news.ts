@@ -1,3 +1,5 @@
+import type { ItemSeo } from './seo';
+
 export type NewsCategory = 'thi-truong' | 'tin-tuc' | 'du-an';
 
 export interface NewsArticle {
@@ -12,4 +14,7 @@ export interface NewsArticle {
   author: string;
   publishedAt: string;
   readTime: string;
+  seo?: ItemSeo;
+  // Previous slugs of this item (newest last, max 10); old links redirect (301) to the current one.
+  oldSlugs?: string[];
 }

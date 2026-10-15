@@ -1,0 +1,722 @@
+{
+ "_readme": "Shared by node scripts/check-seo.mjs (src/utils/seo.ts) and server/tests/smoke.sh (server/src/seo.php). Inputs are authored by hand, expected values were reviewed by hand. Edit both implementations together.",
+ "plainText": [
+  [
+   "<p>Xin&nbsp;chào <b>thế giới</b></p><p>Dòng hai</p>",
+   "Xin chào thế giới Dòng hai"
+  ],
+  [
+   "a<br>b<br/>c",
+   "a b c"
+  ],
+  [
+   "Tom &amp; Jerry &lt;3 &quot;q&quot; &#39;x&#39; &#x41;",
+   "Tom & Jerry <3 \"q\" 'x' A"
+  ],
+  [
+   "<script>x()</script>Giữ <style>p{}</style>lại",
+   "Giữ lại"
+  ],
+  [
+   "  nhiều   khoảng\n\ntrắng  ",
+   "nhiều khoảng trắng"
+  ],
+  [
+   "<h2>Tiêu đề</h2><ul><li>Một</li><li>Hai</li></ul>",
+   "Tiêu đề Một Hai"
+  ],
+  [
+   "5 < 6 và 7 > 3",
+   "5 < 6 và 7 > 3"
+  ],
+  [
+   "Giá&nbsp;&nbsp;tốt &hellip; &copy;",
+   "Giá tốt … ©"
+  ],
+  [
+   "x  y",
+   "x y"
+  ],
+  [
+   "",
+   ""
+  ]
+ ],
+ "snippet": [
+  [
+   "Ngắn gọn.",
+   "Ngắn gọn."
+  ],
+  [
+   "nhà phố liền kề trung tâm quận một giá tốt pháp lý rõ ràng sổ hồng riêng gần chợ trường học bệnh viện công viên nhà phố liền kề trung tâm quận một giá tốt pháp lý rõ ràng sổ hồng riêng gần chợ trường học bệnh viện công viên nhà ph",
+   "nhà phố liền kề trung tâm quận một giá tốt pháp lý rõ ràng sổ hồng riêng gần chợ trường học bệnh viện công viên nhà phố liền kề trung tâm quận một giá tốt…"
+  ],
+  [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…"
+  ],
+  [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…"
+  ],
+  [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy…"
+  ],
+  [
+   "một hai ba bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn năm, sáu bảy tám chín mười mười một mười hai mười ba",
+   "một hai ba bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn bốn năm, sáu bảy tám chín mười mười một mười…"
+  ],
+  [
+   "đđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđ😀😀😀 sau",
+   "đđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđ😀…"
+  ],
+  [
+   "  khoảng   trắng   thừa  ",
+   "khoảng trắng thừa"
+  ]
+ ],
+ "usableImage": [
+  [
+   "/uploads/a.jpg",
+   "/uploads/a.jpg"
+  ],
+  [
+   "/images/og-default.png",
+   "/images/og-default.png"
+  ],
+  [
+   "https://cdn.example/x.png",
+   "https://cdn.example/x.png"
+  ],
+  [
+   "http://x/y.png",
+   ""
+  ],
+  [
+   "//evil/x.png",
+   ""
+  ],
+  [
+   "/uploads/a.svg",
+   ""
+  ],
+  [
+   "/uploads/a.SVG?x=1",
+   ""
+  ],
+  [
+   "javascript:alert(1)",
+   ""
+  ],
+  [
+   "",
+   ""
+  ],
+  [
+   null,
+   ""
+  ],
+  [
+   5,
+   ""
+  ],
+  [
+   "/uploads/a b.jpg",
+   ""
+  ],
+  [
+   "/other/a.jpg",
+   ""
+  ],
+  [
+   " /uploads/trim.png ",
+   "/uploads/trim.png"
+  ],
+  [
+   "https://x/a.svg#frag",
+   ""
+  ],
+  [
+   "/uploads/q\"x.png",
+   ""
+  ]
+ ],
+ "keywords": [
+  [
+   [
+    "a",
+    "A ",
+    " b  c ",
+    "",
+    5
+   ],
+   [
+    "a",
+    "b c"
+   ]
+  ],
+  [
+   [
+    "k0",
+    "k1",
+    "k2",
+    "k3",
+    "k4",
+    "k5",
+    "k6",
+    "k7",
+    "k8",
+    "k9",
+    "k10",
+    "k11",
+    "k12",
+    "k13",
+    "k14",
+    "k15",
+    "k16",
+    "k17",
+    "k18",
+    "k19"
+   ],
+   [
+    "k0",
+    "k1",
+    "k2",
+    "k3",
+    "k4",
+    "k5",
+    "k6",
+    "k7",
+    "k8",
+    "k9",
+    "k10",
+    "k11",
+    "k12",
+    "k13",
+    "k14"
+   ]
+  ],
+  [
+   [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ],
+   [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ]
+  ],
+  [
+   {
+    "a": 1
+   },
+   []
+  ],
+  [
+   "abc",
+   []
+  ],
+  [
+   [
+    "Bất Động Sản",
+    "bất động sản",
+    "THỊ TRƯỜNG"
+   ],
+   [
+    "Bất Động Sản",
+    "THỊ TRƯỜNG"
+   ]
+  ]
+ ],
+ "items": [
+  {
+   "name": "news custom",
+   "kind": "news",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "path": "/tin-tuc/a",
+   "item": {
+    "title": "Tin A",
+    "excerpt": "Tóm tắt",
+    "content": "<p>Nội dung</p>",
+    "thumbnail": "/uploads/t.jpg",
+    "seo": {
+     "title": "  Tiêu đề   SEO ",
+     "description": "Mô tả SEO",
+     "keywords": [
+      "bất động sản",
+      "Bất Động Sản",
+      "thị trường"
+     ],
+     "ogImage": "/uploads/og.png"
+    }
+   },
+   "expect": {
+    "title": "Tiêu đề SEO",
+    "description": "Mô tả SEO",
+    "keywords": "bất động sản, thị trường",
+    "robots": "index, follow",
+    "image": "/uploads/og.png",
+    "ogType": "article",
+    "path": "/tin-tuc/a"
+   }
+  },
+  {
+   "name": "project derived with long short description",
+   "kind": "project",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "path": "/du-an/a",
+   "item": {
+    "name": "Dự án A",
+    "shortDescription": "nhà phố liền kề trung tâm quận một giá tốt pháp lý rõ ràng sổ hồng riêng gần chợ trường học bệnh viện công viên nhà phố liền kề trung tâm quận một giá tốt pháp lý rõ ràng sổ hồng riêng gần chợ trường học bệnh viện công viên nhà ph",
+    "fullDescription": "<p>x</p>",
+    "thumbnail": "/uploads/p.jpg",
+    "images": [
+     "/uploads/p2.jpg"
+    ]
+   },
+   "expect": {
+    "title": "Dự án A | PN",
+    "description": "nhà phố liền kề trung tâm quận một giá tốt pháp lý rõ ràng sổ hồng riêng gần chợ trường học bệnh viện công viên nhà phố liền kề trung tâm quận một giá tốt…",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/uploads/p.jpg",
+    "ogType": "website",
+    "path": "/du-an/a"
+   }
+  },
+  {
+   "name": "property description from full html",
+   "kind": "property",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "path": "/chuyen-nhuong/a",
+   "item": {
+    "title": "BĐS A",
+    "shortDescription": "",
+    "fullDescription": "<p>Căn hộ&nbsp;đẹp</p><p>View sông</p>",
+    "thumbnail": "",
+    "images": [
+     "/uploads/first.jpg"
+    ]
+   },
+   "expect": {
+    "title": "BĐS A | PN",
+    "description": "Căn hộ đẹp View sông",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/uploads/first.jpg",
+    "ogType": "website",
+    "path": "/chuyen-nhuong/a"
+   }
+  },
+  {
+   "name": "legacy consignment with name only",
+   "kind": "consignment",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "path": "/ky-gui/a",
+   "item": {
+    "name": "Tin cũ",
+    "shortDescription": "Mô tả cũ",
+    "thumbnail": "/uploads/c.jpg"
+   },
+   "expect": {
+    "title": "Tin cũ | PN",
+    "description": "Mô tả cũ",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/uploads/c.jpg",
+    "ogType": "website",
+    "path": "/ky-gui/a"
+   }
+  },
+  {
+   "name": "noindex item",
+   "kind": "news",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "path": "/tin-tuc/n",
+   "item": {
+    "title": "Ẩn",
+    "excerpt": "e",
+    "thumbnail": "/uploads/t.jpg",
+    "seo": {
+     "noindex": true
+    }
+   },
+   "expect": {
+    "title": "Ẩn | PN",
+    "description": "e",
+    "keywords": "",
+    "robots": "noindex, nofollow",
+    "image": "/uploads/t.jpg",
+    "ogType": "article",
+    "path": "/tin-tuc/n"
+   }
+  },
+  {
+   "name": "site indexSite false",
+   "kind": "project",
+   "company": {
+    "name": "PN",
+    "seo": {
+     "indexSite": false
+    }
+   },
+   "path": "/du-an/a",
+   "item": {
+    "name": "Dự án A",
+    "shortDescription": "ngắn",
+    "thumbnail": "/uploads/p.jpg"
+   },
+   "expect": {
+    "title": "Dự án A | Phương Nam Realty",
+    "description": "ngắn",
+    "keywords": "",
+    "robots": "noindex, nofollow",
+    "image": "/uploads/p.jpg",
+    "ogType": "website",
+    "path": "/du-an/a"
+   }
+  },
+  {
+   "name": "svg thumbnail then a valid first gallery image",
+   "kind": "project",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "path": "/du-an/b",
+   "item": {
+    "name": "B",
+    "shortDescription": "ngắn",
+    "thumbnail": "/images/projects/a.svg",
+    "images": [
+     "https://cdn.example/b.jpg",
+     "/images/projects/b.svg"
+    ]
+   },
+   "expect": {
+    "title": "B | PN",
+    "description": "ngắn",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "https://cdn.example/b.jpg",
+    "ogType": "website",
+    "path": "/du-an/b"
+   }
+  },
+  {
+   "name": "only svg images -> site default image",
+   "kind": "project",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "path": "/du-an/c",
+   "item": {
+    "name": "C",
+    "shortDescription": "ngắn",
+    "thumbnail": "/images/projects/a.svg",
+    "images": [
+     "/images/projects/b.svg"
+    ]
+   },
+   "expect": {
+    "title": "C | PN",
+    "description": "ngắn",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/site.png",
+    "ogType": "website",
+    "path": "/du-an/c"
+   }
+  },
+  {
+   "name": "everything empty",
+   "kind": "property",
+   "company": {},
+   "path": "/chuyen-nhuong/e",
+   "item": {
+    "title": "",
+    "shortDescription": "",
+    "fullDescription": ""
+   },
+   "expect": {
+    "title": " | Phương Nam Realty",
+    "description": "Bất động sản Phương Nam — Kiến tạo giá trị, Đồng hành cùng bạn. Phân phối, chuyển nhượng, ký gửi bất động sản uy tín.",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/og-default.png",
+    "ogType": "website",
+    "path": "/chuyen-nhuong/e"
+   }
+  },
+  {
+   "name": "explicit empty title suffix",
+   "kind": "news",
+   "company": {
+    "seo": {
+     "titleSuffix": ""
+    }
+   },
+   "path": "/tin-tuc/s",
+   "item": {
+    "title": "Không hậu tố",
+    "excerpt": "x"
+   },
+   "expect": {
+    "title": "Không hậu tố",
+    "description": "x",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/og-default.png",
+    "ogType": "article",
+    "path": "/tin-tuc/s"
+   }
+  },
+  {
+   "name": "seo object with empty fields",
+   "kind": "news",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "path": "/tin-tuc/z",
+   "item": {
+    "title": "Rỗng",
+    "excerpt": "e",
+    "seo": {
+     "title": "",
+     "description": "",
+     "keywords": [],
+     "ogImage": "",
+     "noindex": false
+    }
+   },
+   "expect": {
+    "title": "Rỗng | PN",
+    "description": "e",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/site.png",
+    "ogType": "article",
+    "path": "/tin-tuc/z"
+   }
+  }
+ ],
+ "pages": [
+  {
+   "page": "home",
+   "path": "/",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "expect": {
+    "title": "Phương Nam Realty — Kiến tạo giá trị",
+    "description": "Mô tả site",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/site.png",
+    "ogType": "website",
+    "path": "/"
+   }
+  },
+  {
+   "page": "home",
+   "path": "/",
+   "company": {},
+   "expect": {
+    "title": "Phương Nam Realty",
+    "description": "Bất động sản Phương Nam — Kiến tạo giá trị, Đồng hành cùng bạn. Phân phối, chuyển nhượng, ký gửi bất động sản uy tín.",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/og-default.png",
+    "ogType": "website",
+    "path": "/"
+   }
+  },
+  {
+   "page": "home",
+   "path": "/",
+   "company": {
+    "name": "PN",
+    "seo": {
+     "indexSite": false
+    }
+   },
+   "expect": {
+    "title": "PN",
+    "description": "Bất động sản Phương Nam — Kiến tạo giá trị, Đồng hành cùng bạn. Phân phối, chuyển nhượng, ký gửi bất động sản uy tín.",
+    "keywords": "",
+    "robots": "noindex, nofollow",
+    "image": "/images/og-default.png",
+    "ogType": "website",
+    "path": "/"
+   }
+  },
+  {
+   "page": "projects",
+   "path": "/du-an",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "expect": {
+    "title": "Dự án bất động sản | PN",
+    "description": "Danh sách dự án bất động sản do Phương Nam Realty phân phối: căn hộ, nhà phố, biệt thự, đất nền với thông tin minh bạch, pháp lý rõ ràng.",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/site.png",
+    "ogType": "website",
+    "path": "/du-an"
+   }
+  },
+  {
+   "page": "contact",
+   "path": "/lien-he",
+   "company": {},
+   "expect": {
+    "title": "Liên hệ tư vấn | Phương Nam Realty",
+    "description": "Liên hệ Phương Nam Realty để được tư vấn mua bán, thuê, ký gửi bất động sản. Hotline, email và địa chỉ văn phòng.",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/og-default.png",
+    "ogType": "website",
+    "path": "/lien-he"
+   }
+  },
+  {
+   "page": "notFound",
+   "path": "/x",
+   "company": {
+    "name": "Phương Nam Realty",
+    "slogan": "Kiến tạo giá trị",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "  Mô tả   site  ",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "expect": {
+    "title": "Không tìm thấy trang | PN",
+    "description": "Trang bạn tìm không tồn tại hoặc đã được di chuyển.",
+    "keywords": "",
+    "robots": "noindex, nofollow",
+    "image": "/images/site.png",
+    "ogType": "website",
+    "path": "/x"
+   }
+  },
+  {
+   "page": "admin",
+   "path": "/admin",
+   "company": {},
+   "expect": {
+    "title": "Quản trị | Phương Nam Realty",
+    "description": "Khu vực quản trị nội bộ.",
+    "keywords": "",
+    "robots": "noindex, nofollow",
+    "image": "/images/og-default.png",
+    "ogType": "website",
+    "path": "/admin"
+   }
+  },
+  {
+   "page": "news",
+   "path": "/tin-tuc",
+   "company": {
+    "name": "PN",
+    "seo": {
+     "indexSite": false
+    }
+   },
+   "expect": {
+    "title": "Tin tức & thị trường bất động sản | Phương Nam Realty",
+    "description": "Cập nhật tin tức, phân tích thị trường và xu hướng giá bất động sản mới nhất từ đội ngũ chuyên gia Phương Nam Realty.",
+    "keywords": "",
+    "robots": "noindex, nofollow",
+    "image": "/images/og-default.png",
+    "ogType": "website",
+    "path": "/tin-tuc"
+   }
+  }
+ ]
+}

@@ -4,3 +4,4 @@ export * from './property';
 export * from './news';
 export * from './contact';
 export * from './consignment';
+export * from './seo';

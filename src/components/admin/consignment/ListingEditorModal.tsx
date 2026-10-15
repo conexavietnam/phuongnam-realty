@@ -5,6 +5,8 @@ import { ExternalLink } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { ImageField } from '@/components/admin/ImageField';
+import { SeoFields } from '@/components/admin/seo/SeoFields';
+import { SlugField } from '@/components/admin/seo/SlugField';
 import { GalleryField } from '@/components/admin/GalleryField';
 import { LazyRichTextEditor } from '@/components/admin/LazyRichTextEditor';
 import type { AdminActions } from '@/components/admin/consignment/types';
@@ -15,9 +17,12 @@ import {
   DESCRIPTION_REWRITE_MESSAGE,
   listingUrl,
   needsDescriptionRewrite,
+  sectionPath,
   SECTION_HELP,
   SECTION_LABELS,
 } from '@/utils/consignment';
+import { cleanSeoForSave } from '@/utils/seoFields';
+import { nextOldSlugs } from '@/utils/slugHistory';
 import { normalizeEditorHtml } from '@/utils/richText';
 import { slugify } from '@/utils/slug';
 import type { ConsignmentListing, ConsignmentPurpose, ConsignmentSection, ConsignmentStatus } from '@/types';
@@ -109,6 +114,8 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
       priceDisplay: draft.priceDisplay.trim(),
       shortDescription: draft.shortDescription.trim(),
       fullDescription: normalizeEditorHtml(draft.fullDescription),
+      seo: cleanSeoForSave(draft.seo),
+      oldSlugs: nextOldSlugs(isNew ? undefined : initial, slug),
     };
   };
 
@@ -171,16 +178,16 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
             />
           </Field>
 
-          <Field label="Đường dẫn (slug)">
-            <input
-              type="text"
-              value={draft.slug}
-              onChange={(e) => set('slug', e.target.value)}
-              maxLength={200}
-              placeholder="Để trống để tự tạo từ tiêu đề"
-              className={`${INPUT} font-mono`}
-            />
-          </Field>
+          <SlugField
+            id="listingSlug"
+            value={draft.slug}
+            onChange={(slug) => set('slug', slug)}
+            title={draft.title}
+            prefix={`${sectionPath(draft.section)}/`}
+            savedSlug={isNew ? '' : initial.slug}
+            published={!isNew && initial.status !== 'draft'}
+            conflict={(slug) => consignmentService.slugConflictMessage(slug, draft.id)}
+          />
 
           <Field label="Trạng thái">
             <select value={draft.status} onChange={(e) => set('status', e.target.value as ConsignmentStatus)} className={`${INPUT} bg-white`}>
@@ -353,6 +360,16 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
             <span className="block font-semibold text-slate-700 mb-1">Bài viết chi tiết</span>
             <LazyRichTextEditor value={draft.fullDescription} onChange={(html) => set('fullDescription', html)} category="property" />
           </div>
+
+          <SeoFields
+            value={draft.seo}
+            onChange={(seo) => set('seo', seo)}
+            title={draft.title}
+            shortDescription={draft.shortDescription}
+            thumbnail={draft.thumbnail}
+            slug={draft.slug}
+            section={sectionPath(draft.section).slice(1)}
+          />
 
           <label className="flex items-center gap-2 md:col-span-2 font-semibold text-slate-700">
             <input type="checkbox" checked={draft.featured} onChange={(e) => set('featured', e.target.checked)} />

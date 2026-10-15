@@ -43,6 +43,8 @@ export function consignmentToProperty(item: ConsignmentListing): Property {
     agentId: '',
     createdAt: item.publishedAt || item.createdAt,
     consignmentStatus: soldStatus(item),
+    seo: item.seo,
+    oldSlugs: item.oldSlugs,
   };
 }
 
@@ -68,6 +70,8 @@ export function consignmentToProject(item: ConsignmentListing): Project {
     investor: item.investor,
     status: item.projectStatus,
     consignmentStatus: soldStatus(item),
+    seo: item.seo,
+    oldSlugs: item.oldSlugs,
   };
 }
 

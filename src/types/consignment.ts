@@ -1,3 +1,5 @@
+import type { ItemSeo } from './seo';
+
 export type ConsignmentStatus = 'draft' | 'published' | 'sold';
 
 // Where a listing appears on the public site. Missing in old data = 'ky-gui'.
@@ -42,6 +44,9 @@ export interface ConsignmentListing {
   featured: boolean;
   createdAt: string;
   publishedAt: string;
+  seo?: ItemSeo;
+  // Previous slugs of this item (newest last, max 10); old links redirect (301) to the current one.
+  oldSlugs?: string[];
 }
 
 export type LeadStatus = 'new' | 'processing' | 'approved' | 'rejected' | 'closed';

@@ -52,7 +52,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
+        // Served by server/seo/index.php, never by the cached SPA shell.
+        navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//, /^\/sitemap\.xml$/, /^\/robots\.txt$/, /^\/google[a-z0-9]+\.html$/],
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,woff,woff2}'],
         runtimeCaching: [
           {

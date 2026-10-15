@@ -1,9 +1,11 @@
+import { normalizeItemSeo } from '@/utils/seoFields';
 import type {
   ConsignmentListing,
   ConsignmentPurpose,
   ConsignmentSection,
   ConsignmentStatus,
   CustomerLead,
+  ItemSeo,
   LeadStatus,
 } from '@/types';
 
@@ -25,6 +27,16 @@ const LISTING_STATUSES: ConsignmentStatus[] = ['draft', 'published', 'sold'];
 
 const str = (value: unknown): string => (typeof value === 'string' ? value : '');
 const num = (value: unknown): number => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
+
+const withSeo = (raw: unknown): { seo?: ItemSeo } => {
+  const seo = normalizeItemSeo(raw);
+  return seo ? { seo } : {};
+};
+
+const withOldSlugs = (raw: unknown): { oldSlugs?: string[] } => {
+  const list = Array.isArray(raw) ? raw.filter((s): s is string => typeof s === 'string' && s !== '') : [];
+  return list.length > 0 ? { oldSlugs: list } : {};
+};
 
 // Data saved before the workflow existed has no status (published), `name` and `category`.
 export function normalizeListing(raw: unknown): ConsignmentListing {
@@ -66,6 +78,8 @@ export function normalizeListing(raw: unknown): ConsignmentListing {
     featured: r.featured === true,
     createdAt,
     publishedAt: str(r.publishedAt) || (status === 'draft' ? '' : createdAt),
+    ...withSeo(r.seo),
+    ...withOldSlugs(r.oldSlugs),
   };
 }
 

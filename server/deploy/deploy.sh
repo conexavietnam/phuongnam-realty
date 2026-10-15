@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Safe deploy: build locally, back up user data on the server, swap ONLY the app files.
-# Layout: public_html/ holds ONLY the built SPA. The PHP entry point (server/api/) and the uploaded images
+# Layout: public_html/ holds ONLY the built SPA. The PHP entry points (server/api/ and server/seo/, the SEO shell) and the uploaded images
 # (uploads/) live OUTSIDE public_html (nginx maps /api/index.php and /uploads/ to them), so even a stray
 # "rm -rf public_html/*" cannot delete the backend or user images. It never touches uploads/, data/ or server/config.php.
 #
@@ -53,6 +53,7 @@ trap 'rm -rf "$WORK"' EXIT
 echo "==> Packing"
 tar -czf "$WORK/dist.tgz" -C dist .
 tar -czf "$WORK/api.tgz" -C server/api .
+tar -czf "$WORK/seo.tgz" -C server/seo .
 tar -czf "$WORK/src.tgz" -C server/src .
 tar -czf "$WORK/seed.tgz" -C server/seed .
 tar -czf "$WORK/bin.tgz" -C server/bin .
@@ -60,7 +61,7 @@ tar -czf "$WORK/bin.tgz" -C server/bin .
 STAGE="$APP_ROOT/.deploy-incoming/$TS"
 echo "==> Uploading to $DEPLOY_HOST:$STAGE"
 ssh "$DEPLOY_HOST" "mkdir -p -- $(printf '%q' "$STAGE")"
-scp -q "$WORK"/dist.tgz "$WORK"/api.tgz "$WORK"/src.tgz "$WORK"/seed.tgz "$WORK"/bin.tgz "$DEPLOY_HOST:$STAGE/"
+scp -q "$WORK"/dist.tgz "$WORK"/api.tgz "$WORK"/seo.tgz "$WORK"/src.tgz "$WORK"/seed.tgz "$WORK"/bin.tgz "$DEPLOY_HOST:$STAGE/"
 
 echo "==> Deploying on the server"
 {
@@ -75,15 +76,16 @@ BACKUPS="$APP_ROOT/backups"
 UPLOADS="$APP_ROOT/uploads"
 [ -f "$APP_ROOT/server/config.php" ] || { echo "server/config.php is missing: not a configured app root" >&2; exit 1; }
 
-mkdir -p "$STAGE/dist" "$STAGE/api" "$STAGE/src" "$STAGE/seed" "$STAGE/bin"
+mkdir -p "$STAGE/dist" "$STAGE/api" "$STAGE/seo" "$STAGE/src" "$STAGE/seed" "$STAGE/bin"
 tar -xzf "$STAGE/dist.tgz" -C "$STAGE/dist"
 tar -xzf "$STAGE/api.tgz" -C "$STAGE/api"
+tar -xzf "$STAGE/seo.tgz" -C "$STAGE/seo"
 tar -xzf "$STAGE/src.tgz" -C "$STAGE/src"
 tar -xzf "$STAGE/seed.tgz" -C "$STAGE/seed"
 tar -xzf "$STAGE/bin.tgz" -C "$STAGE/bin"
 
 echo "-- php -l"
-find "$STAGE/api" "$STAGE/src" "$STAGE/bin" -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+find "$STAGE/api" "$STAGE/seo" "$STAGE/src" "$STAGE/bin" -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
 
 echo "-- backup of uploads + data"
 mkdir -p "$BACKUPS"
@@ -104,9 +106,10 @@ echo "-- replacing dist files (uploads/ and api/ are never touched)"
 find "$PUBLIC" -mindepth 1 -maxdepth 1 ! -name uploads ! -name api -exec rm -r -- {} +
 cp -a "$STAGE/dist/." "$PUBLIC/"
 
-echo "-- installing server/api (outside the webroot) and uploads/"
-mkdir -p "$APP_ROOT/server/api" "$UPLOADS"
+echo "-- installing server/api and server/seo (outside the webroot) and uploads/"
+mkdir -p "$APP_ROOT/server/api" "$APP_ROOT/server/seo" "$UPLOADS"
 cp -a "$STAGE/api/." "$APP_ROOT/server/api/"
+cp -a "$STAGE/seo/." "$APP_ROOT/server/seo/"
 
 echo "-- replacing server/src, server/seed and server/bin (config.php untouched)"
 for part in src seed bin; do
@@ -117,10 +120,12 @@ for part in src seed bin; do
 done
 
 echo "-- permissions"
-$REMOTE_SUDO chown -R "$SITE_USER:$PRIVATE_GROUP" "$APP_ROOT/server/src" "$APP_ROOT/server/seed" "$APP_ROOT/server/bin" "$APP_ROOT/server/api"
+$REMOTE_SUDO chown -R "$SITE_USER:$PRIVATE_GROUP" "$APP_ROOT/server/src" "$APP_ROOT/server/seed" "$APP_ROOT/server/bin" "$APP_ROOT/server/api" "$APP_ROOT/server/seo"
 $REMOTE_SUDO chown "$SITE_USER:$SITE_GROUP" "$UPLOADS"
 chmod 755 "$UPLOADS"
-find "$APP_ROOT/server/api" -type d -exec chmod 750 {} + ; find "$APP_ROOT/server/api" -type f -exec chmod 640 {} +
+for entry in api seo; do
+  find "$APP_ROOT/server/$entry" -type d -exec chmod 750 {} + ; find "$APP_ROOT/server/$entry" -type f -exec chmod 640 {} +
+done
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -exec $REMOTE_SUDO chown -h "$SITE_USER:$SITE_GROUP" {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -type d -exec chmod 755 {} +
 find "$PUBLIC" -path "$PUBLIC/uploads" -prune -o -type f -exec chmod 644 {} +
@@ -151,6 +156,9 @@ check_status() {
 }
 check_status "home page" "$SITE_URL/" ok
 check_status "api auth/me" "$SITE_URL/api/index.php?r=auth/me" ok
+check_status "sitemap.xml (SEO shell)" "$SITE_URL/sitemap.xml" ok
+check_status "robots.txt (SEO shell)" "$SITE_URL/robots.txt" ok
+check_status "unknown page answers 404 (no soft 404)" "$SITE_URL/khong-co-trang-nay-$TS" not200
 check_status "server/config.php is not public" "$SITE_URL/server/config.php" not200
 
 if [ "$fail" -ne 0 ]; then

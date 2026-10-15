@@ -1,9 +1,13 @@
 import { dataStorage } from '@/services/dataStorage';
-import type { CompanyInfo, MenuConfig, FilterConfig, FooterConfig, Agent } from '@/types';
+import type { CompanyInfo, CompanySeo, MenuConfig, FilterConfig, FooterConfig, Agent } from '@/types';
 
 export const companyService = {
   getCompanyInfo(): CompanyInfo {
     return dataStorage.getCompany() as CompanyInfo;
+  },
+
+  saveSeo(seo: CompanySeo): Promise<void> {
+    return dataStorage.saveCompany({ seo });
   },
 
   getMenuConfig(): MenuConfig {

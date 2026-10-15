@@ -31,6 +31,9 @@ function pn_config(): array
         'uploads_url' => '/' . trim((string) ($loaded['uploads_url'] ?? '/uploads/'), '/') . '/',
         'cookie_secure' => (bool) ($loaded['cookie_secure'] ?? true),
         'auth_key' => (string) ($loaded['auth_key'] ?? ''),
+        // SEO shell (server/seo/index.php): canonical origin and where the built index.html lives.
+        'site_url' => rtrim((string) ($loaded['site_url'] ?? ''), '/'),
+        'webroot' => rtrim((string) ($loaded['webroot'] ?? dirname(__DIR__, 2) . '/public_html'), '/\\'),
     ];
     return $cfg;
 }
