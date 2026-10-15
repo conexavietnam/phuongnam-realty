@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Phone } from 'lucide-react';
 import { companyService } from '@/services/companyService';
 import { Button } from '@/components/common/Button';
 import { Logo } from '@/components/common/Logo';
+import { DesktopNav } from '@/components/desktop/DesktopNav';
+import { useDataListener } from '@/hooks';
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  useDataListener();
   const companyInfo = companyService.getCompanyInfo();
-  const menuConfig = companyService.getMenuConfig();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,24 +32,7 @@ export function Header() {
           <Logo variant="dark" size={isScrolled ? 'sm' : 'md'} showTagline={!isScrolled} />
 
           {/* Center: Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            {menuConfig.desktop.map((item, index) => (
-              <NavLink
-                key={index}
-                to={item.path}
-                className={({ isActive }) =>
-                  `text-base transition-colors py-2 ${
-                    isActive
-                      ? 'text-gold-500 font-semibold border-b-2 border-gold-500'
-                      : 'text-navy-800 hover:text-gold-500'
-                  }`
-                }
-                end={item.exact}
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
+          <DesktopNav />
 
           {/* Right: Hotline & CTA */}
           <div className="hidden md:flex items-center gap-6">

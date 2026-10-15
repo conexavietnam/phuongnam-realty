@@ -13,6 +13,9 @@
 //     /images/ path or an https URL, and not an .svg (social crawlers cannot show SVG).
 //  6. Keywords: trimmed, whitespace collapsed, <= 60 chars each, de-duplicated (case-insensitive), <= 15, joined ", ".
 //  7. Robots: "noindex, nofollow" when the item has seo.noindex or the site has indexSite === false, else "index, follow".
+//  8. News category page (/tin-tuc/danh-muc/<slug>): title = seo.title, else label + titleSuffix; description =
+//     seo.description, else snippet(category description), else "Tin tức chuyên mục <label>: cập nhật mới nhất từ <site>.";
+//     image = site default; robots noindex when the site is not indexed or the category has no indexable article.
 import type { CompanySeo, ItemSeo } from '@/types/seo';
 
 export const SEO_DEFAULTS = {
@@ -50,6 +53,12 @@ export interface PageSeo {
   ogType: 'website' | 'article';
   // Path only (no host); used for canonical and og:url.
   path: string;
+}
+
+export interface CategoryLike {
+  label?: unknown;
+  description?: unknown;
+  seo?: { title?: unknown; description?: unknown } | null;
 }
 
 export interface StaticPage {
@@ -230,6 +239,24 @@ export function itemSeo(kind: SeoKind, raw: Record<string, unknown>, site: SiteS
     robots: !site.indexSite || seo.noindex === true ? ROBOTS_NOINDEX : ROBOTS_INDEX,
     image,
     ogType: kind === 'news' ? 'article' : 'website',
+    path,
+  };
+}
+
+// Meta of /tin-tuc/danh-muc/<slug>. indexableCount = articles of the category that may be indexed.
+export function categorySeo(category: CategoryLike, indexableCount: number, site: SiteSeo, path: string): PageSeo {
+  const seo = category.seo ?? {};
+  const label = collapseSpaces(str(category.label));
+  const customTitle = collapseSpaces(str(seo.title));
+  const customDescription = collapseSpaces(str(seo.description));
+  const own = snippet(plainText(str(category.description)));
+  return {
+    title: customTitle || label + site.titleSuffix,
+    description: customDescription || own || `Tin tức chuyên mục ${label}: cập nhật mới nhất từ ${site.siteName}.`,
+    keywords: '',
+    robots: !site.indexSite || indexableCount === 0 ? ROBOTS_NOINDEX : ROBOTS_INDEX,
+    image: site.ogImage,
+    ogType: 'website',
     path,
   };
 }

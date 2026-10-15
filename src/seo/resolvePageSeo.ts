@@ -4,7 +4,8 @@ import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { consignmentService } from '@/services/consignmentService';
 import { listingUrl } from '@/utils/consignment';
-import { homeSeo, itemSeo, siteSeo, staticPageSeo } from '@/utils/seo';
+import { categorySeo, homeSeo, itemSeo, siteSeo, staticPageSeo } from '@/utils/seo';
+import { categoryPath } from '@/utils/newsMeta';
 import type { PageSeo, SeoKind, SiteSeo } from '@/utils/seo';
 import { matchSiteRoute } from '@/seo/routes';
 import type { RoutePage } from '@/seo/routes';
@@ -40,6 +41,13 @@ export function resolvePageSeo(pathname: string): ResolvedSeo {
 
   const slugValue = slug ?? '';
   const encoded = encodeURIComponent(slugValue);
+
+  if (page === 'newsCategory') {
+    const category = newsService.getCategory(slugValue);
+    if (!category) return notFound();
+    const indexable = newsService.getAll().filter((n) => n.category === category.slug && n.seo?.noindex !== true).length;
+    return wrap(categorySeo(category, indexable, site, categoryPath(category.slug)));
+  }
   const detail = (kind: SeoKind, item: unknown, path: string) => wrap(itemSeo(kind, asRecord(item), site, path));
 
   if (page === 'article') {

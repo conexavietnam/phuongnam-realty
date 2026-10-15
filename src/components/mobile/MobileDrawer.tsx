@@ -1,8 +1,11 @@
-import React, { useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
-import { X, Phone, Mail, Share2, Video, Camera } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { X, Phone, Mail, Share2, Video, Camera, ChevronDown } from 'lucide-react';
 import { companyService } from '@/services/companyService';
 import { Logo } from '@/components/common/Logo';
+import { SiteLink } from '@/components/common/SiteLink';
+import { useDataListener } from '@/hooks';
+import { isLinkActive, isNavItemActive } from '@/utils/menuConfig';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -10,8 +13,13 @@ interface MobileDrawerProps {
 }
 
 export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) => {
+  useDataListener();
+  const { pathname } = useLocation();
   const companyInfo = companyService.getCompanyInfo();
-  const menuConfig = companyService.getMenuConfig();
+  const items = companyService.getNavigation().desktop;
+  // Accordion: undefined = default (the item holding the current page is open), '' = everything closed.
+  const [expandedId, setExpandedId] = useState<string | undefined>(undefined);
+  const openId = expandedId ?? items.find((item) => item.children.length > 0 && isNavItemActive(pathname, item))?.id;
 
   // Prevent background scroll when open
   useEffect(() => {
@@ -54,21 +62,58 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
 
         {/* Menu Items */}
         <div className="flex-1 overflow-y-auto py-2">
-          {menuConfig.desktop.map((item, idx) => (
-            <NavLink
-              key={idx}
-              to={item.path}
-              end={item.exact}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `block px-4 py-4 border-b border-slate-50 text-base font-medium transition-colors ${
-                  isActive ? 'text-gold-500 bg-gold-50/30' : 'text-navy-800'
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {items.map((item) => {
+            const active = isNavItemActive(pathname, item);
+            const rowClass = `block flex-1 px-4 py-4 text-base font-medium transition-colors ${active ? 'text-gold-500 bg-gold-50/30' : 'text-navy-800'}`;
+            if (item.children.length === 0) {
+              return (
+                <div key={item.id} className="border-b border-slate-50">
+                  <SiteLink item={item} active={isLinkActive(pathname, item)} onClick={onClose} className={rowClass}>
+                    {item.label}
+                  </SiteLink>
+                </div>
+              );
+            }
+            const expanded = openId === item.id;
+            const panelId = `drawer-submenu-${item.id}`;
+            return (
+              <div key={item.id} className="border-b border-slate-50">
+                <div className={`flex items-stretch ${active ? 'bg-gold-50/30' : ''}`}>
+                  <SiteLink item={item} active={isLinkActive(pathname, item)} onClick={onClose} className={rowClass}>
+                    {item.label}
+                  </SiteLink>
+                  <button
+                    type="button"
+                    aria-expanded={expanded}
+                    aria-controls={panelId}
+                    aria-label={`${expanded ? 'Thu gọn' : 'Mở'} menu con của ${item.label}`}
+                    onClick={() => setExpandedId(expanded ? '' : item.id)}
+                    className="px-4 text-slate-500 hover:text-navy-900 focus:outline-none"
+                  >
+                    <ChevronDown className={`w-5 h-5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+                {expanded && (
+                  <ul id={panelId} className="bg-slate-50/70 pb-1">
+                    {item.children.map((child) => (
+                      <li key={child.id}>
+                        <SiteLink
+                          item={child}
+                          active={isLinkActive(pathname, child)}
+                          onClick={onClose}
+                          className={`block pl-8 pr-4 py-3 text-sm transition-colors ${
+                            isLinkActive(pathname, child) ? 'text-gold-500 font-semibold' : 'text-navy-700'
+                          }`}
+                        >
+                          {child.label}
+                        </SiteLink>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Footer info */}

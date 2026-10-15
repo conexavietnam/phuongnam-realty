@@ -1,5 +1,7 @@
 import { dataStorage } from '@/services/dataStorage';
-import type { CompanyInfo, CompanySeo, MenuConfig, FilterConfig, FooterConfig, Agent } from '@/types';
+import { renderableBottom, renderableNav } from '@/utils/menuConfig';
+import type { BottomItem, NavItem } from '@/utils/menuConfig';
+import type { CompanyInfo, CompanySeo, MenuConfig, MenuItem, FilterConfig, FooterConfig, Agent } from '@/types';
 
 export const companyService = {
   getCompanyInfo(): CompanyInfo {
@@ -12,6 +14,20 @@ export const companyService = {
 
   getMenuConfig(): MenuConfig {
     return dataStorage.getMenu();
+  },
+
+  // Header/drawer menu and bottom bar as they are shown: hidden and invalid entries removed.
+  getNavigation(): { desktop: NavItem[]; bottom: BottomItem[] } {
+    const menu = dataStorage.getMenu();
+    return { desktop: renderableNav(menu.desktop), bottom: renderableBottom(menu.mobileBottomNav) };
+  },
+
+  getDefaultNavigation(): { desktop: MenuItem[]; mobileBottomNav: MenuItem[] } {
+    return dataStorage.getDefaultNavigation();
+  },
+
+  saveNavigation(nav: { desktop: MenuItem[]; mobileBottomNav: MenuItem[] }): Promise<void> {
+    return dataStorage.saveNavigation(nav);
   },
 
   getFooterConfig(): FooterConfig {

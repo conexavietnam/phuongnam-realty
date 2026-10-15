@@ -2,12 +2,13 @@ import { useParams, Link } from 'react-router-dom';
 import { Clock, Calendar, User, ArrowLeft, Share2 } from 'lucide-react';
 import { DesktopLayout } from '@/layouts/DesktopLayout';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
-import { Badge } from '@/components/common/Badge';
+import { CategoryChip } from '@/components/common/CategoryChip';
 import { NewsCard } from '@/components/desktop/NewsCard';
 import { SectionTitle } from '@/components/common/SectionTitle';
 import { Button } from '@/components/common/Button';
 import { newsService } from '@/services/newsService';
 import { renderRichHtml, stripHtml } from '@/utils/richText';
+import { categoryPath, formatNewsDate } from '@/utils/newsMeta';
 
 export function NewsDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -30,11 +31,8 @@ export function NewsDetailPage() {
     );
   }
 
-  const formattedDate = new Date(article.publishedAt).toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+  const formattedDate = formatNewsDate(article.publishedAt);
+  const category = newsService.getCategory(article.category);
 
   return (
     <DesktopLayout>
@@ -43,12 +41,13 @@ export function NewsDetailPage() {
         <Breadcrumb
           items={[
             { label: 'Tin tức & Thị trường', path: '/tin-tuc' },
+            ...(category ? [{ label: category.label, path: categoryPath(category.slug) }] : []),
             { label: article.title },
           ]}
         />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
           <div className="mb-3">
-            <Badge variant="gold">{article.categoryLabel}</Badge>
+            <CategoryChip article={article} tone="gold" />
           </div>
           <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight mb-4">
             {article.title}

@@ -347,6 +347,113 @@ check "company seo indexSite as a string -> 422" 422 "$(cput '{"indexSite":"fals
 check "company seo unknown key -> 422" 422 "$(cput '{"robotsTxt":"x"}')"
 check "company seo as a list -> 422" 422 "$(cput '["a"]')"
 
+echo "== news categories: write validation and public read"
+CAT_A='{"id":"cat-a","slug":"thi-truong","label":"Thị trường","description":"Mô tả chuyên mục","order":1,"seo":{"title":"SEO tiêu đề","description":"SEO mô tả"}}'
+CAT_B='{"id":"cat-b","slug":"tin-tuc","label":"Tin tức","order":2}'
+check "two valid categories -> 200" 200 "$(putc news_categories "[${CAT_A},${CAT_B}]")"
+check "categories are public: anonymous GET -> 200" 200 "$(http "$BASE?r=data&c=news_categories")"
+body_has "public read returns the category" '"slug":"thi-truong"'
+check "anonymous PUT news_categories -> 401" 401 "$(http -X PUT -H "$JSON" --data '[]' "$BASE?r=data&c=news_categories")"
+check "empty category list -> 200" 200 "$(putc news_categories '[]')"
+check "duplicate slug -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"x","label":"A","order":1},{"id":"b","slug":"x","label":"B","order":2}]')"
+check "slug with upper case -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"Thi-Truong","label":"A","order":1}]')"
+check "slug with a space -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"thi truong","label":"A","order":1}]')"
+check "slug with an accent -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"thị-trường","label":"A","order":1}]')"
+check "slug with a slash -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"a/b","label":"A","order":1}]')"
+check "empty slug -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"","label":"A","order":1}]')"
+check "slug of 80 chars -> 200" 200 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"$(head -c 80 /dev/zero | tr '\0' 'a')\",\"label\":\"A\",\"order\":1}]")"
+check "slug of 81 chars -> 422" 422 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"$(head -c 81 /dev/zero | tr '\0' 'a')\",\"label\":\"A\",\"order\":1}]")"
+check "label of 60 chars -> 200" 200 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"a\",\"label\":\"$(head -c 60 /dev/zero | tr '\0' 'a')\",\"order\":1}]")"
+check "label of 61 chars -> 422" 422 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"a\",\"label\":\"$(head -c 61 /dev/zero | tr '\0' 'a')\",\"order\":1}]")"
+check "blank label -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"a","label":"   ","order":1}]')"
+check "label as a number -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"a","label":5,"order":1}]')"
+check "description of 300 chars -> 200" 200 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"a\",\"label\":\"A\",\"description\":\"$(head -c 300 /dev/zero | tr '\0' 'a')\",\"order\":1}]")"
+check "description of 301 chars -> 422" 422 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"a\",\"label\":\"A\",\"description\":\"$(head -c 301 /dev/zero | tr '\0' 'a')\",\"order\":1}]")"
+check "order as a string -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"a","label":"A","order":"1"}]')"
+check "order as a fraction -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"a","label":"A","order":1.5}]')"
+check "missing order -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"a","label":"A"}]')"
+check "missing id -> 422" 422 "$(putc news_categories '[{"slug":"a","label":"A","order":1}]')"
+check "unknown key -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"a","label":"A","order":1,"extra":1}]')"
+check "seo with an unknown key -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"a","label":"A","order":1,"seo":{"noindex":true}}]')"
+check "seo title over 120 chars -> 422" 422 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"a\",\"label\":\"A\",\"order\":1,\"seo\":{\"title\":\"$(head -c 121 /dev/zero | tr '\0' 'a')\"}}]")"
+check "category that is not an object -> 422" 422 "$(putc news_categories '["tin-tuc"]')"
+check "categories as an object -> 422" 422 "$(putc news_categories '{"slug":"a"}')"
+check "category oldSlugs valid -> 200" 200 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["cu","cu-2"]}]')"
+check "category oldSlugs with 10 entries -> 200" 200 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"moi\",\"label\":\"A\",\"order\":1,\"oldSlugs\":[$(printf '"s%s",' $(seq 1 9))\"s10\"]}]")"
+check "category oldSlugs with 11 entries -> 422" 422 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"moi\",\"label\":\"A\",\"order\":1,\"oldSlugs\":[$(printf '"s%s",' $(seq 1 10))\"s11\"]}]")"
+check "category oldSlugs containing the current slug -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["moi"]}]')"
+check "category oldSlugs with a duplicate -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["cu","cu"]}]')"
+check "category oldSlugs with upper case -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["Cu"]}]')"
+check "category oldSlugs with a slash -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":["a/b"]}]')"
+check "category oldSlugs empty string -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":[""]}]')"
+check "category oldSlug over 80 chars -> 422" 422 "$(putc news_categories "[{\"id\":\"a\",\"slug\":\"moi\",\"label\":\"A\",\"order\":1,\"oldSlugs\":[\"$(head -c 81 /dev/zero | tr '\0' 'a')\"]}]")"
+check "category oldSlugs not a list -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":"cu"}]')"
+check "category oldSlugs with a non-string -> 422" 422 "$(putc news_categories '[{"id":"a","slug":"moi","label":"A","order":1,"oldSlugs":[5]}]')"
+CAT_40="$(for i in $(seq 1 40); do printf '{"id":"c%s","slug":"s%s","label":"L%s","order":%s},' "$i" "$i" "$i" "$i"; done)"
+check "40 categories -> 200" 200 "$(putc news_categories "[${CAT_40%,}]")"
+check "41 categories -> 422" 422 "$(putc news_categories "[${CAT_40}{\"id\":\"c41\",\"slug\":\"s41\",\"label\":\"L41\",\"order\":41}]")"
+check "news slug danh-muc is reserved -> 422" 422 "$(putc news '[{"id":"n","slug":"danh-muc"}]')"
+check "news oldSlugs danh-muc is reserved -> 422" 422 "$(putc news '[{"id":"n","slug":"moi","oldSlugs":["danh-muc"]}]')"
+check "news slug danh-muc-2 -> 200" 200 "$(putc news '[{"id":"n","slug":"danh-muc-2"}]')"
+check "other collections may use danh-muc -> 200" 200 "$(putc projects '[{"id":"n","slug":"danh-muc"}]')"
+check "news with category and categoryLabel -> 200" 200 "$(putc news '[{"id":"n","slug":"tin-1","category":"thi-truong","categoryLabel":"Thị trường","author":"A","publishedAt":"2026-05-01T03:30:00.000Z","readTime":"3 phút đọc"}]')"
+
+echo "== menu: write validation and public read"
+MENU_FOOTER='"footer":{"columns":[{"id":"c","title":"T","links":[{"label":"L","url":"/du-an"}]}],"copyright":"c"}'
+menu_put() { putc menu "$1"; }
+check "legacy menu shape -> 200" 200 "$(menu_put "{\"desktop\":[{\"label\":\"Trang chủ\",\"path\":\"/\",\"exact\":true},{\"label\":\"Dự án\",\"path\":\"/du-an\"}],\"mobileBottomNav\":[{\"label\":\"Trang chủ\",\"path\":\"/\",\"icon\":\"Home\",\"exact\":true}],${MENU_FOOTER}}")"
+check "anonymous read of the menu -> 200" 200 "$(http "$BASE?r=data&c=menu")"
+body_has "footer is stored with the menu" '"copyright":"c"'
+check "new menu shape with children, flags and ids -> 200" 200 "$(menu_put '{"desktop":[{"id":"home","label":"Trang chủ","path":"/","exact":true,"visible":true},{"id":"news","label":"Tin tức","path":"/tin-tuc","newTab":false,"children":[{"id":"news-market","label":"Thị trường","path":"/tin-tuc/danh-muc/thi-truong","visible":true,"newTab":true},{"id":"mail","label":"Email","path":"mailto:a@b.vn"},{"id":"tel","label":"Gọi","path":"tel:+84901234567"},{"id":"ext","label":"Ngoài","path":"https://example.test/x?y=1#z"}]}],"mobileBottomNav":[{"id":"b1","label":"Trang chủ","path":"/","icon":"Home","visible":true},{"id":"b2","label":"Liên hệ","path":"/lien-he","icon":"Phone"}]}')"
+check "menu without footer or bottom bar -> 200" 200 "$(menu_put '{"desktop":[{"label":"A","path":"/"}]}')"
+check "javascript: link in the header menu -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"javascript:alert(1)"}]}')"
+check "JAVASCRIPT: in upper case -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"JavaScript:alert(1)"}]}')"
+check "javascript: link in a submenu -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/","children":[{"label":"B","path":"javascript:alert(1)"}]}]}')"
+check "javascript: link in the bottom bar -> 422" 422 "$(menu_put '{"mobileBottomNav":[{"label":"A","path":"javascript:alert(1)","icon":"Home"}]}')"
+check "data: link -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"data:text/html,x"}]}')"
+check "protocol-relative link -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"//evil.test/x"}]}')"
+check "link with a backslash -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/\\evil.test"}]}')"
+check "plain http link -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"http://example.test"}]}')"
+check "https link without a host -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"https://"}]}')"
+check "link with a space -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/a b"}]}')"
+check "link with a quote -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/a\"onclick=1"}]}')"
+check "link with angle brackets -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/a<b>"}]}')"
+check "relative link without a slash -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"du-an"}]}')"
+check "empty link -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":""}]}')"
+check "missing link -> 422" 422 "$(menu_put '{"desktop":[{"label":"A"}]}')"
+check "link of 500 chars -> 200" 200 "$(menu_put "{\"desktop\":[{\"label\":\"A\",\"path\":\"/$(head -c 499 /dev/zero | tr '\0' 'a')\"}]}")"
+check "link of 501 chars -> 422" 422 "$(menu_put "{\"desktop\":[{\"label\":\"A\",\"path\":\"/$(head -c 500 /dev/zero | tr '\0' 'a')\"}]}")"
+MENU_10="$(for i in $(seq 1 10); do printf '{"label":"M%s","path":"/m%s"},' "$i" "$i"; done)"
+check "10 header items -> 200" 200 "$(menu_put "{\"desktop\":[${MENU_10%,}]}")"
+check "11 header items -> 422" 422 "$(menu_put "{\"desktop\":[${MENU_10}{\"label\":\"M11\",\"path\":\"/m11\"}]}")"
+KIDS_12="$(for i in $(seq 1 12); do printf '{"label":"K%s","path":"/k%s"},' "$i" "$i"; done)"
+check "12 submenu items -> 200" 200 "$(menu_put "{\"desktop\":[{\"label\":\"A\",\"path\":\"/\",\"children\":[${KIDS_12%,}]}]}")"
+check "13 submenu items -> 422" 422 "$(menu_put "{\"desktop\":[{\"label\":\"A\",\"path\":\"/\",\"children\":[${KIDS_12}{\"label\":\"K13\",\"path\":\"/k13\"}]}]}")"
+check "children of children -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/","children":[{"label":"B","path":"/b","children":[{"label":"C","path":"/c"}]}]}]}')"
+check "children that is not a list -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/","children":{"label":"B"}}]}')"
+check "children on a bottom bar item -> 422" 422 "$(menu_put '{"mobileBottomNav":[{"label":"A","path":"/","icon":"Home","children":[]}]}')"
+BOTTOM_5="$(for i in 1 2 3 4 5; do printf '{"label":"B%s","path":"/b%s","icon":"Home"},' "$i" "$i"; done)"
+check "5 bottom bar items -> 200" 200 "$(menu_put "{\"mobileBottomNav\":[${BOTTOM_5%,}]}")"
+check "6 bottom bar items -> 422" 422 "$(menu_put "{\"mobileBottomNav\":[${BOTTOM_5}{\"label\":\"B6\",\"path\":\"/b6\",\"icon\":\"Home\"}]}")"
+check "icon outside the allow-list -> 422" 422 "$(menu_put '{"mobileBottomNav":[{"label":"A","path":"/","icon":"Skull"}]}')"
+check "icon as a number -> 422" 422 "$(menu_put '{"mobileBottomNav":[{"label":"A","path":"/","icon":3}]}')"
+check "icon with markup -> 422" 422 "$(menu_put '{"mobileBottomNav":[{"label":"A","path":"/","icon":"<svg>"}]}')"
+check "icon on a header item -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/","icon":"Home"}]}')"
+check "label of 40 chars -> 200" 200 "$(menu_put "{\"desktop\":[{\"label\":\"$(head -c 40 /dev/zero | tr '\0' 'a')\",\"path\":\"/\"}]}")"
+check "label of 41 chars -> 422" 422 "$(menu_put "{\"desktop\":[{\"label\":\"$(head -c 41 /dev/zero | tr '\0' 'a')\",\"path\":\"/\"}]}")"
+check "blank label -> 422" 422 "$(menu_put '{"desktop":[{"label":"  ","path":"/"}]}')"
+check "label as a number -> 422" 422 "$(menu_put '{"desktop":[{"label":5,"path":"/"}]}')"
+check "id with a space -> 422" 422 "$(menu_put '{"desktop":[{"id":"a b","label":"A","path":"/"}]}')"
+check "id as a number -> 422" 422 "$(menu_put '{"desktop":[{"id":5,"label":"A","path":"/"}]}')"
+check "visible as a string -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/","visible":"yes"}]}')"
+check "newTab as a number -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/","newTab":1}]}')"
+check "unknown key on an item -> 422" 422 "$(menu_put '{"desktop":[{"label":"A","path":"/","onclick":"x"}]}')"
+check "item that is not an object -> 422" 422 "$(menu_put '{"desktop":["/du-an"]}')"
+check "desktop as an object -> 422" 422 "$(menu_put '{"desktop":{"label":"A","path":"/"}}')"
+check "mobileBottomNav as a string -> 422" 422 "$(menu_put '{"mobileBottomNav":"x"}')"
+check "menu as a list -> 422" 422 "$(menu_put '[{"label":"A","path":"/"}]')"
+check "restore the seeded menu -> 200" 200 "$(menu_put "$(cat "$REPO/server/seed/menu.json")")"
+
 echo "== seo: SEO shell fixtures"
 SEO="http://127.0.0.1:${SEO_PORT}"
 mkdir -p "$ROOT/web"
@@ -371,9 +478,18 @@ cat > "$ROOT/web/index.html" <<'HTML'
 HTML
 cat > "$ROOT/data/news.json" <<'JSON'
 [
- {"id":"n1","slug":"tin-thuong","oldSlugs":["tin-thuong-cu"],"title":"Tin thường","excerpt":"Tóm tắt tin thường","content":"<p>Nội dung <strong>chi tiết</strong> bài viết &amp; hơn nữa.</p><script>alert(2)</script>","thumbnail":"/uploads/n1.jpg","author":"Biên tập","publishedAt":"2026-03-01","seo":{"title":"SEO tiêu đề tin","description":"SEO mô tả tin","keywords":["bất động sản","Bất Động Sản","thị trường"]}},
- {"id":"n2","slug":"tin-hostile","title":"</title><script>alert(1)</script>\"'&x","excerpt":"</script><script>alert(3)</script>","content":"","thumbnail":"/images/x.svg","publishedAt":"2026-03-02"},
- {"id":"n3","slug":"tin-noindex","oldSlugs":["tin-thuong","tin-xoa"],"title":"Tin noindex","excerpt":"e","content":"c","thumbnail":"/uploads/n3.jpg","publishedAt":"2026-03-03","seo":{"noindex":true}}
+ {"id":"n1","slug":"tin-thuong","category":"thi-truong","categoryLabel":"Thị trường","oldSlugs":["tin-thuong-cu"],"title":"Tin thường","excerpt":"Tóm tắt tin thường","content":"<p>Nội dung <strong>chi tiết</strong> bài viết &amp; hơn nữa.</p><script>alert(2)</script>","thumbnail":"/uploads/n1.jpg","author":"Biên tập","publishedAt":"2026-03-01","seo":{"title":"SEO tiêu đề tin","description":"SEO mô tả tin","keywords":["bất động sản","Bất Động Sản","thị trường"]}},
+ {"id":"n2","slug":"tin-hostile","category":"hostile","title":"</title><script>alert(1)</script>\"'&x","excerpt":"</script><script>alert(3)</script>","content":"","thumbnail":"/images/x.svg","publishedAt":"2026-03-02"},
+ {"id":"n3","slug":"tin-noindex","category":"thi-truong","oldSlugs":["tin-thuong","tin-xoa"],"title":"Tin noindex","excerpt":"e","content":"c","thumbnail":"/uploads/n3.jpg","publishedAt":"2026-03-03","seo":{"noindex":true}},
+ {"id":"n4","slug":"tin-tuy-chinh","category":"tuy-chinh","title":"Tin tùy chỉnh","excerpt":"e","content":"c","thumbnail":"/uploads/n4.jpg","publishedAt":"2026-03-05"}
+]
+JSON
+cat > "$ROOT/data/news_categories.json" <<'JSON'
+[
+ {"id":"k1","slug":"thi-truong","label":"Thị trường","description":"Phân tích thị trường","order":1},
+ {"id":"k2","slug":"hostile","label":"</title><script>alert(9)</script>\"'&c","description":"</script><script>alert(8)</script>","order":2},
+ {"id":"k3","slug":"trong","label":"Chuyên mục trống","order":3},
+ {"id":"k4","slug":"tuy-chinh","label":"Tùy chỉnh","description":"Mô tả gốc","order":4,"seo":{"title":"SEO tiêu đề chuyên mục","description":"SEO mô tả chuyên mục"},"oldSlugs":["tuy-chinh-cu","thi-truong"]}
 ]
 JSON
 cat > "$ROOT/data/projects.json" <<'JSON'
@@ -507,6 +623,62 @@ body_lacks_f "news list skips a noindex article" 'tin-noindex'
 check "property list -> 200" 200 "$(http "$SEO/chuyen-nhuong")"
 body_has_f "property list links a property" '/chuyen-nhuong/bds-mot'
 
+echo "== seo: news categories"
+check "category page -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/thi-truong")"
+body_has_f "category title = label + suffix" '<title>Thị trường | PN Test</title>'
+body_has_f "category description from the category" '<meta name="description" content="Phân tích thị trường" />'
+body_has_f "category canonical" '<link rel="canonical" href="https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/danh-muc/thi-truong" />'
+body_has_f "category og:url" '<meta property="og:url" content="https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/danh-muc/thi-truong" />'
+body_has_f "category is indexable" '<meta name="robots" content="index, follow" />'
+body_count "category has exactly one <title>" '<title>' 1
+body_has_f "category JSON-LD CollectionPage" '"@type":"CollectionPage"'
+body_has_f "category JSON-LD ItemList" '"@type":"ItemList"'
+body_has_f "category JSON-LD lists the article" '"url":"https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/tin-thuong"'
+body_has_f "category JSON-LD breadcrumb" '"@type":"BreadcrumbList"'
+body_has_f "category breadcrumb ends with the category" '"name":"Thị trường","item":"https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/danh-muc/thi-truong"'
+body_has_f "category h1" '<h1>Thị trường</h1>'
+body_has_f "category crawler list links the article" '<li><a href="/tin-tuc/tin-thuong">Tin thường</a></li>'
+body_lacks_f "category list skips a noindex article" 'tin-noindex'
+body_lacks_f "category list skips another category's article" 'tin-tuy-chinh'
+header_lacks "category page has no X-Robots-Tag" '^x-robots-tag'
+check "category with custom seo -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/tuy-chinh")"
+body_has_f "custom category title used as is" '<title>SEO tiêu đề chuyên mục</title>'
+body_has_f "custom category description" '<meta name="description" content="SEO mô tả chuyên mục" />'
+check "empty category -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/trong")"
+body_has_f "empty category is noindex" '<meta name="robots" content="noindex, nofollow" />'
+header_has "empty category sends X-Robots-Tag" '^x-robots-tag: noindex, nofollow'
+body_lacks_f "empty category has no canonical" 'rel="canonical"'
+body_has_f "empty category without description gets a generated one" 'content="Tin tức chuyên mục Chuyên mục trống: cập nhật mới nhất từ Phương Nam Realty."'
+check "hostile category -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/hostile")"
+body_has_f "hostile label escaped in <title>" '<title>&lt;/title&gt;&lt;script&gt;alert(9)&lt;/script&gt;&quot;&#039;&amp;c | PN Test</title>'
+body_lacks_f "no raw script from the category label" '<script>alert(9)'
+body_lacks_f "no raw script from the category description" '<script>alert(8)'
+body_lacks_f "no raw closing title injection from the label" '</title><script>'
+body_has_f "category h1 escaped" '<h1>&lt;/title&gt;&lt;script&gt;alert(9)&lt;/script&gt;&quot;&#039;&amp;c</h1>'
+body_has_f "category JSON-LD escapes angle brackets" "$(printf '\134u003C/script\134u003E')"
+check "unknown category -> 404" 404 "$(http "$SEO/tin-tuc/danh-muc/khong-co")"
+body_has_f "unknown category keeps the SPA shell" '/assets/index-abc.js'
+body_has_f "unknown category is noindex" '<meta name="robots" content="noindex, nofollow" />'
+header_has "unknown category sends X-Robots-Tag" '^x-robots-tag: noindex, nofollow'
+check "category slug with upper case -> 404" 404 "$(http "$SEO/tin-tuc/danh-muc/Thi-Truong")"
+check "category slug percent-encoded junk -> 404" 404 "$(http "$SEO/tin-tuc/danh-muc/%3Cscript%3E")"
+check "/tin-tuc/danh-muc alone is no article -> 404" 404 "$(http "$SEO/tin-tuc/danh-muc")"
+check "/tin-tuc/danh-muc/ with a trailing slash -> 404" 404 "$(http "$SEO/tin-tuc/danh-muc/")"
+check "category page with a trailing slash -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/thi-truong/")"
+check "category page with a query string -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/thi-truong?page=2")"
+echo "== seo: renamed category slugs redirect (301)"
+check "old category slug -> 301" 301 "$(http "$SEO/tin-tuc/danh-muc/tuy-chinh-cu")"
+header_has "301 points at the current category (absolute URL)" '^location: https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/danh-muc/tuy-chinh\s*$'
+check "old category slug with a trailing slash -> 301" 301 "$(http "$SEO/tin-tuc/danh-muc/tuy-chinh-cu/")"
+check "a slug that is current for another category wins over an old slug -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/thi-truong")"
+body_has_f "the current owner serves the page, not a redirect" '<title>Thị trường | PN Test</title>'
+check "old category slug is not an article route -> 404" 404 "$(http "$SEO/tin-tuc/tuy-chinh-cu")"
+check "category old slug with junk -> 404" 404 "$(http "$SEO/tin-tuc/danh-muc/tuy-chinh-cu%00")"
+check "category old slug under another section -> 404" 404 "$(http "$SEO/du-an/tuy-chinh-cu")"
+check "news list -> 200" 200 "$(http "$SEO/tin-tuc")"
+body_has_f "news list links every category" '<li><a href="/tin-tuc/danh-muc/thi-truong">Thị trường</a></li>'
+body_has_f "news list links the custom category" '<li><a href="/tin-tuc/danh-muc/tuy-chinh">Tùy chỉnh</a></li>'
+
 echo "== seo: 404, noindex, redirects"
 check "unknown news slug -> 404" 404 "$(http "$SEO/tin-tuc/khong-co")"
 body_has_f "404 keeps the SPA shell" '/assets/index-abc.js'
@@ -565,6 +737,12 @@ done
 body_has_f "sitemap lastmod from publishedAt" '<loc>https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/tin-thuong</loc><lastmod>2026-03-01</lastmod>'
 body_has_f "sitemap lastmod normalised from ISO" '<lastmod>2026-04-01T00:00:00+00:00</lastmod>'
 body_lacks_f "sitemap skips noindex news" 'tin-noindex'
+for c in thi-truong hostile tuy-chinh; do
+  body_has_f "sitemap lists the category $c" "<loc>https://127.0.0.1:${SEO_PORT}/tin-tuc/danh-muc/${c}</loc>"
+done
+body_has_f "category lastmod is its newest article" '<loc>https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/danh-muc/tuy-chinh</loc><lastmod>2026-03-05</lastmod>'
+body_lacks_f "sitemap skips an empty category" '/tin-tuc/danh-muc/trong'
+body_lacks_f "sitemap never lists an old category slug" 'tuy-chinh-cu'
 body_lacks_f "sitemap skips drafts" 'ky-gui-nhap'
 body_lacks_f "sitemap skips sold noindex" 'ky-gui-da-ban'
 body_lacks_f "sitemap skips admin" '/admin'
@@ -621,6 +799,8 @@ body_lacks_f "robots has no Sitemap line" 'Sitemap:'
 check "sitemap when indexing is off -> 200" 200 "$(http "$SEO/sitemap.xml")"
 check "sitemap is an empty urlset" 0 "$(grep -c '<url>' "$BODY" | tr -d ' ')"
 body_has_f "empty sitemap is still valid XML" '</urlset>'
+check "category page when indexing is off -> 200" 200 "$(http "$SEO/tin-tuc/danh-muc/thi-truong")"
+body_has_f "category page is noindex too" '<meta name="robots" content="noindex, nofollow" />'
 check "page when indexing is off -> 200" 200 "$(http "$SEO/tin-tuc/tin-thuong")"
 body_has_f "page is noindex" '<meta name="robots" content="noindex, nofollow" />'
 header_has "page X-Robots-Tag" '^x-robots-tag: noindex, nofollow'
@@ -630,6 +810,10 @@ echo "== seo: missing and corrupt data"
 rm -f "$ROOT/data/news.json"
 check "news.json missing -> list still served from the seed" 200 "$(http "$SEO/tin-tuc")"
 check "the SEO shell never creates data files" 0 "$([ -f "$ROOT/data/news.json" ] && echo 1 || echo 0)"
+rm -f "$ROOT/data/news_categories.json"
+check "news_categories.json missing -> category page from the seed" 200 "$(http "$SEO/tin-tuc/danh-muc/du-an")"
+body_has_f "seed category lists a seed article" '/tin-tuc/tien-do-thi-cong-vanh-dai-3-don-bay-khu-dong'
+check "the SEO shell never creates news_categories.json" 0 "$([ -f "$ROOT/data/news_categories.json" ] && echo 1 || echo 0)"
 check "slug from the missing file -> 404, not an error" 404 "$(http "$SEO/tin-tuc/tin-thuong")"
 printf '{{{ not json' > "$ROOT/data/news.json"
 check "corrupt news.json -> list served from the seed" 200 "$(http "$SEO/tin-tuc")"
@@ -705,13 +889,40 @@ foreach ($v['pages'] as $i => $case) {
         $expect("pages #$i {$case['page']} $key", $want, $meta[$key]);
     }
 }
+foreach ($v['categories'] as $i => $case) {
+    $site = pn_seo_site($case['company']);
+    $meta = pn_seo_category_meta($case['category'], $case['indexableCount'], $site, $case['path']);
+    foreach ($case['expect'] as $key => $want) {
+        $expect("categories #$i {$case['name']} $key", $want, $meta[$key]);
+    }
+}
 echo $total . ' ' . $fail;
 PHPVEC
 VECTOR_OUT="$("$PHP_BIN" "$ROOT/seo_vectors.php" "$ROOT/server/src" "$REPO/server/tests/seo-vectors.json" 2>"$ROOT/vectors.err")"
 cat "$ROOT/vectors.err"
 check "PHP derivation matches every shared vector (checked: ${VECTOR_OUT%% *})" 0 "${VECTOR_OUT##* }"
 
-rm -f "$ROOT/data/news.json" "$ROOT/data/projects.json" "$ROOT/data/properties.json" "$ROOT/data/consignments.json" "$ROOT/data/company.json"
+rm -f "$ROOT/data/news.json" "$ROOT/data/news_categories.json" "$ROOT/data/projects.json" "$ROOT/data/properties.json" "$ROOT/data/consignments.json" "$ROOT/data/company.json"
+
+echo "== menu: link vectors (shared with src/utils/menuConfig.ts)"
+cat > "$ROOT/menu_vectors.php" <<'PHPVEC'
+<?php
+declare(strict_types=1);
+require $argv[1] . '/storage.php';
+$v = json_decode(file_get_contents($argv[2]), true, 64, JSON_THROW_ON_ERROR);
+$fail = 0;
+foreach ($v['links'] as [$url, $ok]) {
+    if (pn_valid_menu_link($url) !== $ok) {
+        $fail++;
+        fwrite(STDERR, 'MENU VECTOR FAIL ' . json_encode($url, JSON_UNESCAPED_UNICODE) . ' want ' . json_encode($ok) . "
+");
+    }
+}
+echo count($v['links']) . ' ' . $fail;
+PHPVEC
+MENU_VECTOR_OUT="$("$PHP_BIN" "$ROOT/menu_vectors.php" "$ROOT/server/src" "$REPO/server/tests/menu-vectors.json" 2>"$ROOT/menu_vectors.err")"
+cat "$ROOT/menu_vectors.err"
+check "PHP menu link check matches every shared vector (checked: ${MENU_VECTOR_OUT%% *})" 0 "${MENU_VECTOR_OUT##* }"
 
 echo "== OTP lockout"
 check "second OTP request -> 200" 200 "$(http -X POST -H "$JSON" --data "{\"phone\":\"${ADMIN_PHONE}\"}" "$BASE?r=auth/otp")"

@@ -3,6 +3,7 @@ import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { consignmentService } from '@/services/consignmentService';
 import { listingUrl } from '@/utils/consignment';
+import { categoryPath } from '@/utils/newsMeta';
 import { mergedProjects, mergedProperties } from '@/utils/consignmentAdapters';
 import { matchSiteRoute } from '@/seo/routes';
 
@@ -21,6 +22,11 @@ export function oldSlugRedirect(pathname: string): string | null {
       if (newsService.getBySlug(slug)) return null;
       const item = newsService.getAll().find(usesOldSlug(slug));
       return item ? `/tin-tuc/${enc(item.slug)}` : null;
+    }
+    case 'newsCategory': {
+      if (newsService.getCategory(slug)) return null;
+      const category = newsService.getCategories().find(usesOldSlug(slug));
+      return category ? categoryPath(category.slug) : null;
     }
     case 'project': {
       if (projectService.getBySlug(slug)) return null;

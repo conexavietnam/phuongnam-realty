@@ -14,6 +14,23 @@ Tài liệu cho người quản trị và người triển khai. Phần kỹ thu
 
 Zalo và Facebook không chạy JavaScript nên chỉ đọc phần `<head>` do máy chủ gửi. Vì vậy bài đăng mới có ảnh và tiêu đề đúng khi dán link vào Zalo/Facebook ngay cả khi không ai mở bằng trình duyệt trước.
 
+Bảng route (một bảng cho mỗi phía, phải giống nhau): `src/seo/routes.ts` (trình duyệt) và `PN_SEO_ROUTES` trong `server/src/seo.php`.
+
+| Địa chỉ | Trang | Ghi chú |
+|-|-|-|
+| `/` | home | |
+| `/du-an`, `/du-an/:slug` | projects, project | |
+| `/chuyen-nhuong`, `/chuyen-nhuong/:slug` | properties, property | |
+| `/ky-gui`, `/ky-gui/:slug` | consignments, consignment | |
+| `/tin-tuc` | news | liệt kê bài và link tới các danh mục |
+| `/tin-tuc/danh-muc/:slug` | newsCategory | danh mục tin; chưa có trong danh sách là 404; danh mục không có bài lập chỉ mục là `noindex`; JSON-LD `CollectionPage` + `BreadcrumbList`; tối đa 30 link bài; có trong sitemap khi có bài |
+| `/tin-tuc/:slug` | article | slug `danh-muc` bị giữ riêng, bài không được dùng |
+| `/lien-he`, `/admin` | contact, admin | |
+
+Đổi đường dẫn (slug) của danh mục: hệ thống ghi nhớ tối đa 10 đường dẫn cũ (`oldSlugs`) và `/tin-tuc/danh-muc/<slug-cu>` trả 301 sang địa chỉ mới (kiểm tra bằng `curl -sI`); đường dẫn cũ không nằm trong sitemap, và đường dẫn đang là của một danh mục khác luôn thắng đường dẫn cũ.
+
+Trang danh mục: tiêu đề là tiêu đề SEO của danh mục, nếu trống là tên danh mục + hậu tố; mô tả là mô tả SEO, nếu trống là mô tả ngắn của danh mục, nếu trống nữa là câu mặc định "Tin tức chuyên mục ...". Menu website không ảnh hưởng SEO shell hay sitemap.
+
 Quy tắc suy ra giá trị mặc định (khi để trống) nằm ở một chỗ cho mỗi phía và phải giống hệt nhau: `src/utils/seo.ts` (trình duyệt) và `server/src/seo.php` (máy chủ). Bộ ví dụ kiểm tra chung: `server/tests/seo-vectors.json`.
 
 | Thông tin | Nếu để trống |

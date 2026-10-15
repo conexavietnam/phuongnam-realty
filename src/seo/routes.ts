@@ -9,6 +9,7 @@ export type RoutePage =
   | 'consignments'
   | 'consignment'
   | 'news'
+  | 'newsCategory'
   | 'article'
   | 'contact'
   | 'admin';
@@ -27,6 +28,7 @@ export const SITE_ROUTES: SiteRoute[] = [
   { path: '/ky-gui', page: 'consignments' },
   { path: '/ky-gui/:slug', page: 'consignment' },
   { path: '/tin-tuc', page: 'news' },
+  { path: '/tin-tuc/danh-muc/:slug', page: 'newsCategory' },
   { path: '/tin-tuc/:slug', page: 'article' },
   { path: '/lien-he', page: 'contact' },
   { path: '/admin', page: 'admin' },

@@ -28,11 +28,25 @@ export interface FilterOption {
   label: string;
 }
 
+// Submenu entry of a header menu item (one level only).
+export interface MenuChild {
+  id?: string;
+  label: string;
+  path: string;
+  visible?: boolean;
+  newTab?: boolean;
+}
+
+// Entry of menu.desktop or menu.mobileBottomNav. Data saved before the menu editor only has label, path, exact and icon.
 export interface MenuItem {
+  id?: string;
   label: string;
   path: string;
   icon?: string;
   exact?: boolean;
+  visible?: boolean;
+  newTab?: boolean;
+  children?: MenuChild[];
 }
 
 export interface FooterLink {

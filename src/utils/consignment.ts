@@ -1,3 +1,4 @@
+import { formatNumber } from '@/utils/numberFormat';
 import { normalizeItemSeo } from '@/utils/seoFields';
 import type {
   ConsignmentListing,
@@ -144,7 +145,7 @@ export function sortForPublic(items: ConsignmentListing[]): ConsignmentListing[]
 }
 
 export function priceLabel(item: ConsignmentListing): string {
-  return item.priceDisplay.trim() || (item.price > 0 ? `${item.price} Tỷ` : 'Liên hệ');
+  return item.priceDisplay.trim() || (item.price > 0 ? `${formatNumber(item.price, 3)} Tỷ` : 'Liên hệ');
 }
 
 // Where an application stands in: Mới > Đang xử lý > Đã duyệt (nháp) > Đã đăng > Đã giao dịch, or Từ chối.

@@ -20,6 +20,9 @@ declare(strict_types=1);
 //     or https URL, and not .svg.
 //  6. keywords: trimmed, collapsed, <= 60 chars, case-insensitive de-dupe, <= 15, joined ", ".
 //  7. robots: "noindex, nofollow" when seo.noindex or the site's indexSite is false, else "index, follow".
+//  8. news category page (/tin-tuc/danh-muc/<slug>): title = seo.title, else label + site titleSuffix;
+//     description = seo.description, else snippet(category description), else "Tin tức chuyên mục <label>: ...";
+//     image = site default; robots noindex when the site is not indexed or the category has no indexable article.
 
 const PN_SEO_SITE_NAME = 'Phương Nam Realty';
 const PN_SEO_DEFAULT_SUFFIX = ' | Phương Nam Realty';
@@ -45,6 +48,7 @@ const PN_SEO_ROUTES = [
     ['path' => '/ky-gui', 'page' => 'consignments'],
     ['path' => '/ky-gui/:slug', 'page' => 'consignment'],
     ['path' => '/tin-tuc', 'page' => 'news'],
+    ['path' => '/tin-tuc/danh-muc/:slug', 'page' => 'newsCategory'],
     ['path' => '/tin-tuc/:slug', 'page' => 'article'],
     ['path' => '/lien-he', 'page' => 'contact'],
     ['path' => '/admin', 'page' => 'admin'],
@@ -68,6 +72,9 @@ const PN_SEO_SECTION_LABELS = [
     '/ky-gui' => 'Ký gửi',
     '/tin-tuc' => 'Tin tức',
 ];
+
+const PN_SEO_NEWS_BASE = '/tin-tuc';
+const PN_SEO_NEWS_CATEGORY_BASE = '/tin-tuc/danh-muc';
 
 const PN_SEO_SECTION_BASES = ['ky-gui' => '/ky-gui', 'chuyen-nhuong' => '/chuyen-nhuong', 'du-an' => '/du-an'];
 
@@ -228,6 +235,26 @@ function pn_seo_item_meta(string $kind, array $raw, array $site, string $path): 
     );
 }
 
+/** Meta of /tin-tuc/danh-muc/<slug>. $indexableCount = articles of the category that may be indexed. */
+function pn_seo_category_meta(array $category, int $indexableCount, array $site, string $path): array
+{
+    $seo = is_array($category['seo'] ?? null) ? $category['seo'] : [];
+    $label = pn_seo_collapse(pn_seo_text($category['label'] ?? ''));
+    $customTitle = pn_seo_collapse(pn_seo_text($seo['title'] ?? ''));
+    $customDescription = pn_seo_collapse(pn_seo_text($seo['description'] ?? ''));
+    $own = pn_seo_snippet(pn_seo_plain_text(pn_seo_text($category['description'] ?? '')));
+    $hidden = !$site['indexSite'] || $indexableCount === 0;
+    return pn_seo_meta(
+        $customTitle !== '' ? $customTitle : $label . $site['titleSuffix'],
+        $customDescription !== '' ? $customDescription : ($own !== '' ? $own : 'Tin tức chuyên mục ' . $label . ': cập nhật mới nhất từ ' . $site['siteName'] . '.'),
+        '',
+        $hidden ? PN_SEO_ROBOTS_NOINDEX : PN_SEO_ROBOTS_INDEX,
+        $site['ogImage'],
+        'website',
+        $path
+    );
+}
+
 // ---------------------------------------------------------------------------------------------
 // Data (read only)
 // ---------------------------------------------------------------------------------------------
@@ -256,7 +283,7 @@ function pn_seo_collection(string $name): array
 function pn_seo_data_mtime(): int
 {
     $newest = 0;
-    foreach (['news', 'projects', 'properties', 'consignments', 'company'] as $name) {
+    foreach (['news', 'news_categories', 'projects', 'properties', 'consignments', 'company'] as $name) {
         foreach ([pn_data_path($name), dirname(__DIR__) . '/seed/' . $name . '.json'] as $file) {
             $time = @filemtime($file);
             if ($time !== false) {
@@ -287,11 +314,62 @@ function pn_seo_load_data(): array
     ));
     return [
         'company' => pn_seo_collection('company'),
+        'newsCategories' => pn_seo_sorted_categories(pn_seo_collection('news_categories')),
         'news' => $slugged(pn_seo_collection('news')),
         'projects' => $slugged(pn_seo_collection('projects')),
         'properties' => $slugged(pn_seo_collection('properties')),
         'consignments' => $consignments,
     ];
+}
+
+/** Valid categories (slug pattern, non-empty label) ordered by "order", then label. */
+function pn_seo_sorted_categories(array $list): array
+{
+    $valid = array_values(array_filter($list, static fn(array $c): bool => is_string($c['slug'] ?? null)
+        && preg_match(PN_NEWS_CATEGORY_SLUG_PATTERN, $c['slug']) === 1
+        && pn_seo_collapse(pn_seo_text($c['label'] ?? '')) !== ''));
+    usort($valid, static fn(array $a, array $b): int => (is_int($a['order'] ?? null) ? $a['order'] : 0) <=> (is_int($b['order'] ?? null) ? $b['order'] : 0)
+        ?: strcmp(pn_seo_text($a['label']), pn_seo_text($b['label'])));
+    return $valid;
+}
+
+function pn_seo_find_category(array $data, string $slug): ?array
+{
+    foreach ($data['newsCategories'] as $category) {
+        if ($category['slug'] === $slug) {
+            return $category;
+        }
+    }
+    return null;
+}
+
+/** Category that used to have this slug (kept in oldSlugs when an admin renames it), or null. */
+function pn_seo_category_by_old_slug(array $data, string $slug): ?array
+{
+    foreach ($data['newsCategories'] as $category) {
+        $old = is_array($category['oldSlugs'] ?? null) ? $category['oldSlugs'] : [];
+        if (in_array($slug, $old, true)) {
+            return $category;
+        }
+    }
+    return null;
+}
+
+function pn_seo_category_path(array $category): string
+{
+    return PN_SEO_NEWS_CATEGORY_BASE . '/' . rawurlencode($category['slug']);
+}
+
+/** Catalog entries (news) of a category that crawlers may index, in display order. */
+function pn_seo_category_entries(array $catalog, array $category, array $site): array
+{
+    $entries = [];
+    foreach ($catalog as $entry) {
+        if ($entry['base'] === PN_SEO_NEWS_BASE && ($entry['raw']['category'] ?? null) === $category['slug'] && !pn_seo_entry_noindex($entry, $site)) {
+            $entries[] = $entry;
+        }
+    }
+    return $entries;
 }
 
 function pn_seo_section_of(array $consignment): string
@@ -507,6 +585,26 @@ function pn_seo_organization(string $origin, array $company, array $site): array
     return $org;
 }
 
+/** CollectionPage listing the category's articles, plus the breadcrumb. */
+function pn_seo_category_jsonld(array $page, string $origin, array $site): array
+{
+    $meta = $page['meta'];
+    $label = $page['heading'];
+    $items = [];
+    foreach ($page['links'] as $i => [$title, $path]) {
+        $items[] = ['@type' => 'ListItem', 'position' => $i + 1, 'url' => $origin . $path, 'name' => $title];
+    }
+    $collection = [
+        '@context' => 'https://schema.org', '@type' => 'CollectionPage',
+        'name' => $label, 'description' => $meta['description'], 'url' => $origin . $meta['path'], 'inLanguage' => 'vi-VN',
+        'isPartOf' => ['@type' => 'WebSite', 'name' => $site['siteName'], 'url' => $origin . '/'],
+    ];
+    if ($items !== []) {
+        $collection['mainEntity'] = ['@type' => 'ItemList', 'itemListElement' => $items];
+    }
+    return [$collection, pn_seo_breadcrumb($origin, [['Trang chủ', '/'], [PN_SEO_SECTION_LABELS[PN_SEO_NEWS_BASE], PN_SEO_NEWS_BASE], [$label, $meta['path']]])];
+}
+
 /** @return list<array> JSON-LD objects for a page */
 function pn_seo_jsonld(array $page, string $origin, array $company, array $site): array
 {
@@ -515,6 +613,9 @@ function pn_seo_jsonld(array $page, string $origin, array $company, array $site)
             pn_seo_organization($origin, $company, $site),
             ['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => $site['siteName'], 'url' => $origin . '/', 'inLanguage' => 'vi-VN'],
         ];
+    }
+    if ($page['type'] === 'category') {
+        return pn_seo_category_jsonld($page, $origin, $site);
     }
     if ($page['type'] !== 'detail') {
         return [];
@@ -645,11 +746,15 @@ function pn_seo_fallback_html(array $page, array $site): string
             $parts[] = '<p>' . $e($excerpt) . '</p>';
         }
     }
-    if ($page['type'] === 'list' && $page['links'] !== []) {
-        $parts[] = '<ul>' . implode('', array_map(
-            static fn(array $l): string => '<li><a href="' . $e($l[1]) . '">' . $e($l[0]) . '</a></li>',
-            $page['links']
-        )) . '</ul>';
+    $linkList = static fn(array $links): string => '<ul>' . implode('', array_map(
+        static fn(array $l): string => '<li><a href="' . $e($l[1]) . '">' . $e($l[0]) . '</a></li>',
+        $links
+    )) . '</ul>';
+    if (($page['type'] === 'list' || $page['type'] === 'category') && $page['links'] !== []) {
+        $parts[] = $linkList($page['links']);
+    }
+    if (($page['categoryLinks'] ?? []) !== []) {
+        $parts[] = '<nav aria-label="Chuyên mục">' . $linkList($page['categoryLinks']) . '</nav>';
     }
     $nav = [['/', 'Trang chủ']];
     foreach (PN_SEO_SECTION_LABELS as $path => $label) {
@@ -714,6 +819,26 @@ function pn_seo_resolve(string $path, array $data, array $site): array
                 'meta' => pn_seo_static_meta($page, $base, $site),
                 'heading' => PN_SEO_STATIC_PAGES[$page][0],
                 'links' => pn_seo_list_items($catalog, $base, $site),
+                'categoryLinks' => $page === 'news'
+                    ? array_map(static fn(array $c): array => [pn_seo_collapse($c['label']), pn_seo_category_path($c)], $data['newsCategories'])
+                    : [],
+            ]];
+        case 'newsCategory':
+            $category = pn_seo_find_category($data, (string) $slug);
+            if ($category === null) {
+                // A slug that is current for some category always wins above; only then does the history count.
+                $renamed = pn_seo_category_by_old_slug($data, (string) $slug);
+                return $renamed !== null ? ['status' => 301, 'location' => pn_seo_category_path($renamed)] : $notFound;
+            }
+            $entries = pn_seo_category_entries($catalog, $category, $site);
+            return ['status' => 200, 'page' => [
+                'type' => 'category',
+                'meta' => pn_seo_category_meta($category, count($entries), $site, pn_seo_category_path($category)),
+                'heading' => pn_seo_collapse($category['label']),
+                'links' => array_map(
+                    static fn(array $e): array => [pn_seo_item_title($e['kind'], $e['raw']), pn_seo_entry_path($e)],
+                    array_slice($entries, 0, PN_SEO_LIST_LINKS_MAX)
+                ),
             ]];
     }
     $base = ['project' => '/du-an', 'property' => '/chuyen-nhuong', 'consignment' => '/ky-gui', 'article' => '/tin-tuc'][$page];
@@ -792,6 +917,15 @@ function pn_seo_sitemap_xml(string $origin, array $data, array $site): string
         }
         $fixed = ['/' => null, '/du-an' => $newest['/du-an'] ?? null, '/chuyen-nhuong' => $newest['/chuyen-nhuong'] ?? null,
             '/ky-gui' => $newest['/ky-gui'] ?? null, '/tin-tuc' => $newest['/tin-tuc'] ?? null, '/lien-he' => null];
+        // Categories with at least one indexable article (an empty category page is noindex and stays out).
+        foreach ($data['newsCategories'] as $category) {
+            $entries = pn_seo_category_entries($catalog, $category, $site);
+            if ($entries === []) {
+                continue;
+            }
+            $dates = array_filter(array_map('pn_seo_entry_date', $entries), static fn($d): bool => $d !== null);
+            $fixed[pn_seo_category_path($category)] = $dates === [] ? null : max($dates);
+        }
         $urls = $fixed + $urls;
     }
     $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
