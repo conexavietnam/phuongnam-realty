@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/common/Button';
 import { ImageField } from '@/components/admin/ImageField';
 import type { CompanyInfo } from '@/types/common';
+import { isUsablePhone, isValidZaloUrl, zaloHref } from '@/utils/contact';
 
 interface WebsiteInfoTabProps {
   company: CompanyInfo;
@@ -9,7 +10,22 @@ interface WebsiteInfoTabProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export function WebsiteInfoTab({ company, onChange: setCompany, onSubmit: handleSaveCompany }: WebsiteInfoTabProps) {
+export function WebsiteInfoTab({ company, onChange: setCompany, onSubmit }: WebsiteInfoTabProps) {
+  const hotlineError = isUsablePhone(company.hotline) ? '' : 'Số điện thoại phải có từ 9 đến 11 chữ số.';
+  // Older data holds "#" as a placeholder; it means "not set".
+  const zaloValue = company.social?.zalo === '#' ? '' : (company.social?.zalo ?? '');
+  const zaloError =
+    zaloValue.trim() === '' || isValidZaloUrl(zaloValue) ? '' : 'Chỉ nhận đường dẫn dạng https://zalo.me/... hoặc để trống.';
+  const effectiveZalo = zaloHref({ hotline: company.hotline, social: { zalo: zaloError ? '' : zaloValue } });
+
+  const handleSaveCompany = (e: React.FormEvent) => {
+    if (hotlineError || zaloError) {
+      e.preventDefault();
+      return;
+    }
+    onSubmit(e);
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
       <h3 className="text-base font-bold text-navy-900 mb-1">
@@ -74,8 +90,39 @@ export function WebsiteInfoTab({ company, onChange: setCompany, onSubmit: handle
               type="text"
               value={company.hotline}
               onChange={(e) => setCompany({ ...company, hotline: e.target.value })}
+              aria-invalid={hotlineError !== ''}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono"
             />
+            {hotlineError ? (
+              <p role="alert" className="text-[11px] text-red-600 mt-1">{hotlineError}</p>
+            ) : (
+              <p className="text-[11px] text-slate-500 mt-1">Số này dùng cho gọi điện và Zalo trên toàn website.</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Zalo (để trống = dùng số hotline)</label>
+            <input
+              type="text"
+              value={zaloValue}
+              onChange={(e) => setCompany({ ...company, social: { ...company.social, zalo: e.target.value } })}
+              placeholder="https://zalo.me/..."
+              aria-invalid={zaloError !== ''}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono"
+            />
+            {zaloError && <p role="alert" className="text-[11px] text-red-600 mt-1">{zaloError}</p>}
+            <p className="text-[11px] text-slate-500 mt-1">
+              Liên kết Zalo đang dùng:{' '}
+              <span className="font-mono">{effectiveZalo}</span>
+              {effectiveZalo !== '#' && (
+                <>
+                  {' '}
+                  <a href={effectiveZalo} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                    Mở thử
+                  </a>
+                </>
+              )}
+            </p>
           </div>
 
           <div>

@@ -6,6 +6,7 @@ import { Logo } from '@/components/common/Logo';
 import { SiteLink } from '@/components/common/SiteLink';
 import { useDataListener } from '@/hooks';
 import { isLinkActive, isNavItemActive } from '@/utils/menuConfig';
+import { telHref } from '@/utils/contact';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -119,7 +120,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
         {/* Footer info */}
         <div className="p-4 bg-slate-50 border-t border-slate-100 mt-auto">
           <div className="space-y-3 mb-4">
-            <a href={`tel:${companyInfo.hotline.replace(/\s/g, '')}`} className="flex items-center text-navy-800">
+            <a href={telHref(companyInfo.hotline)} className="flex items-center text-navy-800">
               <Phone className="w-5 h-5 mr-3 text-gold-500" />
               <span className="font-semibold">{companyInfo.hotline}</span>
             </a>

@@ -146,7 +146,7 @@ export function ContactForm({ onSubmit, className = '' }: ContactFormProps) {
           />
           <FormInput
             label="Số điện thoại *"
-            placeholder="0901 234 567"
+            placeholder="Ví dụ: 0912 345 678"
             icon={<Phone className="w-4 h-4" />}
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}

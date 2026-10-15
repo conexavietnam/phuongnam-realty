@@ -3,6 +3,7 @@ import { Menu, Phone } from 'lucide-react';
 import { companyService } from '@/services/companyService';
 import { Logo } from '@/components/common/Logo';
 import { MobileDrawer } from './MobileDrawer';
+import { telHref } from '@/utils/contact';
 
 export const MobileHeader: React.FC = () => {
   const companyInfo = companyService.getCompanyInfo();
@@ -22,7 +23,7 @@ export const MobileHeader: React.FC = () => {
         <Logo variant="dark" size="sm" />
 
         <a 
-          href={`tel:${companyInfo.hotline.replace(/\s/g, '')}`}
+          href={telHref(companyInfo.hotline)}
           className="p-2 -mr-2 text-gold-500 focus:outline-none"
           aria-label="Gọi hotline"
         >

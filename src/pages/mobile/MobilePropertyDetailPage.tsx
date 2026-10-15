@@ -11,6 +11,7 @@ import { companyService } from '@/services/companyService';
 import { Badge } from '@/components/common/Badge';
 import { renderRichHtml } from '@/utils/richText';
 import { typeLabel } from '@/utils/typeLabel';
+import { agentContact } from '@/utils/contact';
 
 export function MobilePropertyDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -96,10 +97,10 @@ export function MobilePropertyDetailPage() {
               </div>
             </div>
             <div className="flex gap-3">
-              <a href={`tel:${agent.phone}`} className="flex-1 bg-navy-900 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
+              <a href={agentContact(agent, companyService.getCompanyInfo()).tel} className="flex-1 bg-navy-900 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
                 <Phone className="w-4 h-4" /> Gọi điện
               </a>
-              <a href={`https://zalo.me/${agent.phone}`} target="_blank" rel="noreferrer" className="flex-1 bg-blue-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
+              <a href={agentContact(agent, companyService.getCompanyInfo()).zalo} target="_blank" rel="noreferrer" className="flex-1 bg-blue-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
                 <MessageSquare className="w-4 h-4" /> Zalo
               </a>
             </div>

@@ -1,12 +1,15 @@
 import { Phone, MessageCircle } from 'lucide-react';
 import type { Agent } from '@/types';
 import { Button } from '@/components/common/Button';
+import { companyService } from '@/services/companyService';
+import { agentContact } from '@/utils/contact';
 
 export interface AgentCardProps {
   agent: Agent;
 }
 
 export function AgentCard({ agent }: AgentCardProps) {
+  const contact = agentContact(agent, companyService.getCompanyInfo());
   return (
     <div className="bg-white rounded-xl shadow-md border border-slate-100 p-6 flex flex-col items-center text-center">
       {/* Avatar Circle */}
@@ -26,16 +29,16 @@ export function AgentCard({ agent }: AgentCardProps) {
 
       {/* Phone Number */}
       <a
-        href={`tel:${agent.phone.replace(/\s+/g, '')}`}
+        href={contact.tel}
         className="inline-flex items-center gap-2 text-navy-900 font-bold text-base hover:text-gold-500 transition-colors mb-2"
       >
         <Phone className="w-4 h-4 text-gold-500" />
-        <span>{agent.phone}</span>
+        <span>{contact.phone}</span>
       </a>
 
       {/* Zalo Link */}
       <a
-        href={agent.zaloLink}
+        href={contact.zalo}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-medium text-sm mb-5 transition-colors"
@@ -46,12 +49,12 @@ export function AgentCard({ agent }: AgentCardProps) {
 
       {/* Action Buttons */}
       <div className="w-full flex flex-col gap-2">
-        <a href={`tel:${agent.phone.replace(/\s+/g, '')}`} className="w-full">
+        <a href={contact.tel} className="w-full">
           <Button variant="primary" size="md" className="w-full font-semibold">
             Liên hệ ngay
           </Button>
         </a>
-        <a href={agent.zaloLink} target="_blank" rel="noopener noreferrer" className="w-full">
+        <a href={contact.zalo} target="_blank" rel="noopener noreferrer" className="w-full">
           <Button variant="outline" size="md" className="w-full font-semibold">
             Nhắn tin
           </Button>

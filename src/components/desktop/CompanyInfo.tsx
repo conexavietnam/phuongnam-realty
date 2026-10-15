@@ -1,5 +1,6 @@
 import { Building2, MapPin, Phone, Mail, Globe, Clock, MessageSquare } from 'lucide-react';
 import { companyService } from '@/services/companyService';
+import { telHref, zaloHref } from '@/utils/contact';
 
 export function CompanyInfo() {
   const info = companyService.getCompanyInfo();
@@ -42,7 +43,7 @@ export function CompanyInfo() {
             </div>
             <div>
               <span className="text-xs text-slate-400 block uppercase font-medium">Hotline tư vấn</span>
-              <a href={`tel:${info.hotline.replace(/\s+/g, '')}`} className="text-white font-semibold hover:text-gold-400 transition-colors">
+              <a href={telHref(info.hotline)} className="text-white font-semibold hover:text-gold-400 transition-colors">
                 {info.hotline}
               </a>
             </div>
@@ -94,7 +95,7 @@ export function CompanyInfo() {
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
               </svg>
             </a>
-            <a href={info.social.zalo} aria-label="Zalo" className="p-2 rounded-lg bg-white/5 hover:bg-gold-500 hover:text-navy-950 transition-colors text-slate-300">
+            <a href={zaloHref(info)} target="_blank" rel="noopener noreferrer" aria-label="Zalo" className="p-2 rounded-lg bg-white/5 hover:bg-gold-500 hover:text-navy-950 transition-colors text-slate-300">
               <MessageSquare className="w-4 h-4" />
             </a>
             <a href={info.social.youtube} aria-label="YouTube" className="p-2 rounded-lg bg-white/5 hover:bg-gold-500 hover:text-navy-950 transition-colors text-slate-300">

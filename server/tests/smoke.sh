@@ -507,9 +507,9 @@ cat > "$ROOT/data/consignments.json" <<'JSON'
  {"id":"c5","slug":"ky-gui-sang-bds","status":"published","section":"chuyen-nhuong","title":"Chuyển BĐS","shortDescription":"d","price":2,"publishedAt":"2026-04-04T00:00:00Z"}
 ]
 JSON
-write_company() { # indexSite (true|false)
+write_company() { # indexSite (true|false) [hotline]
   cat > "$ROOT/data/company.json" <<JSON
-{"name":"Phương Nam Realty","slogan":"Kiến tạo giá trị","hotline":"0901 234 567","email":"info@example.test","address":"Hà Nội","social":{"facebook":"https://facebook.com/pn","zalo":"#"},"seo":{"titleSuffix":" | PN Test","defaultDescription":"Mô tả mặc định test","googleSiteVerification":"abcdefghij1234567890","bingSiteVerification":"BINGCODE1234567890","googleHtmlFile":{"name":"google1234567890abcdef.html","content":"google-site-verification: google1234567890abcdef.html"},"indexSite":$1}}
+{"name":"Phương Nam Realty","slogan":"Kiến tạo giá trị","hotline":"${2:-0901 234 567}","email":"info@example.test","address":"Hà Nội","social":{"facebook":"https://facebook.com/pn","zalo":"#"},"seo":{"titleSuffix":" | PN Test","defaultDescription":"Mô tả mặc định test","googleSiteVerification":"abcdefghij1234567890","bingSiteVerification":"BINGCODE1234567890","googleHtmlFile":{"name":"google1234567890abcdef.html","content":"google-site-verification: google1234567890abcdef.html"},"indexSite":$1}}
 JSON
 }
 write_company true
@@ -591,6 +591,21 @@ body_has_f "home og image width" '<meta property="og:image:width" content="1200"
 body_has_f "home Organization JSON-LD" '"@type":"RealEstateAgent"'
 body_has_f "home WebSite JSON-LD" '"@type":"WebSite"'
 body_has_f "home sameAs only https links" '"sameAs":["https://facebook.com/pn"]'
+body_has_f "home Organization telephone is E.164" '"telephone":"+84901234567"'
+body_has_f "home Organization contactPoint" '"contactPoint":{"@type":"ContactPoint","telephone":"+84901234567","contactType":"customer service","areaServed":"VN","availableLanguage":"Vietnamese"}'
+write_company true '+84 931 123 416'
+check "home with +84 hotline -> 200" 200 "$(http "$SEO/")"
+body_has_f "+84 hotline normalised" '"telephone":"+84931123416"'
+write_company true '<script>alert(1)</script>'
+check "home with hostile hotline -> 200" 200 "$(http "$SEO/")"
+body_lacks_f "hostile hotline yields no telephone" '"telephone"'
+body_lacks_f "hostile hotline yields no contactPoint" '"contactPoint"'
+body_lacks_f "hostile hotline has no raw script" '<script>alert(1)'
+write_company true '12345'
+check "home with short hotline -> 200" 200 "$(http "$SEO/")"
+body_lacks_f "short hotline yields no telephone" '"telephone"'
+write_company true
+check "home restored -> 200" 200 "$(http "$SEO/")"
 body_has_f "home canonical" '<link rel="canonical" href="https://127.0.0.1:'"${SEO_PORT}"'/" />'
 check "contact page -> 200" 200 "$(http "$SEO/lien-he")"
 body_has_f "contact title" '<title>Liên hệ tư vấn | PN Test</title>'

@@ -6,6 +6,7 @@ import { Button } from '@/components/common/Button';
 import { Logo } from '@/components/common/Logo';
 import { DesktopNav } from '@/components/desktop/DesktopNav';
 import { useDataListener } from '@/hooks';
+import { telHref } from '@/utils/contact';
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -42,7 +43,7 @@ export function Header() {
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-slate-500 uppercase font-semibold">Hotline</span>
-                <span className="font-bold text-lg leading-none">{companyInfo.hotline}</span>
+                <a href={telHref(companyInfo.hotline)} className="font-bold text-lg leading-none hover:text-gold-500 transition-colors">{companyInfo.hotline}</a>
               </div>
             </div>
             <Link to="/ky-gui">
