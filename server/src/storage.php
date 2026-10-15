@@ -5,6 +5,7 @@ const PN_PUBLIC_COLLECTIONS = [
     'properties' => 'list',
     'projects' => 'list',
     'news' => 'list',
+    'news_categories' => 'list',
     'agents' => 'list',
     'consignments' => 'list',
     'company' => 'object',
@@ -72,6 +73,30 @@ const PN_SEO_IMAGE_PATTERN = '~^(?:/(?:uploads|images)/[^\s"\'<>\\\\]*|https://[
 const PN_SEO_VERIFICATION_PATTERN = '/^[A-Za-z0-9_-]{10,100}$/D';
 const PN_SEO_HTML_FILE_NAME_PATTERN = '/^google[a-z0-9]{8,64}\.html$/D';
 const PN_SEO_HTML_FILE_CONTENT_PATTERN = '/^[A-Za-z0-9 :._-]{1,200}$/D';
+
+const PN_NEWS_CATEGORIES_MAX = 40;
+const PN_NEWS_CATEGORY_LABEL_MAX = 60;
+const PN_NEWS_CATEGORY_DESCRIPTION_MAX = 300;
+const PN_NEWS_CATEGORY_ID_MAX = 100;
+const PN_NEWS_CATEGORY_SLUG_PATTERN = '/^[a-z0-9-]{1,80}$/D';
+const PN_NEWS_CATEGORY_KEYS = ['id', 'slug', 'label', 'description', 'order', 'seo'];
+const PN_NEWS_CATEGORY_SEO_KEYS = ['title', 'description'];
+/** News slugs that would collide with a fixed URL: /tin-tuc/danh-muc/<category>. Keep in step with RESERVED_NEWS_SLUGS in src/utils/newsMeta.ts. */
+const PN_NEWS_RESERVED_SLUGS = ['danh-muc'];
+
+const PN_MENU_MAX_ITEMS = 10;
+const PN_MENU_MAX_CHILDREN = 12;
+const PN_MENU_MAX_BOTTOM_ITEMS = 5;
+const PN_MENU_LABEL_MAX = 40;
+const PN_MENU_URL_MAX = 500;
+const PN_MENU_ID_PATTERN = '/^[A-Za-z0-9_-]{1,60}$/D';
+/** Lucide icons the bottom bar can show. Keep in step with MENU_ICON_NAMES in src/components/common/menuIcons.ts. */
+const PN_MENU_ICONS = ['Home', 'Building2', 'Send', 'Newspaper', 'Phone', 'Mail', 'MapPin', 'Search', 'Heart', 'User', 'Info', 'Handshake', 'Key', 'Landmark'];
+const PN_MENU_DESKTOP_KEYS = ['id', 'label', 'path', 'exact', 'visible', 'newTab', 'children'];
+const PN_MENU_CHILD_KEYS = ['id', 'label', 'path', 'exact', 'visible', 'newTab'];
+const PN_MENU_BOTTOM_KEYS = ['id', 'label', 'path', 'icon', 'exact', 'visible'];
+/** No whitespace, quotes, angle brackets or backslash in a link. */
+const PN_MENU_URL_FORBIDDEN = '/[\s"\'<>\\\\]/';
 
 function pn_collection_kind(string $name): ?string
 {
@@ -280,6 +305,132 @@ function pn_valid_old_slugs(array $item): bool
     return count(array_unique($list)) === count($list);
 }
 
+function pn_valid_news_category(mixed $item): bool
+{
+    if (!pn_is_object_array($item) || $item === [] || array_diff(array_keys($item), PN_NEWS_CATEGORY_KEYS) !== []) {
+        return false;
+    }
+    if (!is_string($item['id'] ?? null) || $item['id'] === '' || mb_strlen($item['id']) > PN_NEWS_CATEGORY_ID_MAX) {
+        return false;
+    }
+    if (!is_string($item['slug'] ?? null) || preg_match(PN_NEWS_CATEGORY_SLUG_PATTERN, $item['slug']) !== 1) {
+        return false;
+    }
+    if (!is_string($item['label'] ?? null) || trim($item['label']) === '' || mb_strlen($item['label']) > PN_NEWS_CATEGORY_LABEL_MAX) {
+        return false;
+    }
+    if (isset($item['description']) && (!is_string($item['description']) || mb_strlen($item['description']) > PN_NEWS_CATEGORY_DESCRIPTION_MAX)) {
+        return false;
+    }
+    if (!is_int($item['order'] ?? null)) {
+        return false;
+    }
+    $seo = $item['seo'] ?? null;
+    if ($seo === null) {
+        return true;
+    }
+    return pn_is_object_array($seo) && array_diff(array_keys($seo), PN_NEWS_CATEGORY_SEO_KEYS) === []
+        && pn_valid_seo_string($seo['title'] ?? null, PN_SEO_TITLE_MAX)
+        && pn_valid_seo_string($seo['description'] ?? null, PN_SEO_DESCRIPTION_MAX);
+}
+
+/** news_categories: at most 40 entries with unique slugs. */
+function pn_valid_news_categories(array $list): bool
+{
+    if (count($list) > PN_NEWS_CATEGORIES_MAX) {
+        return false;
+    }
+    $slugs = [];
+    foreach ($list as $item) {
+        if (!pn_valid_news_category($item) || isset($slugs[$item['slug']])) {
+            return false;
+        }
+        $slugs[$item['slug']] = true;
+    }
+    return true;
+}
+
+/** A news article may not use a reserved slug, now or as a redirecting old slug. */
+function pn_valid_news_item(array $item): bool
+{
+    if (in_array($item['slug'] ?? null, PN_NEWS_RESERVED_SLUGS, true)) {
+        return false;
+    }
+    foreach (is_array($item['oldSlugs'] ?? null) ? $item['oldSlugs'] : [] as $old) {
+        if (in_array($old, PN_NEWS_RESERVED_SLUGS, true)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Link of a menu entry: a site path ("/x", never "//x"), an https URL, mailto: or tel:.
+ * Twin of classifyMenuUrl() in src/utils/menuConfig.ts (classifyFooterUrl plus "no backslash").
+ */
+function pn_valid_menu_link(mixed $url): bool
+{
+    if (!is_string($url) || $url === '' || strlen($url) > PN_MENU_URL_MAX || preg_match(PN_MENU_URL_FORBIDDEN, $url) !== 0) {
+        return false;
+    }
+    return preg_match('~^/(?!/)~', $url) === 1
+        || preg_match('~^https://[^/?#]+~i', $url) === 1
+        || preg_match('~^mailto:[^\s@]+@[^\s@]+$~i', $url) === 1
+        || preg_match('~^tel:\+?[0-9][0-9.\-()]*$~i', $url) === 1;
+}
+
+/** One menu entry: allowed keys only, label 1..40 chars, valid link, optional id, flags and icon. */
+function pn_valid_menu_entry(mixed $entry, array $allowedKeys): bool
+{
+    if (!pn_is_object_array($entry) || $entry === [] || array_diff(array_keys($entry), $allowedKeys) !== []) {
+        return false;
+    }
+    if (!is_string($entry['label'] ?? null) || trim($entry['label']) === '' || mb_strlen($entry['label']) > PN_MENU_LABEL_MAX) {
+        return false;
+    }
+    if (!pn_valid_menu_link($entry['path'] ?? null)) {
+        return false;
+    }
+    if (isset($entry['id']) && (!is_string($entry['id']) || preg_match(PN_MENU_ID_PATTERN, $entry['id']) !== 1)) {
+        return false;
+    }
+    foreach (['exact', 'visible', 'newTab'] as $flag) {
+        if (isset($entry[$flag]) && !is_bool($entry[$flag])) {
+            return false;
+        }
+    }
+    return !isset($entry['icon']) || (is_string($entry['icon']) && in_array($entry['icon'], PN_MENU_ICONS, true));
+}
+
+function pn_valid_menu_list(mixed $list, int $maxItems, array $keys, bool $withChildren): bool
+{
+    if (!is_array($list) || !array_is_list($list) || count($list) > $maxItems) {
+        return false;
+    }
+    foreach ($list as $entry) {
+        if (!pn_valid_menu_entry($entry, $keys)) {
+            return false;
+        }
+        if ($withChildren && isset($entry['children']) && !pn_valid_menu_list($entry['children'], PN_MENU_MAX_CHILDREN, PN_MENU_CHILD_KEYS, false)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * menu.desktop (<= 10 entries, each with <= 12 children, one level) and menu.mobileBottomNav (<= 5 entries).
+ * Legacy entries {label, path[, exact][, icon]} stay valid. menu.footer is not checked here.
+ */
+function pn_valid_menu(array $menu): bool
+{
+    if (array_key_exists('desktop', $menu) && !pn_valid_menu_list($menu['desktop'], PN_MENU_MAX_ITEMS, PN_MENU_DESKTOP_KEYS, true)) {
+        return false;
+    }
+    return !array_key_exists('mobileBottomNav', $menu)
+        || pn_valid_menu_list($menu['mobileBottomNav'], PN_MENU_MAX_BOTTOM_ITEMS, PN_MENU_BOTTOM_KEYS, false);
+}
+
 function pn_valid_google_html_file(mixed $file): bool
 {
     return $file === null || (
@@ -362,6 +513,9 @@ function pn_validate_collection(string $name, mixed $data): bool
         if ($data === [] || array_is_list($data)) {
             return false;
         }
+        if ($name === 'menu') {
+            return pn_valid_menu($data);
+        }
         return $name !== 'company' || pn_valid_company_seo($data['seo'] ?? null);
     }
     if (!array_is_list($data)) {
@@ -382,9 +536,12 @@ function pn_validate_collection(string $name, mixed $data): bool
     if ($name === 'consignments') {
         return pn_valid_consignments($data);
     }
+    if ($name === 'news_categories') {
+        return pn_valid_news_categories($data);
+    }
     if (in_array($name, ['projects', 'properties', 'news'], true)) {
         foreach ($data as $item) {
-            if (!pn_valid_seo_fields($item)) {
+            if (!pn_valid_seo_fields($item) || ($name === 'news' && !pn_valid_news_item($item))) {
                 return false;
             }
         }

@@ -718,5 +718,198 @@
     "path": "/tin-tuc"
    }
   }
+ ],
+ "categories": [
+  {
+   "name": "basic",
+   "company": {
+    "name": "Phương Nam Realty",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "Mô tả site",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "category": {
+    "slug": "thi-truong",
+    "label": "Thị trường",
+    "description": "Phân tích thị trường"
+   },
+   "indexableCount": 3,
+   "path": "/tin-tuc/danh-muc/thi-truong",
+   "expect": {
+    "title": "Thị trường | PN",
+    "description": "Phân tích thị trường",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/site.png",
+    "ogType": "website",
+    "path": "/tin-tuc/danh-muc/thi-truong"
+   }
+  },
+  {
+   "name": "generated description",
+   "company": {
+    "name": "PN"
+   },
+   "category": {
+    "slug": "du-an",
+    "label": "Dự án"
+   },
+   "indexableCount": 1,
+   "path": "/tin-tuc/danh-muc/du-an",
+   "expect": {
+    "title": "Dự án | Phương Nam Realty",
+    "description": "Tin tức chuyên mục Dự án: cập nhật mới nhất từ PN.",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/og-default.png",
+    "ogType": "website",
+    "path": "/tin-tuc/danh-muc/du-an"
+   }
+  },
+  {
+   "name": "custom seo wins",
+   "company": {
+    "name": "Phương Nam Realty",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "Mô tả site",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "category": {
+    "slug": "tin-tuc",
+    "label": "Tin tức",
+    "description": "Mô tả gốc",
+    "seo": {
+     "title": "  Tiêu đề   riêng ",
+     "description": " Mô tả  riêng "
+    }
+   },
+   "indexableCount": 2,
+   "path": "/tin-tuc/danh-muc/tin-tuc",
+   "expect": {
+    "title": "Tiêu đề riêng",
+    "description": "Mô tả riêng",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/site.png",
+    "ogType": "website",
+    "path": "/tin-tuc/danh-muc/tin-tuc"
+   }
+  },
+  {
+   "name": "empty category is noindex",
+   "company": {
+    "name": "Phương Nam Realty",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "Mô tả site",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "category": {
+    "slug": "trong",
+    "label": "Trống",
+    "description": "d"
+   },
+   "indexableCount": 0,
+   "path": "/tin-tuc/danh-muc/trong",
+   "expect": {
+    "title": "Trống | PN",
+    "description": "d",
+    "keywords": "",
+    "robots": "noindex, nofollow",
+    "image": "/images/site.png",
+    "ogType": "website",
+    "path": "/tin-tuc/danh-muc/trong"
+   }
+  },
+  {
+   "name": "site not indexed",
+   "company": {
+    "name": "Phương Nam Realty",
+    "seo": {
+     "titleSuffix": " | PN",
+     "indexSite": false
+    }
+   },
+   "category": {
+    "slug": "a",
+    "label": "A",
+    "description": "d"
+   },
+   "indexableCount": 5,
+   "path": "/tin-tuc/danh-muc/a",
+   "expect": {
+    "title": "A | PN",
+    "description": "d",
+    "keywords": "",
+    "robots": "noindex, nofollow",
+    "image": "/images/og-default.png",
+    "ogType": "website",
+    "path": "/tin-tuc/danh-muc/a"
+   }
+  },
+  {
+   "name": "long description is cut like a snippet",
+   "company": {
+    "name": "Phương Nam Realty",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "Mô tả site",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "category": {
+    "slug": "a",
+    "label": "A",
+    "description": "Phân tích diễn biến giá nguồn cung và xu hướng thị trường bất động sản từ đội ngũ chuyên gia Phân tích diễn biến giá nguồn cung và xu hướng thị trường bất động sản từ đội ngũ chuyên gia Phân tích diễn biến giá nguồn cung và xu hướng thị trường bất động sản từ đội ngũ chuyên gia"
+   },
+   "indexableCount": 1,
+   "path": "/tin-tuc/danh-muc/a",
+   "expect": {
+    "title": "A | PN",
+    "description": "Phân tích diễn biến giá nguồn cung và xu hướng thị trường bất động sản từ đội ngũ chuyên gia Phân tích diễn biến giá nguồn cung và xu hướng thị trường bất…",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/site.png",
+    "ogType": "website",
+    "path": "/tin-tuc/danh-muc/a"
+   }
+  },
+  {
+   "name": "html in the description is flattened",
+   "company": {
+    "name": "Phương Nam Realty",
+    "seo": {
+     "titleSuffix": " | PN",
+     "defaultDescription": "Mô tả site",
+     "defaultOgImage": "/images/site.png",
+     "indexSite": true
+    }
+   },
+   "category": {
+    "slug": "a",
+    "label": "  Thị   trường  ",
+    "description": "<b>Đậm</b> &amp; thường"
+   },
+   "indexableCount": 1,
+   "path": "/tin-tuc/danh-muc/a",
+   "expect": {
+    "title": "Thị trường | PN",
+    "description": "Đậm & thường",
+    "keywords": "",
+    "robots": "index, follow",
+    "image": "/images/site.png",
+    "ogType": "website",
+    "path": "/tin-tuc/danh-muc/a"
+   }
+  }
  ]
 }

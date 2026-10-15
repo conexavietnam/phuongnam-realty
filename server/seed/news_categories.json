@@ -1,0 +1,23 @@
+[
+  {
+    "id": "cat-thi-truong",
+    "slug": "thi-truong",
+    "label": "Thị trường",
+    "order": 1,
+    "description": "Phân tích diễn biến giá, nguồn cung và xu hướng thị trường bất động sản từ đội ngũ chuyên gia Phương Nam Realty."
+  },
+  {
+    "id": "cat-tin-tuc",
+    "slug": "tin-tuc",
+    "label": "Tin tức",
+    "order": 2,
+    "description": "Tin nóng về chính sách, pháp lý, lãi suất và quy hoạch ảnh hưởng đến người mua và nhà đầu tư bất động sản."
+  },
+  {
+    "id": "cat-du-an",
+    "slug": "du-an",
+    "label": "Dự án",
+    "order": 3,
+    "description": "Cập nhật tiến độ, mở bán và bàn giao của các dự án do Phương Nam Realty phân phối."
+  }
+]

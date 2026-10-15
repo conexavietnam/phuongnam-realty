@@ -35,6 +35,10 @@ vectors.pages.forEach((c, i) => {
   const page = c.page === 'home' ? seo.homeSeo(site) : seo.staticPageSeo(c.page, c.path, site);
   expect(`pages #${i} ${c.page}`, c.expect, pick(page));
 });
+vectors.categories.forEach((c, i) => {
+  const page = seo.categorySeo(c.category, c.indexableCount, seo.siteSeo(c.company), c.path);
+  expect(`categories #${i} ${c.name}`, c.expect, pick(page));
+});
 
 console.log(`seo vectors: ${total - failed}/${total} passed`);
 process.exit(failed === 0 ? 0 : 1);

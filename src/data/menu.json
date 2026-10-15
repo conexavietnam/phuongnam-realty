@@ -1,54 +1,65 @@
 {
   "desktop": [
     {
+      "id": "home",
       "label": "Trang chủ",
       "path": "/",
       "exact": true
     },
     {
+      "id": "projects",
       "label": "Dự án",
       "path": "/du-an"
     },
     {
+      "id": "properties",
       "label": "Chuyển nhượng",
       "path": "/chuyen-nhuong"
     },
     {
+      "id": "news",
       "label": "Tin tức",
       "path": "/tin-tuc"
     },
     {
+      "id": "consignments",
       "label": "Ký gửi",
       "path": "/ky-gui"
     },
     {
+      "id": "contact",
       "label": "Liên hệ",
       "path": "/lien-he"
     }
   ],
   "mobileBottomNav": [
     {
+      "id": "home",
       "label": "Trang chủ",
       "path": "/",
       "icon": "Home",
       "exact": true
     },
     {
+      "id": "projects",
       "label": "Dự án",
       "path": "/du-an",
       "icon": "Building2"
     },
     {
+      "id": "consignments",
       "label": "Ký gửi",
       "path": "/ky-gui",
       "icon": "Send"
     },
     {
+      "id": "news",
       "label": "Tin tức",
       "path": "/tin-tuc",
       "icon": "Newspaper"
     },
     {
+      "id": "contact",
       "label": "Liên hệ",
       "path": "/lien-he",
       "icon": "Phone"
