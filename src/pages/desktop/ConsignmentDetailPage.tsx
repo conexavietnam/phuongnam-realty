@@ -13,6 +13,7 @@ import { consignmentService } from '@/services/consignmentService';
 import { renderRichHtml, stripHtml } from '@/utils/richText';
 import { listingUrl, priceLabel } from '@/utils/consignment';
 import { useDataListener } from '@/hooks';
+import { CardGrid } from '@/components/common/CardGrid';
 
 export function ConsignmentDetailPage() {
   useDataListener();
@@ -113,11 +114,11 @@ export function ConsignmentDetailPage() {
         <section className="py-16 bg-slate-50 border-t border-slate-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <SectionTitle subtitle="GỢI Ý THÊM" title="TIN KÝ GỬI KHÁC" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <CardGrid cols={3} direct>
               {related.map((other) => (
                 <ConsignmentCard key={other.id} item={other} />
               ))}
-            </div>
+            </CardGrid>
           </div>
         </section>
       )}

@@ -14,6 +14,7 @@ import { projectService } from '@/services/projectService';
 import { propertyService } from '@/services/propertyService';
 import { newsService } from '@/services/newsService';
 import { consignmentService } from '@/services/consignmentService';
+import { CardGrid } from '@/components/common/CardGrid';
 
 export function HomePage() {
   useDataListener();
@@ -37,11 +38,11 @@ export function HomePage() {
             centered
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <CardGrid cols={3} gap="lg">
             {featuredProjects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
-          </div>
+          </CardGrid>
 
           <div className="mt-12 text-center">
             <Link to="/du-an">
@@ -90,11 +91,11 @@ export function HomePage() {
             centered
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <CardGrid cols={4}>
             {featuredProperties.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}
-          </div>
+          </CardGrid>
 
           <div className="mt-12 text-center">
             <Link to="/chuyen-nhuong">
@@ -120,11 +121,11 @@ export function HomePage() {
               centered
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <CardGrid cols={3} gap="lg">
               {latestConsignments.map((item) => (
                 <ConsignmentCard key={item.id} item={item} />
               ))}
-            </div>
+            </CardGrid>
 
             <div className="mt-12 text-center">
               <Link to="/ky-gui">
@@ -153,11 +154,11 @@ export function HomePage() {
             centered
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <CardGrid cols={3} gap="lg">
             {featuredNews.map((article) => (
               <NewsCard key={article.id} article={article} />
             ))}
-          </div>
+          </CardGrid>
 
           <div className="mt-12 text-center">
             <Link to="/tin-tuc">

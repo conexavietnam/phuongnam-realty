@@ -13,6 +13,7 @@ import { consignmentService } from '@/services/consignmentService';
 import { filtersFromSearchParams, searchParamsFromFilters } from '@/utils/filterQuery';
 import type { PropertyFilter } from '@/types';
 import { useDataListener } from '@/hooks';
+import { CardGrid } from '@/components/common/CardGrid';
 
 const PAGE_SIZE = 9;
 
@@ -97,11 +98,11 @@ export function ConsignmentPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <CardGrid cols={3} gap="lg">
                 {filtered.slice(0, displayLimit).map((item) => (
                   <ConsignmentCard key={item.id} item={item} />
                 ))}
-              </div>
+              </CardGrid>
               {displayLimit < filtered.length && (
                 <div className="mt-12 text-center">
                   <Button variant="outline" size="md" className="font-semibold px-8" onClick={() => setDisplayLimit((prev) => prev + PAGE_SIZE)}>

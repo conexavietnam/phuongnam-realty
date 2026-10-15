@@ -12,6 +12,7 @@ import { propertyService } from '@/services/propertyService';
 import { companyService } from '@/services/companyService';
 import { renderRichHtml } from '@/utils/richText';
 import { typeLabel } from '@/utils/typeLabel';
+import { CardGrid } from '@/components/common/CardGrid';
 
 const BENEFITS = [
   { icon: Shield, title: 'Pháp Lý An Toàn 100%', desc: 'Đội ngũ pháp lý kiểm tra quy hoạch và hồ sơ kỹ lưỡng trước khi bàn giao.' },
@@ -158,9 +159,9 @@ export function PropertyDetailPage() {
       <section className="py-16 bg-slate-50 border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionTitle subtitle="GỢI Ý THÊM" title="DỰ ÁN TƯƠNG TỰ" description="Các bất động sản có cùng phân khúc và vị trí để bạn dễ dàng so sánh." />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardGrid cols={3} direct>
             {relatedProperties.map((prop) => (<PropertyCard key={prop.id} property={prop} />))}
-          </div>
+          </CardGrid>
         </div>
       </section>
     </DesktopLayout>
