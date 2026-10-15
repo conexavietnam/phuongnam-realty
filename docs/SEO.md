@@ -33,7 +33,7 @@ Khi nhập tiêu đề SEO riêng, hệ thống dùng đúng chữ bạn nhập 
 - **Từ khóa (keywords)**: tối đa 15 từ khóa. Google bỏ qua thẻ này khi xếp hạng, nên điền hay không cũng không ảnh hưởng thứ hạng; điền để ghi chú chủ đề và phục vụ một số công cụ khác. Không có hại.
 - **Ảnh chia sẻ (OG image)**: tùy chọn, ảnh JPG/PNG tỉ lệ 1200×630. Để trống sẽ dùng ảnh đại diện.
 - **Không cho Google lập chỉ mục (noindex)**: dùng cho trang nội bộ, tin trùng lặp hoặc đang chờ hoàn thiện. Trang vẫn mở được bằng link nhưng không lên Google và không có trong sitemap.
-- **Đường dẫn (slug)**: ngắn, không dấu, có từ khóa (ví dụ `can-ho-2pn-palm-river`). Đổi đường dẫn của bài đã đăng sẽ làm link cũ không còn truy cập được (đang không có chuyển hướng tự động), nên chỉ đổi khi thật cần.
+- **Đường dẫn (slug)**: ngắn, không dấu, có từ khóa (ví dụ `can-ho-2pn-palm-river`). Khi đổi đường dẫn của bài đã lưu, hệ thống ghi nhớ đường dẫn cũ (tối đa 10 đường dẫn gần nhất) và link cũ tự chuyển hướng 301 sang link mới, cả trên Google lẫn trong website. Vẫn nên hạn chế đổi vì Google cần thời gian cập nhật. Không đặt trùng đường dẫn đang dùng hoặc đường dẫn cũ của bài khác; nếu một đường dẫn đang là của bài này thì luôn thắng đường dẫn cũ của bài kia.
 - Nút **Tự điền từ nội dung** chỉ điền vào các ô còn trống, từ tiêu đề và mô tả ngắn.
 
 ## 3. Kết nối Google Search Console
@@ -73,8 +73,12 @@ Kiểm tra dữ liệu có cấu trúc: dán địa chỉ bài vào https://sear
 
 **Vì sao đổi tiêu đề mà Google chưa đổi?** Google cập nhật khi thu thập lại trang (vài ngày). Dùng "Kiểm tra URL" > "Yêu cầu lập chỉ mục" để nhanh hơn. Google cũng có thể tự chọn tiêu đề khác nếu thấy tiêu đề bạn viết không khớp nội dung.
 
-**Tắt "Cho phép Google lập chỉ mục website" thì sao?** `robots.txt` chặn toàn bộ (`Disallow: /`), `sitemap.xml` để trống và mọi trang gắn noindex. Chỉ dùng khi website chưa sẵn sàng. Lưu ý: khi robots.txt chặn hết, Google không đọc được thẻ noindex, nên trang đã lên Google có thể còn hiện một thời gian.
+**Tắt "Cho phép Google lập chỉ mục website" thì sao?** Mọi trang gắn `<meta name="robots" content="noindex, nofollow">` và header `X-Robots-Tag`, `sitemap.xml` để trống. `robots.txt` cố ý KHÔNG chặn `/` (chỉ chặn `/admin` và `/api/`, bỏ dòng Sitemap), vì Google chỉ thấy lệnh noindex ở những trang nó được phép đọc; chặn bằng robots.txt sẽ khiến trang đã lên Google còn hiện lâu. Chỉ tắt khi website chưa sẵn sàng.
 
 **Trang nháp có lên Google không?** Không. Tin ký gửi ở trạng thái Nháp không có địa chỉ công khai (trả 404) và không nằm trong sitemap.
 
 **Chuyển một tin ký gửi sang mục khác thì link cũ?** Link `/ky-gui/...` tự chuyển hướng 301 sang địa chỉ mục mới, Google sẽ cập nhật theo.
+
+**Đổi đường dẫn rồi mà link cũ vẫn mở?** Đúng như thiết kế: link cũ trả 301 sang link mới (kiểm tra bằng `curl -sI https://<domain>/tin-tuc/<slug-cu>`, thấy `301` và `location`). Sitemap chỉ liệt kê đường dẫn hiện tại.
+
+**Nên đặt `site_url` không?** Có, trong `server/config.php` của máy chủ thật: `'site_url' => 'https://phuongnamrealty.vn'`. Khi đó canonical, og:url, sitemap và link chuyển hướng luôn dùng đúng tên miền chính, không phụ thuộc header Host mà người gửi yêu cầu tự đặt.

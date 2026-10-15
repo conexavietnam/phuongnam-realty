@@ -725,7 +725,9 @@ function pn_seo_resolve(string $path, array $data, array $site): array
         }
     }
     if ($entry === null) {
-        return $notFound;
+        // A slug that is current for another item already matched above and always wins over an old slug.
+        $moved = pn_seo_old_slug_target($data, $catalog, $page, $base, (string) $slug);
+        return $moved !== null ? ['status' => 301, 'location' => $moved] : $notFound;
     }
     $meta = pn_seo_item_meta($entry['kind'], $entry['raw'], $site, pn_seo_entry_path($entry));
     return ['status' => 200, 'page' => ['type' => 'detail', 'entry' => $entry, 'meta' => $meta, 'heading' => pn_seo_item_title($entry['kind'], $entry['raw'])]];
@@ -738,6 +740,35 @@ function pn_seo_consignment_elsewhere(array $data, string $slug): ?string
         if ($raw['slug'] === $slug) {
             $section = pn_seo_section_of($raw);
             return $section === 'ky-gui' ? null : PN_SEO_SECTION_BASES[$section] . '/' . rawurlencode($slug);
+        }
+    }
+    return null;
+}
+
+/** Previous slugs of an item (list of valid slugs), kept in oldSlugs when an admin renames it. */
+function pn_seo_old_slugs(array $raw): array
+{
+    $list = $raw['oldSlugs'] ?? null;
+    if (!is_array($list) || !array_is_list($list)) {
+        return [];
+    }
+    return array_values(array_filter($list, static fn($v): bool => is_string($v) && preg_match(PN_SEO_OLD_SLUG_PATTERN, $v) === 1));
+}
+
+/** Current URL of the item that used to live at <base>/<slug>, or null (never listed in the sitemap). */
+function pn_seo_old_slug_target(array $data, array $catalog, string $page, string $base, string $slug): ?string
+{
+    if ($page === 'consignment') {
+        foreach ($data['consignments'] as $raw) {
+            if (in_array($slug, pn_seo_old_slugs($raw), true)) {
+                return PN_SEO_SECTION_BASES[pn_seo_section_of($raw)] . '/' . rawurlencode($raw['slug']);
+            }
+        }
+        return null;
+    }
+    foreach ($catalog as $entry) {
+        if ($entry['base'] === $base && in_array($slug, pn_seo_old_slugs($entry['raw']), true)) {
+            return pn_seo_entry_path($entry);
         }
     }
     return null;
@@ -773,8 +804,9 @@ function pn_seo_sitemap_xml(string $origin, array $data, array $site): string
 
 function pn_seo_robots_txt(string $origin, array $site): string
 {
+    // indexSite=false must stay crawlable: Google only sees noindex on pages it may fetch.
     if (!$site['indexSite']) {
-        return "User-agent: *\nDisallow: /\n";
+        return "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n";
     }
     return "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nSitemap: " . $origin . "/sitemap.xml\n";
 }

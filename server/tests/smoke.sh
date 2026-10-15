@@ -310,6 +310,20 @@ check "properties slug with a space -> 422" 422 "$(putc properties '[{"id":"n","
 check "consignments slug with an accent -> 422" 422 "$(putc consignments '[{"id":"n","slug":"đường"}]')"
 check "slug longer than 200 chars -> 422" 422 "$(putc news "[{\"id\":\"n\",\"slug\":\"$(head -c 201 /dev/zero | tr '\0' 'a')\"}]")"
 check "slug as a number -> 422" 422 "$(putc news '[{"id":"n","slug":5}]')"
+check "oldSlugs valid on every collection -> 200" 200 "$(putc news '[{"id":"n","slug":"moi","oldSlugs":["cu","cu-2"]}]')"
+check "projects oldSlugs valid -> 200" 200 "$(putc projects '[{"id":"n","slug":"moi","oldSlugs":["cu"]}]')"
+check "properties oldSlugs valid -> 200" 200 "$(putc properties '[{"id":"n","slug":"moi","oldSlugs":["cu"]}]')"
+check "consignments oldSlugs valid -> 200" 200 "$(putc consignments '[{"id":"n","slug":"moi","oldSlugs":["cu"]}]')"
+check "oldSlugs with exactly 10 entries -> 200" 200 "$(putc news "[{\"id\":\"n\",\"slug\":\"moi\",\"oldSlugs\":[$(printf '"s%s",' $(seq 1 9))\"s10\"]}]")"
+check "oldSlugs with 11 entries -> 422" 422 "$(putc news "[{\"id\":\"n\",\"slug\":\"moi\",\"oldSlugs\":[$(printf '"s%s",' $(seq 1 10))\"s11\"]}]")"
+check "oldSlugs containing the current slug -> 422" 422 "$(putc news '[{"id":"n","slug":"moi","oldSlugs":["moi"]}]')"
+check "oldSlugs with a duplicate -> 422" 422 "$(putc projects '[{"id":"n","slug":"moi","oldSlugs":["cu","cu"]}]')"
+check "oldSlugs with upper case -> 422" 422 "$(putc properties '[{"id":"n","slug":"moi","oldSlugs":["Cu"]}]')"
+check "oldSlugs with a slash -> 422" 422 "$(putc consignments '[{"id":"n","slug":"moi","oldSlugs":["a/b"]}]')"
+check "oldSlugs with an empty string -> 422" 422 "$(putc news '[{"id":"n","slug":"moi","oldSlugs":[""]}]')"
+check "oldSlug over 200 chars -> 422" 422 "$(putc news "[{\"id\":\"n\",\"slug\":\"moi\",\"oldSlugs\":[\"$(head -c 201 /dev/zero | tr '\0' 'a')\"]}]")"
+check "oldSlugs not a list -> 422" 422 "$(putc news '[{"id":"n","slug":"moi","oldSlugs":"cu"}]')"
+check "oldSlugs with a non-string -> 422" 422 "$(putc news '[{"id":"n","slug":"moi","oldSlugs":[["x"]]}]')"
 check "consignments seo invalid -> 422" 422 "$(putc consignments '[{"id":"n","slug":"ok","seo":{"noindex":1}}]')"
 
 echo "== seo: write validation (company.seo)"
@@ -357,22 +371,22 @@ cat > "$ROOT/web/index.html" <<'HTML'
 HTML
 cat > "$ROOT/data/news.json" <<'JSON'
 [
- {"id":"n1","slug":"tin-thuong","title":"Tin thường","excerpt":"Tóm tắt tin thường","content":"<p>Nội dung <strong>chi tiết</strong> bài viết &amp; hơn nữa.</p><script>alert(2)</script>","thumbnail":"/uploads/n1.jpg","author":"Biên tập","publishedAt":"2026-03-01","seo":{"title":"SEO tiêu đề tin","description":"SEO mô tả tin","keywords":["bất động sản","Bất Động Sản","thị trường"]}},
+ {"id":"n1","slug":"tin-thuong","oldSlugs":["tin-thuong-cu"],"title":"Tin thường","excerpt":"Tóm tắt tin thường","content":"<p>Nội dung <strong>chi tiết</strong> bài viết &amp; hơn nữa.</p><script>alert(2)</script>","thumbnail":"/uploads/n1.jpg","author":"Biên tập","publishedAt":"2026-03-01","seo":{"title":"SEO tiêu đề tin","description":"SEO mô tả tin","keywords":["bất động sản","Bất Động Sản","thị trường"]}},
  {"id":"n2","slug":"tin-hostile","title":"</title><script>alert(1)</script>\"'&x","excerpt":"</script><script>alert(3)</script>","content":"","thumbnail":"/images/x.svg","publishedAt":"2026-03-02"},
- {"id":"n3","slug":"tin-noindex","title":"Tin noindex","excerpt":"e","content":"c","thumbnail":"/uploads/n3.jpg","publishedAt":"2026-03-03","seo":{"noindex":true}}
+ {"id":"n3","slug":"tin-noindex","oldSlugs":["tin-thuong","tin-xoa"],"title":"Tin noindex","excerpt":"e","content":"c","thumbnail":"/uploads/n3.jpg","publishedAt":"2026-03-03","seo":{"noindex":true}}
 ]
 JSON
 cat > "$ROOT/data/projects.json" <<'JSON'
-[{"id":"p1","slug":"du-an-mot","name":"Dự án Một","shortDescription":"Mô tả ngắn dự án","fullDescription":"<p>Chi tiết dự án</p>","thumbnail":"/uploads/p1.jpg","images":[],"priceFrom":"3 Tỷ","location":"Quận 2"}]
+[{"id":"p1","slug":"du-an-mot","oldSlugs":["du-an-cu"],"name":"Dự án Một","shortDescription":"Mô tả ngắn dự án","fullDescription":"<p>Chi tiết dự án</p>","thumbnail":"/uploads/p1.jpg","images":[],"priceFrom":"3 Tỷ","location":"Quận 2"}]
 JSON
 cat > "$ROOT/data/properties.json" <<'JSON'
-[{"id":"r1","slug":"bds-mot","title":"BĐS Một","shortDescription":"Mô tả BĐS","fullDescription":"","thumbnail":"/uploads/r1.jpg","price":4500000000,"location":"Thủ Đức","createdAt":"2026-02-01T00:00:00Z"}]
+[{"id":"r1","slug":"bds-mot","oldSlugs":["bds-cu"],"title":"BĐS Một","shortDescription":"Mô tả BĐS","fullDescription":"","thumbnail":"/uploads/r1.jpg","price":4500000000,"location":"Thủ Đức","createdAt":"2026-02-01T00:00:00Z"}]
 JSON
 cat > "$ROOT/data/consignments.json" <<'JSON'
 [
- {"id":"c1","slug":"ky-gui-dang","status":"published","section":"ky-gui","title":"Ký gửi đang đăng","shortDescription":"mô tả ký gửi","fullDescription":"<p>x</p>","thumbnail":"/uploads/c1.jpg","price":4.5,"publishedAt":"2026-04-01T00:00:00Z","internalNote":"SECRET-NOTE","ownerPhone":"0900111222"},
- {"id":"c2","slug":"ky-gui-nhap","status":"draft","title":"Bản nháp","shortDescription":"nháp"},
- {"id":"c3","slug":"ky-gui-sang-du-an","status":"published","section":"du-an","title":"Chuyển dự án","shortDescription":"d","publishedAt":"2026-04-02T00:00:00Z"},
+ {"id":"c1","slug":"ky-gui-dang","oldSlugs":["ky-gui-cu"],"status":"published","section":"ky-gui","title":"Ký gửi đang đăng","shortDescription":"mô tả ký gửi","fullDescription":"<p>x</p>","thumbnail":"/uploads/c1.jpg","price":4.5,"publishedAt":"2026-04-01T00:00:00Z","internalNote":"SECRET-NOTE","ownerPhone":"0900111222"},
+ {"id":"c2","slug":"ky-gui-nhap","oldSlugs":["ky-gui-nhap-cu"],"status":"draft","title":"Bản nháp","shortDescription":"nháp"},
+ {"id":"c3","slug":"ky-gui-sang-du-an","oldSlugs":["ky-gui-cu-du-an"],"status":"published","section":"du-an","title":"Chuyển dự án","shortDescription":"d","publishedAt":"2026-04-02T00:00:00Z"},
  {"id":"c4","slug":"ky-gui-da-ban","status":"sold","title":"Đã bán","shortDescription":"d","publishedAt":"2026-04-03T00:00:00Z","seo":{"noindex":true}},
  {"id":"c5","slug":"ky-gui-sang-bds","status":"published","section":"chuyen-nhuong","title":"Chuyển BĐS","shortDescription":"d","price":2,"publishedAt":"2026-04-04T00:00:00Z"}
 ]
@@ -524,6 +538,23 @@ header_has "admin X-Robots-Tag" '^x-robots-tag: noindex, nofollow'
 body_lacks_f "admin has no canonical" 'rel="canonical"'
 body_lacks_f "admin page has no crawler content" 'seo-fallback'
 
+echo "== seo: old slugs redirect (301)"
+check "old news slug -> 301" 301 "$(http "$SEO/tin-tuc/tin-thuong-cu")"
+header_has "301 to the current news URL" '^location: https://127.0.0.1:'"${SEO_PORT}"'/tin-tuc/tin-thuong\s*$'
+check "a current slug beats another item's old slug -> 200" 200 "$(http "$SEO/tin-tuc/tin-thuong")"
+check "old slug of a noindex item still redirects -> 301" 301 "$(http "$SEO/tin-tuc/tin-xoa")"
+header_has "301 to the noindex item" '^location: .*/tin-tuc/tin-noindex'
+check "old project slug -> 301" 301 "$(http "$SEO/du-an/du-an-cu")"
+header_has "301 to the project" '^location: .*/du-an/du-an-mot'
+check "old property slug -> 301" 301 "$(http "$SEO/chuyen-nhuong/bds-cu")"
+header_has "301 to the property" '^location: .*/chuyen-nhuong/bds-mot'
+check "old consignment slug -> 301" 301 "$(http "$SEO/ky-gui/ky-gui-cu")"
+header_has "301 to the listing" '^location: .*/ky-gui/ky-gui-dang'
+check "old slug of a listing now in another section -> 301" 301 "$(http "$SEO/ky-gui/ky-gui-cu-du-an")"
+header_has "301 to the listing's section" '^location: .*/du-an/ky-gui-sang-du-an'
+check "old slug under the wrong section -> 404" 404 "$(http "$SEO/du-an/bds-cu")"
+check "old slug of a draft -> 404" 404 "$(http "$SEO/ky-gui/ky-gui-nhap-cu")"
+
 echo "== seo: sitemap and robots"
 check "sitemap.xml -> 200" 200 "$(http "$SEO/sitemap.xml")"
 header_has "sitemap is XML" '^content-type: application/xml; charset=utf-8'
@@ -537,6 +568,9 @@ body_lacks_f "sitemap skips noindex news" 'tin-noindex'
 body_lacks_f "sitemap skips drafts" 'ky-gui-nhap'
 body_lacks_f "sitemap skips sold noindex" 'ky-gui-da-ban'
 body_lacks_f "sitemap skips admin" '/admin'
+for old in tin-thuong-cu tin-xoa du-an-cu bds-cu ky-gui-cu ky-gui-cu-du-an; do
+  body_lacks_f "sitemap never lists the old slug $old" "/$old<"
+done
 check "every sitemap URL is absolute" "$(grep -o '<loc>' "$BODY" | wc -l | tr -d ' ')" "$(grep -o "<loc>https://127.0.0.1:${SEO_PORT}/" "$BODY" | wc -l | tr -d ' ')"
 check "robots.txt -> 200" 200 "$(http "$SEO/robots.txt")"
 header_has "robots is plain text" '^content-type: text/plain; charset=utf-8'
@@ -579,9 +613,11 @@ write_config "$AUTH_KEY"
 echo "== seo: indexSite = false"
 write_company false
 check "robots.txt when indexing is off -> 200" 200 "$(http "$SEO/robots.txt")"
-body_has_f "robots disallows everything" 'Disallow: /'
+check "robots has no blanket Disallow (Google must see noindex)" 0 "$(grep -cx 'Disallow: /' "$BODY")"
+body_has_f "robots allows crawling" 'Allow: /'
+body_has_f "robots still blocks admin" 'Disallow: /admin'
+body_has_f "robots still blocks api" 'Disallow: /api/'
 body_lacks_f "robots has no Sitemap line" 'Sitemap:'
-body_lacks_f "robots has no Allow line" 'Allow: /'
 check "sitemap when indexing is off -> 200" 200 "$(http "$SEO/sitemap.xml")"
 check "sitemap is an empty urlset" 0 "$(grep -c '<url>' "$BODY" | tr -d ' ')"
 body_has_f "empty sitemap is still valid XML" '</urlset>'

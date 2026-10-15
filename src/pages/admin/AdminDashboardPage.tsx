@@ -35,6 +35,7 @@ import { SeoFields } from '@/components/admin/seo/SeoFields';
 import { SlugField } from '@/components/admin/seo/SlugField';
 import { cleanSeoForSave } from '@/utils/seoFields';
 import { slugify } from '@/utils/slug';
+import { nextOldSlugs } from '@/utils/slugHistory';
 import { GalleryField } from '@/components/admin/GalleryField';
 import { LazyRichTextEditor } from '@/components/admin/LazyRichTextEditor';
 import { useBatchUpload, progressLabel } from '@/components/admin/useBatchUpload';
@@ -174,7 +175,7 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     list.find((item) => item.id === id)?.slug ?? '';
 
   const newsSlugConflict = (slug: string, exceptId: string): string | null =>
-    news.some((n) => n.slug === slug && n.id !== exceptId)
+    news.some((n) => n.id !== exceptId && (n.slug === slug || (n.oldSlugs ?? []).includes(slug)))
       ? `Đường dẫn "${slug}" đã được dùng bởi một bài viết khác. Vui lòng đổi sang đường dẫn khác.`
       : null;
 
@@ -215,11 +216,13 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     e.preventDefault();
     if (!editingProject || !editingProject.name.trim()) return;
 
+    const newProjectSlug = slugify(editingProject.slug.trim() || editingProject.name) || editingProject.id;
     const projectToSave: Project = {
       ...editingProject,
       fullDescription: normalizeEditorHtml(editingProject.fullDescription),
-      slug: slugify(editingProject.slug.trim() || editingProject.name) || editingProject.id,
+      slug: newProjectSlug,
       seo: cleanSeoForSave(editingProject.seo),
+      oldSlugs: nextOldSlugs(projects.find((p) => p.id === editingProject.id), newProjectSlug),
     };
 
     const projectConflict = consignmentService.slugConflictMessage(projectToSave.slug, projectToSave.id);
@@ -282,11 +285,13 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
     e.preventDefault();
     if (!editingProperty || !editingProperty.title.trim()) return;
 
+    const newPropertySlug = slugify(editingProperty.slug.trim() || editingProperty.title) || editingProperty.id;
     const propToSave: Property = {
       ...editingProperty,
       fullDescription: normalizeEditorHtml(editingProperty.fullDescription),
-      slug: slugify(editingProperty.slug.trim() || editingProperty.title) || editingProperty.id,
+      slug: newPropertySlug,
       seo: cleanSeoForSave(editingProperty.seo),
+      oldSlugs: nextOldSlugs(properties.find((p) => p.id === editingProperty.id), newPropertySlug),
     };
 
     const propertyConflict = consignmentService.slugConflictMessage(propToSave.slug, propToSave.id);
@@ -342,11 +347,13 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
       return;
     }
 
+    const newNewsSlug = slugify(editingNews.slug.trim() || editingNews.title) || editingNews.id;
     const newsToSave: NewsArticle = {
       ...editingNews,
       content: normalizedContent,
-      slug: slugify(editingNews.slug.trim() || editingNews.title) || editingNews.id,
+      slug: newNewsSlug,
       seo: cleanSeoForSave(editingNews.seo),
+      oldSlugs: nextOldSlugs(news.find((n) => n.id === editingNews.id), newNewsSlug),
     };
 
     const newsConflict = newsSlugConflict(newsToSave.slug, newsToSave.id);

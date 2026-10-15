@@ -124,13 +124,13 @@ export function SeoSettingsTab() {
           <span className="text-xs">
             <span className="block font-semibold text-slate-800">Cho phép Google lập chỉ mục website</span>
             <span className="block text-slate-500">
-              Đang bật: website được Google thu thập, robots.txt cho phép và sitemap.xml liệt kê các trang đã đăng.
+              Đang bật: website được Google thu thập và lập chỉ mục, sitemap.xml liệt kê các trang đã đăng.
             </span>
           </span>
         </label>
         {!draft.indexSite && (
           <p role="alert" className="mt-3 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-300 rounded-xl px-3.5 py-2.5">
-            Đang TẮT: robots.txt sẽ chặn toàn bộ website (Disallow: /), sitemap.xml để trống và mọi trang gắn noindex. Chỉ tắt khi website chưa sẵn sàng công khai.
+            Đang TẮT: mọi trang gắn noindex (thẻ meta và header X-Robots-Tag) và sitemap.xml để trống. robots.txt vẫn cho Google đọc trang để thấy lệnh noindex, chỉ chặn /admin và /api/. Chỉ tắt khi website chưa sẵn sàng công khai.
           </p>
         )}
       </div>

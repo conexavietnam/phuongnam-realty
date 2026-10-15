@@ -155,14 +155,19 @@ Google HTML verification file `/google<token>.html` (name and content come from 
 Behaviour: unknown paths and unknown slugs answer **404** with the normal SPA shell and `noindex` (no soft 404); a
 `/ky-gui/<slug>` whose listing belongs to another section answers **301** to its real URL; drafts never resolve;
 items with `seo.noindex` (or the whole site when `company.seo.indexSite` is false) get `<meta name="robots">` and
-`X-Robots-Tag`; `/admin` is always `noindex, nofollow`; only GET/HEAD (405 otherwise); HTML has
+`X-Robots-Tag` (with `indexSite=false` robots.txt stays crawlable, only `/admin` and `/api/` are disallowed and there is no
+Sitemap line, so Google can see the noindex; sitemap.xml is an empty urlset); an item's previous slugs
+(`oldSlugs`, kept by the admin editors when a saved item is renamed) answer **301** to its current URL, never appear
+in the sitemap, and lose to any slug that is currently in use; `/admin` is always `noindex, nofollow`; only GET/HEAD (405 otherwise); HTML has
 `Cache-Control: public, max-age=0, must-revalidate` + `ETag`/`Last-Modified` (304 supported). If the script
 itself fails (bad config, missing index.html) it logs the error and sends the plain static `index.html`
 (sitemap/robots answer 503 instead of a fake page).
 
-Optional keys in `server/config.php`: `'site_url' => 'https://phuongnamrealty.vn'` (canonical origin; without it
-the script uses `https://` + the Host header) and `'webroot' => '<app root>/public_html'` (default is
-`<app root>/public_html`).
+Keys in `server/config.php`: **set `'site_url' => 'https://phuongnamrealty.vn'` in production.** It is the canonical
+origin for `<link rel="canonical">`, `og:url`, JSON-LD, sitemap.xml, robots.txt and 301 targets, so none of them depend on
+the Host header of whoever sends the request (without it the script falls back to `https://` + a validated Host header,
+and to `https://phuongnamrealty.vn` when that header is junk). Optional `'webroot' => '<app root>/public_html'`
+(default is `<app root>/public_html`).
 
 ### Route table (one table: `PN_SEO_ROUTES` in `server/src/seo.php`, `SITE_ROUTES` in `src/seo/routes.ts`)
 
@@ -170,10 +175,10 @@ the script uses `https://` + the Host header) and `'webroot' => '<app root>/publ
 |-|-|-|
 | `/` | home | 200, Organization + WebSite JSON-LD |
 | `/du-an`, `/chuyen-nhuong`, `/ky-gui`, `/tin-tuc` | lists | 200, up to 30 item links in the body |
-| `/du-an/:slug` | project, or a promoted listing with section `du-an` | 200 / 404 |
-| `/chuyen-nhuong/:slug` | property, or a promoted listing with section `chuyen-nhuong` | 200 / 404 |
-| `/ky-gui/:slug` | published or sold listing | 200 / 301 to its section / 404 (drafts) |
-| `/tin-tuc/:slug` | news article (Article JSON-LD) | 200 / 404 |
+| `/du-an/:slug` | project, or a promoted listing with section `du-an` | 200 / 301 (old slug) / 404 |
+| `/chuyen-nhuong/:slug` | property, or a promoted listing with section `chuyen-nhuong` | 200 / 301 (old slug) / 404 |
+| `/ky-gui/:slug` | published or sold listing | 200 / 301 to its section or from an old slug / 404 (drafts) |
+| `/tin-tuc/:slug` | news article (Article JSON-LD) | 200 / 301 (old slug) / 404 |
 | `/lien-he` | contact | 200 |
 | `/admin` | admin SPA | 200, `noindex, nofollow`, no data lookup |
 | `/sitemap.xml`, `/robots.txt`, `/google<token>.html` | generated | 200 (verification file only for the configured name) |
@@ -239,7 +244,7 @@ Serve the site over HTTPS only: the session cookie is `Secure`, `HttpOnly`, `Sam
 | Route | Method | Auth | Purpose |
 |-|-|-|-|
 | `data&c=<name>` | GET | public for properties, projects, news, agents, consignments, company, filters, menu; admin for customer_leads, media | read a collection. `consignments` has two views on the same URL: an admin session gets everything (`no-store`); everyone else gets only `published`/`sold` items (missing status = published) without keys starting with `_` or named `internalNote`, `leadId`, `ownerName`, `ownerPhone` (`no-cache`, `Vary: Cookie`) |
-| `data&c=<name>` | PUT | admin + `X-CSRF-Token` | replace a collection (JSON, max 2MB, shape-validated; `consignments` items also need an `id`, a `status` of draft/published/sold when present, bounded text/image sizes, numeric price/area/rooms, `section` in ky-gui/chuyen-nhuong/du-an, bounded investor/projectStatus/priceFrom/floor/view/categoryLabel and a highlights list of at most 20 short strings; projects/properties/news/consignments also validate `slug` (`a-z0-9-`, max 200) and an optional `seo` object: title max 120, description max 320, at most 15 keywords of 60 chars, `ogImage` a `/uploads/`, `/images/` or https URL, boolean `noindex`, no other keys; `company.seo` is bounded too: suffix, description, verification codes, `google<token>.html` file name and content, `indexSite` boolean) |
+| `data&c=<name>` | PUT | admin + `X-CSRF-Token` | replace a collection (JSON, max 2MB, shape-validated; `consignments` items also need an `id`, a `status` of draft/published/sold when present, bounded text/image sizes, numeric price/area/rooms, `section` in ky-gui/chuyen-nhuong/du-an, bounded investor/projectStatus/priceFrom/floor/view/categoryLabel and a highlights list of at most 20 short strings; projects/properties/news/consignments also validate `slug` (`a-z0-9-`, max 200), `oldSlugs` (at most 10 distinct slugs, none equal to the current one) and an optional `seo` object: title max 120, description max 320, at most 15 keywords of 60 chars, `ogImage` a `/uploads/`, `/images/` or https URL, boolean `noindex`, no other keys; `company.seo` is bounded too: suffix, description, verification codes, `google<token>.html` file name and content, `indexSite` boolean) |
 | `lead` | POST | public | contact/consignment form: validated, honeypot `website`, 5 per 10 min per IP, saved, Telegram notice |
 | `auth/mode` | GET | public | `{mode: password or bootstrap, twofa: false}` and nothing more |
 | `auth/login` | POST `{email,password,code?}` | public | password mode only (bootstrap: 403). Max 4KB. Same 401 `Email hoặc mật khẩu không đúng` for unknown email, wrong password, wrong/missing code; `401 {twofa:true}` only after the password was verified. 429 + `Retry-After` for: 10 attempts/15 min per IP, 120/10 min global, per-account lock after 5 / 8 / 10 failures (1 / 5 / 30 min, identical for unknown emails). Regenerates the session |

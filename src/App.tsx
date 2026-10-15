@@ -1,7 +1,9 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { LayoutSwitch } from '@/layouts/LayoutSwitch'
 import { useScrollTop } from '@/hooks/useScrollTop'
 import { RouteSeo } from '@/components/seo/RouteSeo'
+import { useDataListener } from '@/hooks/useDataListener'
+import { oldSlugRedirect } from '@/seo/oldSlugRedirect'
 import { SITE_ROUTES } from '@/seo/routes'
 import type { RoutePage } from '@/seo/routes'
 
@@ -59,6 +61,12 @@ const PAGES: Record<Exclude<RoutePage, 'admin'>, PageComponents> = {
 }
 
 export default function App() {
+  useDataListener()
+  const { pathname } = useLocation()
+  // An item's previous URL goes to its current one instead of a not-found page (the server answers 301 for crawlers).
+  const moved = oldSlugRedirect(pathname)
+  if (moved) return <Navigate to={moved} replace />
+
   return (
     <>
       <ScrollToTop />

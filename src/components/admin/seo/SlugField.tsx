@@ -16,7 +16,7 @@ interface SlugFieldProps {
   conflict?: (slug: string) => string | null;
 }
 
-export const SLUG_CHANGE_WARNING = 'Đổi đường dẫn sẽ làm link cũ không còn truy cập được.';
+export const SLUG_CHANGE_WARNING = 'Đổi đường dẫn: link cũ sẽ tự chuyển hướng 301 sang link mới.';
 
 // Slug input shared by the project, property, news and consignment editors.
 // What gets saved is always slugify(typed text), or slugify(title) when left empty.

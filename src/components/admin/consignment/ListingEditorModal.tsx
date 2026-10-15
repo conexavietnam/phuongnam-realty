@@ -22,6 +22,7 @@ import {
   SECTION_LABELS,
 } from '@/utils/consignment';
 import { cleanSeoForSave } from '@/utils/seoFields';
+import { nextOldSlugs } from '@/utils/slugHistory';
 import { normalizeEditorHtml } from '@/utils/richText';
 import { slugify } from '@/utils/slug';
 import type { ConsignmentListing, ConsignmentPurpose, ConsignmentSection, ConsignmentStatus } from '@/types';
@@ -114,6 +115,7 @@ export function ListingEditorModal({ initial, isNew, actions, onClose }: Listing
       shortDescription: draft.shortDescription.trim(),
       fullDescription: normalizeEditorHtml(draft.fullDescription),
       seo: cleanSeoForSave(draft.seo),
+      oldSlugs: nextOldSlugs(isNew ? undefined : initial, slug),
     };
   };
 

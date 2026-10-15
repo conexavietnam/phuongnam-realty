@@ -90,11 +90,14 @@ export const consignmentService = {
     return rows.filter((row) => row.value !== '');
   },
 
-  // Slugs are unique across properties, projects and consignment listings.
+  // Slugs are unique across properties, projects and consignment listings; another item's old slug counts as taken
+  // (it redirects there), so reusing it would hijack that redirect.
   findSlugOwner(slug: string, exceptId: string): string | null {
-    if (dataStorage.getProperties().some((p) => p.slug === slug && p.id !== exceptId)) return 'BĐS chuyển nhượng';
-    if (dataStorage.getProjects().some((p) => p.slug === slug && p.id !== exceptId)) return 'Dự án';
-    if (dataStorage.getConsignments().some((i) => i.slug === slug && i.id !== exceptId)) return 'Tin ký gửi';
+    const uses = (i: { id: string; slug: string; oldSlugs?: string[] }) =>
+      i.id !== exceptId && (i.slug === slug || (i.oldSlugs ?? []).includes(slug));
+    if (dataStorage.getProperties().some(uses)) return 'BĐS chuyển nhượng';
+    if (dataStorage.getProjects().some(uses)) return 'Dự án';
+    if (dataStorage.getConsignments().some(uses)) return 'Tin ký gửi';
     return null;
   },
 

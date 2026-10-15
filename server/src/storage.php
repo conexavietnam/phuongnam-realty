@@ -65,6 +65,8 @@ const PN_SEO_SUFFIX_MAX = 60;
 const PN_SEO_ITEM_KEYS = ['title', 'description', 'keywords', 'ogImage', 'noindex'];
 const PN_SEO_SITE_KEYS = ['titleSuffix', 'defaultDescription', 'defaultOgImage', 'googleSiteVerification', 'bingSiteVerification', 'googleHtmlFile', 'indexSite'];
 const PN_SEO_SLUG_PATTERN = '/^[a-z0-9-]{0,200}$/D';
+const PN_SEO_OLD_SLUG_PATTERN = '/^[a-z0-9-]{1,200}$/D';
+const PN_SEO_MAX_OLD_SLUGS = 10;
 /** A site path under /uploads/ or /images/, or an https URL: nothing that could carry markup. */
 const PN_SEO_IMAGE_PATTERN = '~^(?:/(?:uploads|images)/[^\s"\'<>\\\\]*|https://[^\s"\'<>\\\\]+)$~D';
 const PN_SEO_VERIFICATION_PATTERN = '/^[A-Za-z0-9_-]{10,100}$/D';
@@ -257,7 +259,25 @@ function pn_valid_seo_fields(array $item): bool
     if (isset($item['slug']) && (!is_string($item['slug']) || preg_match(PN_SEO_SLUG_PATTERN, $item['slug']) !== 1)) {
         return false;
     }
-    return pn_valid_seo($item['seo'] ?? null);
+    return pn_valid_old_slugs($item) && pn_valid_seo($item['seo'] ?? null);
+}
+
+/** oldSlugs: at most 10 distinct valid slugs, none equal to the current slug. */
+function pn_valid_old_slugs(array $item): bool
+{
+    if (!isset($item['oldSlugs'])) {
+        return true;
+    }
+    $list = $item['oldSlugs'];
+    if (!is_array($list) || !array_is_list($list) || count($list) > PN_SEO_MAX_OLD_SLUGS) {
+        return false;
+    }
+    foreach ($list as $old) {
+        if (!is_string($old) || preg_match(PN_SEO_OLD_SLUG_PATTERN, $old) !== 1 || $old === ($item['slug'] ?? null)) {
+            return false;
+        }
+    }
+    return count(array_unique($list)) === count($list);
 }
 
 function pn_valid_google_html_file(mixed $file): bool
