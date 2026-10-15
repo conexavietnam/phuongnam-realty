@@ -3,16 +3,16 @@
     "id": "agent-001",
     "name": "Nguyễn Thị Lan Anh",
     "title": "Chuyên viên tư vấn BĐS",
-    "phone": "0901 234 567",
-    "zaloLink": "https://zalo.me/0901234567",
+    "phone": "0931 123 416",
+    "zaloLink": "https://zalo.me/0931123416",
     "avatar": "/images/avatars/avatar-agent-1.svg"
   },
   {
     "id": "agent-002",
     "name": "Trần Minh Đức",
     "title": "Trưởng phòng kinh doanh",
-    "phone": "0901 234 568",
-    "zaloLink": "https://zalo.me/0901234568",
+    "phone": "0931 123 416",
+    "zaloLink": "https://zalo.me/0931123416",
     "avatar": "/images/avatars/avatar-agent-2.svg"
   }
 ]

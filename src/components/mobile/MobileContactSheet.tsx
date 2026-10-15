@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Phone, MessageCircle, MessageSquare, X } from 'lucide-react';
 import { companyService } from '@/services/companyService';
+import { agentContact } from '@/utils/contact';
 
 interface MobileContactSheetProps {
   isOpen: boolean;
@@ -17,7 +18,8 @@ export const MobileContactSheet: React.FC<MobileContactSheetProps> = ({
 }) => {
   const companyInfo = companyService.getCompanyInfo();
   
-  const displayPhone = agentPhone || companyInfo.hotline;
+  const contact = agentContact({ phone: agentPhone }, companyInfo);
+  const displayPhone = contact.phone;
   const displayName = agentName || companyInfo.name;
   
   useEffect(() => {
@@ -32,17 +34,17 @@ export const MobileContactSheet: React.FC<MobileContactSheetProps> = ({
   }, [isOpen]);
 
   const handleCall = () => {
-    window.location.href = `tel:${displayPhone.replace(/\s/g, '')}`;
+    window.location.href = contact.tel;
     onClose();
   };
 
   const handleZalo = () => {
-    window.open(`https://zalo.me/${displayPhone.replace(/\s/g, '')}`, '_blank');
+    window.open(contact.zalo, '_blank', 'noopener,noreferrer');
     onClose();
   };
 
   const handleSMS = () => {
-    window.location.href = `sms:${displayPhone.replace(/\s/g, '')}`;
+    window.location.href = contact.sms;
     onClose();
   };
 

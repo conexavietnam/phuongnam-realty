@@ -3,6 +3,7 @@ import { MobileLayout } from '@/layouts/MobileLayout';
 import { ContactForm } from '@/components/desktop/ContactForm';
 import { companyService } from '@/services/companyService';
 import { useDataListener } from '@/hooks';
+import { telHref } from '@/utils/contact';
 
 export function MobileContactPage() {
   useDataListener();
@@ -23,7 +24,7 @@ export function MobileContactPage() {
             </div>
             <div className="flex items-center gap-3">
               <Phone className="w-5 h-5 text-gold-500 shrink-0" />
-              <span className="text-sm font-bold">{companyInfo.hotline}</span>
+              <a href={telHref(companyInfo.hotline)} className="text-sm font-bold">{companyInfo.hotline}</a>
             </div>
             <div className="flex items-center gap-3">
               <Mail className="w-5 h-5 text-gold-500 shrink-0" />

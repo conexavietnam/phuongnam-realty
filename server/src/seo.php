@@ -554,6 +554,16 @@ function pn_seo_breadcrumb(string $origin, array $crumbs): array
     return ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => $items];
 }
 
+/**
+ * The hotline as an E.164 number ("0931 123 416" -> "+84931123416"), or '' when it does not hold 9-11 digits.
+ * Built from digits only, so free text in the setting can never reach the JSON-LD.
+ */
+function pn_seo_e164($hotline): string
+{
+    $local = pn_phone_local($hotline);
+    return $local === '' ? '' : '+84' . substr($local, 1);
+}
+
 function pn_seo_organization(string $origin, array $company, array $site): array
 {
     $org = ['@context' => 'https://schema.org', '@type' => 'RealEstateAgent', 'name' => $site['siteName'], 'url' => $origin . '/', 'logo' => $origin . '/icons/icon-512.png'];
@@ -561,9 +571,13 @@ function pn_seo_organization(string $origin, array $company, array $site): array
     if ($logo !== '') {
         $org['logo'] = pn_seo_abs($origin, $logo);
     }
-    $hotline = pn_seo_collapse(pn_seo_text($company['hotline'] ?? ''));
-    if ($hotline !== '') {
-        $org['telephone'] = $hotline;
+    $phone = pn_seo_e164($company['hotline'] ?? '');
+    if ($phone !== '') {
+        $org['telephone'] = $phone;
+        $org['contactPoint'] = [
+            '@type' => 'ContactPoint', 'telephone' => $phone, 'contactType' => 'customer service',
+            'areaServed' => 'VN', 'availableLanguage' => 'Vietnamese',
+        ];
     }
     $email = pn_seo_collapse(pn_seo_text($company['email'] ?? ''));
     if ($email !== '') {

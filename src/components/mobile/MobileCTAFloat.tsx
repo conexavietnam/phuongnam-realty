@@ -1,18 +1,14 @@
 import React from 'react';
 import { Phone, MessageCircle } from 'lucide-react';
 import { companyService } from '@/services/companyService';
+import { companyContact } from '@/utils/contact';
 
 export const MobileCTAFloat: React.FC = () => {
-  const companyInfo = companyService.getCompanyInfo();
-  
+  const contact = companyContact(companyService.getCompanyInfo());
+
   const handleZaloClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (companyInfo.social.zalo && companyInfo.social.zalo !== '#') {
-      window.open(companyInfo.social.zalo, '_blank');
-    } else {
-      // Fallback
-      window.open(`https://zalo.me/${companyInfo.hotline.replace(/\s/g, '')}`, '_blank');
-    }
+    window.open(contact.zalo, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -26,7 +22,7 @@ export const MobileCTAFloat: React.FC = () => {
 
       <div className="relative">
         <a 
-          href={`tel:${companyInfo.hotline.replace(/\s/g, '')}`}
+          href={contact.tel}
           className="w-12 h-12 bg-green-500 rounded-full shadow-lg flex items-center justify-center text-white focus:outline-none hover:bg-green-600 transition-colors relative z-10"
         >
           <Phone className="w-6 h-6" />

@@ -5,6 +5,7 @@ import { Logo } from '@/components/common/Logo';
 import { useDataListener } from '@/hooks';
 import { classifyFooterUrl } from '@/utils/footerLinks';
 import type { FooterLink } from '@/types';
+import { telHref } from '@/utils/contact';
 
 const LINK_CLASS = 'hover:text-gold-500 transition-colors';
 
@@ -45,7 +46,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-gold-500 shrink-0" />
-                <span>{companyInfo.hotline}</span>
+                <a href={telHref(companyInfo.hotline)} className="hover:text-gold-400 transition-colors">{companyInfo.hotline}</a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-gold-500 shrink-0" />
