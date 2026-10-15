@@ -178,6 +178,7 @@ and to `https://phuongnamrealty.vn` when that header is junk). Optional `'webroo
 | `/du-an/:slug` | project, or a promoted listing with section `du-an` | 200 / 301 (old slug) / 404 |
 | `/chuyen-nhuong/:slug` | property, or a promoted listing with section `chuyen-nhuong` | 200 / 301 (old slug) / 404 |
 | `/ky-gui/:slug` | published or sold listing | 200 / 301 to its section or from an old slug / 404 (drafts) |
+| `/tin-tuc/danh-muc/:slug` | news category (CollectionPage + BreadcrumbList JSON-LD, up to 30 article links; `noindex` when it has no indexable article) | 200 / 404 (slug not in `news_categories`) |
 | `/tin-tuc/:slug` | news article (Article JSON-LD) | 200 / 301 (old slug) / 404 |
 | `/lien-he` | contact | 200 |
 | `/admin` | admin SPA | 200, `noindex, nofollow`, no data lookup |
