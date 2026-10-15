@@ -560,16 +560,8 @@ function pn_seo_breadcrumb(string $origin, array $crumbs): array
  */
 function pn_seo_e164($hotline): string
 {
-    $digits = preg_replace('/\D/', '', is_string($hotline) ? $hotline : '') ?? '';
-    if (str_starts_with($digits, '0084')) {
-        $digits = '0' . substr($digits, 4);
-    } elseif (str_starts_with($digits, '84') && strlen($digits) >= 10) {
-        $digits = '0' . substr($digits, 2);
-    }
-    if (strlen($digits) < 9 || strlen($digits) > 11 || $digits[0] !== '0') {
-        return '';
-    }
-    return '+84' . substr($digits, 1);
+    $local = pn_phone_local($hotline);
+    return $local === '' ? '' : '+84' . substr($local, 1);
 }
 
 function pn_seo_organization(string $origin, array $company, array $site): array

@@ -1,6 +1,10 @@
 // Checks the pure helpers behind the single phone/Zalo number (src/utils/contact.ts).
 // Usage: node scripts/check-contact.mjs
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import * as c from '../src/utils/contact.ts';
+
+const vectors = JSON.parse(readFileSync(fileURLToPath(new URL('../server/tests/phone-vectors.json', import.meta.url)), 'utf8'));
 
 let total = 0;
 let failed = 0;
@@ -21,6 +25,7 @@ for (const [name, text, digits, usable, tel] of [
   ['0084', '0084931123416', '0084931123416', true, 'tel:0931123416'],
   ['dots', '0931.123.416', '0931123416', true, 'tel:0931123416'],
   ['too short', '12345', '12345', false, '#'],
+  ['bare 9 digits', '931123416', '931123416', false, '#'],
   ['too long', '0931123416789', '0931123416789', false, '#'],
   ['junk', 'abc', '', false, '#'],
   ['empty', '', '', false, '#'],
@@ -30,6 +35,11 @@ for (const [name, text, digits, usable, tel] of [
   expect(`telHref ${name}`, tel, c.telHref(text));
 }
 expect('phoneDigits null', '', c.phoneDigits(null));
+
+// Shared with PHP (pn_phone_local): the domestic form, or '' when unusable.
+for (const [text, local] of vectors.phones) {
+  expect(`shared vector ${JSON.stringify(text)}`, local, c.isUsablePhone(text) ? c.localDigits(text) : '');
+}
 
 expect('zalo from hotline', 'https://zalo.me/0931123416', c.zaloHref(company('0931 1234 16')));
 expect('zalo from +84', 'https://zalo.me/0931123416', c.zaloHref(company('+84 931 123 416')));

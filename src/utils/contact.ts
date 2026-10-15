@@ -29,9 +29,11 @@ export function localDigits(text: string | undefined | null): string {
   return `0${digits}`;
 }
 
+// Usable = domestic form with its leading 0 and 9-11 digits. A bare 9-digit number ("931123416") is rejected:
+// without the 0 or +84 it is ambiguous. Twin of pn_phone_local() in server/src/storage.php (shared vectors).
 export function isUsablePhone(text: string | undefined | null): boolean {
-  const length = localDigits(text).length;
-  return length >= 9 && length <= 11;
+  const local = localDigits(text);
+  return local.startsWith('0') && local.length >= 9 && local.length <= 11;
 }
 
 export function isValidZaloUrl(url: string | undefined | null): boolean {

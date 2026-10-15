@@ -1,0 +1,24 @@
+{
+ "_readme": "Shared by node scripts/check-contact.mjs (isUsablePhone/localDigits in src/utils/contact.ts) and server/tests/smoke.sh (pn_phone_local in server/src/storage.php). [text, domestic form or \"\" when unusable]. Rule: strip non-digits, 0084/84 prefix becomes 0, then a leading 0 and 9-11 digits are required (a bare 9-digit number without the 0 is NOT accepted). Edit both implementations together.",
+ "phones": [
+  ["0931 1234 16", "0931123416"],
+  ["0931123416", "0931123416"],
+  ["0931.123.416", "0931123416"],
+  ["(0931) 123-416", "0931123416"],
+  ["+84 931 123 416", "0931123416"],
+  ["+84931123416", "0931123416"],
+  ["0084931123416", "0931123416"],
+  ["84931123416", "0931123416"],
+  ["028 3822 1234", "02838221234"],
+  ["0283822123", "0283822123"],
+  ["931123416", ""],
+  ["931 123 416", ""],
+  ["+84 931 123 41", "093112341"],
+  ["012345678", "012345678"],
+  ["01234567", ""],
+  ["0931123416789", ""],
+  ["12345", ""],
+  ["abc", ""],
+  ["", ""]
+ ]
+}

@@ -458,6 +458,67 @@ function pn_valid_google_html_file(mixed $file): bool
     );
 }
 
+/**
+ * A phone number in domestic form ("+84 931 123 416" -> "0931123416"), or '' when unusable: it needs its leading 0
+ * (after 0084/84 is folded to 0) and 9-11 digits. Twin of isUsablePhone()/localDigits() in src/utils/contact.ts.
+ */
+function pn_phone_local(mixed $text): string
+{
+    $digits = preg_replace('/\D/', '', is_string($text) ? $text : '') ?? '';
+    if (str_starts_with($digits, '0084')) {
+        $digits = '0' . substr($digits, 4);
+    } elseif (str_starts_with($digits, '84') && strlen($digits) >= 10) {
+        $digits = '0' . substr($digits, 2);
+    }
+    $length = strlen($digits);
+    return $length >= 9 && $length <= 11 && $digits[0] === '0' ? $digits : '';
+}
+
+/** company.social link: "", "#" (not set) or an https URL; Zalo only on zalo.me / chat.zalo.me. */
+function pn_valid_social_link(mixed $url, bool $zalo): bool
+{
+    if (!is_string($url) || strlen($url) > 300) {
+        return false;
+    }
+    if ($url === '' || $url === '#') {
+        return true;
+    }
+    if ($zalo) {
+        return preg_match('~^https://(zalo\.me|chat\.zalo\.me)/[A-Za-z0-9._\-/?=&%#\~]+$~', $url) === 1;
+    }
+    return preg_match('~^https://[^\s"\'<>\\\\]+$~', $url) === 1;
+}
+
+/** company.hotline / email / social: what visitors call, write to and follow. Keys that are absent pass. */
+function pn_valid_company_contact(array $company): bool
+{
+    if (array_key_exists('hotline', $company)) {
+        $hotline = $company['hotline'];
+        if (!is_string($hotline) || strlen($hotline) > 40 || preg_match('~^[0-9 .\-+()]+$~', $hotline) !== 1
+            || pn_phone_local($hotline) === '') {
+            return false;
+        }
+    }
+    if (array_key_exists('email', $company)) {
+        $email = $company['email'];
+        if (!is_string($email) || strlen($email) > 120 || ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
+            return false;
+        }
+    }
+    if (array_key_exists('social', $company)) {
+        $social = $company['social'];
+        if (!pn_is_object_array($social)) {
+            return false;
+        }
+        foreach (['facebook', 'zalo', 'youtube', 'instagram'] as $key) {
+            if (array_key_exists($key, $social) && !pn_valid_social_link($social[$key], $key === 'zalo')) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 /** company.seo: site-wide SEO settings. */
 function pn_valid_company_seo(mixed $seo): bool
 {
@@ -534,7 +595,7 @@ function pn_validate_collection(string $name, mixed $data): bool
         if ($name === 'menu') {
             return pn_valid_menu($data);
         }
-        return $name !== 'company' || pn_valid_company_seo($data['seo'] ?? null);
+        return $name !== 'company' || (pn_valid_company_contact($data) && pn_valid_company_seo($data['seo'] ?? null));
     }
     if (!array_is_list($data)) {
         return false;

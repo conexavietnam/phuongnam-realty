@@ -347,6 +347,33 @@ check "company seo indexSite as a string -> 422" 422 "$(cput '{"indexSite":"fals
 check "company seo unknown key -> 422" 422 "$(cput '{"robotsTxt":"x"}')"
 check "company seo as a list -> 422" 422 "$(cput '["a"]')"
 
+echo "== company: hotline, email and social links"
+cc() { putc company "{${COMPANY_BASE},$1}"; }
+LIVE='"hotline":"0931 1234 16","email":"info@phuongnamrealty.vn","address":"Hà Nội","logoImage":"/logo.svg","heroBannerImage":"/images/hero-banner.svg","googleMapsEmbed":"https://www.google.com/maps/embed?pb=1","googleMapsLink":"https://maps.google.com/?q=x"'
+check "company live-like payload -> 200" 200 "$(cc "$LIVE,\"social\":{\"facebook\":\"https://facebook.com/pn\",\"zalo\":\"#\",\"youtube\":\"\",\"instagram\":\"#\"},\"seo\":{\"indexSite\":true}")"
+check "company social zalo https://zalo.me -> 200" 200 "$(cc '"social":{"zalo":"https://zalo.me/g/abc"}')"
+check "company social zalo chat.zalo.me -> 200" 200 "$(cc '"social":{"zalo":"https://chat.zalo.me/?phone=1"}')"
+check "company social zalo empty -> 200" 200 "$(cc '"social":{"zalo":""}')"
+check "company hotline +84 -> 200" 200 "$(cc '"hotline":"+84 (931) 123-416"')"
+check "company empty email -> 200" 200 "$(cc '"email":""')"
+check "company hotline with letters -> 422" 422 "$(cc '"hotline":"0931 abc 416"')"
+check "company hotline too short -> 422" 422 "$(cc '"hotline":"12345"')"
+check "company hotline bare 9 digits -> 422" 422 "$(cc '"hotline":"931123416"')"
+check "company hotline over 40 chars -> 422" 422 "$(cc "\"hotline\":\"0931$(head -c 40 /dev/zero | tr '\0' ' ')123416\"")"
+check "company hotline not a string -> 422" 422 "$(cc '"hotline":931123416')"
+check "company email invalid -> 422" 422 "$(cc '"email":"not-an-email"')"
+check "company email over 120 chars -> 422" 422 "$(cc "\"email\":\"$(head -c 115 /dev/zero | tr '\0' 'a')@b.com\"")"
+check "company social javascript: -> 422" 422 "$(cc '"social":{"facebook":"javascript:alert(1)"}')"
+check "company social http: -> 422" 422 "$(cc '"social":{"youtube":"http://youtube.com/x"}')"
+check "company social with a quote -> 422" 422 "$(cc '"social":{"instagram":"https://i.example/\"x"}')"
+check "company social with a space -> 422" 422 "$(cc '"social":{"facebook":"https://f.example/a b"}')"
+check "company social with angle brackets -> 422" 422 "$(cc '"social":{"facebook":"https://f.example/<x>"}')"
+check "company social over 300 chars -> 422" 422 "$(cc "\"social\":{\"facebook\":\"https://f.example/$(head -c 300 /dev/zero | tr '\0' 'a')\"}")"
+check "company zalo on a foreign host -> 422" 422 "$(cc '"social":{"zalo":"https://evil.example/zalo.me/1"}')"
+check "company zalo lookalike host -> 422" 422 "$(cc '"social":{"zalo":"https://zalo.me.evil.example/1"}')"
+check "company social as a list -> 422" 422 "$(cc '"social":["#"]')"
+check "company social link not a string -> 422" 422 "$(cc '"social":{"facebook":5}')"
+
 echo "== news categories: write validation and public read"
 CAT_A='{"id":"cat-a","slug":"thi-truong","label":"Thị trường","description":"Mô tả chuyên mục","order":1,"seo":{"title":"SEO tiêu đề","description":"SEO mô tả"}}'
 CAT_B='{"id":"cat-b","slug":"tin-tuc","label":"Tin tức","order":2}'
@@ -938,6 +965,25 @@ PHPVEC
 MENU_VECTOR_OUT="$("$PHP_BIN" "$ROOT/menu_vectors.php" "$ROOT/server/src" "$REPO/server/tests/menu-vectors.json" 2>"$ROOT/menu_vectors.err")"
 cat "$ROOT/menu_vectors.err"
 check "PHP menu link check matches every shared vector (checked: ${MENU_VECTOR_OUT%% *})" 0 "${MENU_VECTOR_OUT##* }"
+
+echo "== phone: vectors (shared with src/utils/contact.ts)"
+cat > "$ROOT/phone_vectors.php" <<'PHPVEC'
+<?php
+declare(strict_types=1);
+require $argv[1] . '/storage.php';
+$v = json_decode(file_get_contents($argv[2]), true, 64, JSON_THROW_ON_ERROR);
+$fail = 0;
+foreach ($v['phones'] as [$text, $local]) {
+    if (pn_phone_local($text) !== $local) {
+        $fail++;
+        fwrite(STDERR, 'PHONE VECTOR FAIL ' . json_encode($text, JSON_UNESCAPED_UNICODE) . ' want ' . json_encode($local) . "\n");
+    }
+}
+echo count($v['phones']) . ' ' . $fail;
+PHPVEC
+PHONE_VECTOR_OUT="$("$PHP_BIN" "$ROOT/phone_vectors.php" "$ROOT/server/src" "$REPO/server/tests/phone-vectors.json" 2>"$ROOT/phone_vectors.err")"
+cat "$ROOT/phone_vectors.err"
+check "PHP phone check matches every shared vector (checked: ${PHONE_VECTOR_OUT%% *})" 0 "${PHONE_VECTOR_OUT##* }"
 
 echo "== OTP lockout"
 check "second OTP request -> 200" 200 "$(http -X POST -H "$JSON" --data "{\"phone\":\"${ADMIN_PHONE}\"}" "$BASE?r=auth/otp")"
