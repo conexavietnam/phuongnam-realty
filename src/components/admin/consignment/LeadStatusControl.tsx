@@ -1,15 +1,10 @@
 import { StageChip } from '@/components/admin/consignment/StatusChip';
-import { applicationStage, SECTION_LABELS } from '@/utils/consignment';
+import { applicationStage, CONTACT_STATUS_LABELS, SECTION_LABELS } from '@/utils/consignment';
 import type { ConsignmentListing, CustomerLead, LeadStatus } from '@/types';
 
 // Contact-form leads keep the simple four-state select (old statuses map: contacted -> processing,
 // completed -> closed, cancelled -> rejected). Consignment applications are handled in the Ký gửi tab.
-const CONTACT_STATUS_OPTIONS: Array<{ value: LeadStatus; label: string }> = [
-  { value: 'new', label: 'Mới nhận' },
-  { value: 'processing', label: 'Đang liên hệ' },
-  { value: 'closed', label: 'Đã hoàn thành' },
-  { value: 'rejected', label: 'Đã hủy' },
-];
+const CONTACT_STATUS_OPTIONS = (Object.entries(CONTACT_STATUS_LABELS) as Array<[LeadStatus, string]>).map(([value, label]) => ({ value, label }));
 
 interface LeadStatusControlProps {
   lead: CustomerLead;

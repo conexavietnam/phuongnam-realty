@@ -168,3 +168,16 @@ export function applicationStage(lead: CustomerLead, listing?: ConsignmentListin
   }
   return lead.status;
 }
+
+// Contact-form leads use a simple four-state flow; consignment applications use the stage labels above.
+export const CONTACT_STATUS_LABELS: Partial<Record<LeadStatus, string>> = {
+  new: 'Mới nhận',
+  processing: 'Đang liên hệ',
+  closed: 'Đã hoàn thành',
+  rejected: 'Đã hủy',
+};
+
+export function leadStatusLabel(lead: CustomerLead, listing?: ConsignmentListing): string {
+  if (lead.source === 'contact') return CONTACT_STATUS_LABELS[lead.status] ?? lead.status;
+  return STAGE_LABELS[applicationStage(lead, listing)];
+}

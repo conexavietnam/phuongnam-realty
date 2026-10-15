@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Phone, MessageSquare, Check, X, FileEdit, RotateCcw, Play, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { LeadsExportButton } from '@/components/admin/LeadsExportButton';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { SectionChip, StageChip } from '@/components/admin/consignment/StatusChip';
@@ -300,6 +301,15 @@ export function ApplicationsPanel({ leads, listings, actions, onOpenListing }: A
 
   return (
     <div className="space-y-5">
+      <div className="flex justify-end">
+        <LeadsExportButton
+          filtered={visible}
+          all={applications}
+          listings={listings}
+          onNotify={actions.notify}
+          onError={(m) => alert(m)}
+        />
+      </div>
       <div className="flex flex-wrap gap-2" role="group" aria-label="Lọc đơn theo trạng thái">
         {FILTERS.map((f) => (
           <button

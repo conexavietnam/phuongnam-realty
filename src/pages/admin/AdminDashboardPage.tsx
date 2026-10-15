@@ -59,6 +59,7 @@ import { SeoSettingsTab } from '@/components/admin/settings/SeoSettingsTab';
 import { SecurityTab } from '@/components/admin/settings/SecurityTab';
 import { AccountSetupBanner } from '@/components/admin/AccountSetupBanner';
 import { ConsignmentTab } from '@/components/admin/consignment/ConsignmentTab';
+import { LeadsExportButton } from '@/components/admin/LeadsExportButton';
 import { LeadStatusControl } from '@/components/admin/consignment/LeadStatusControl';
 import { PromotedBanner } from '@/components/admin/consignment/PromotedBanner';
 import type { SectionFilter } from '@/components/admin/consignment/ListingsPanel';
@@ -1097,7 +1098,14 @@ export function AdminDashboardPage({ onLogout }: AdminDashboardPageProps) {
               </div>
 
               {/* Status Filter */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <LeadsExportButton
+                  filtered={filteredLeads}
+                  all={leads}
+                  listings={listings}
+                  onNotify={showNotification}
+                  onError={(m) => alert(m)}
+                />
                 <span className="text-xs font-semibold text-slate-500">Lọc theo:</span>
                 <select
                   value={leadStatusFilter}
